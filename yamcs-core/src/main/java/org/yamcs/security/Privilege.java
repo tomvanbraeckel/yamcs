@@ -16,8 +16,8 @@ import org.slf4j.LoggerFactory;
 import org.yamcs.ConfigurationException;
 import org.yamcs.YConfiguration;
 import org.yamcs.api.YamcsSession;
-import org.yamcs.usoctools.XtceUtil;
 import org.yamcs.xtce.MdbMappings;
+import org.yamcs.xtce.SequenceContainer;
 import org.yamcs.xtce.XtceDb;
 import org.yamcs.xtceproc.XtceDbFactory;
 
@@ -206,11 +206,12 @@ public class Privilege {
         if( namespace == null ) {
             namespace = MdbMappings.MDB_OPSNAME;
         }
-        Collection<String> tl=XtceUtil.getInstance(XtceDbFactory.getInstance(yamcsInstance)).getTmPacketNames( namespace );
+        Collection<SequenceContainer> containers = XtceDbFactory.getInstance(yamcsInstance).getSequenceContainers(); 
+        
         ArrayList<String> l=new ArrayList<String>();
-        for(String name:tl) {
-            if(!hasPrivilege(authenticationToken, Privilege.Type.TM_PACKET, name)) continue;
-            l.add(name);
+        for(SequenceContainer sc:containers) {
+            if(!hasPrivilege(authenticationToken, Privilege.Type.TM_PACKET, sc.getAlias(namespace))) continue;
+            l.add(sc.getAlias(namespace));
         }
         return l;
     }
