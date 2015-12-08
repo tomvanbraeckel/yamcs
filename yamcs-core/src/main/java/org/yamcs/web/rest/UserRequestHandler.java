@@ -17,17 +17,12 @@ import org.yamcs.security.User;
 public class UserRequestHandler extends RestRequestHandler {
     
     @Override
-    public String getPath() {
-        return "user";
-    }
-
-    @Override
     public RestResponse handleRequest(RestRequest req, int pathOffset) throws RestException {
         if (req.hasPathSegment(pathOffset)) {
             throw new NotFoundException(req);
         }
         
-        UserInfo info = getUser(req.authToken);
+        UserInfo info = getUser(req.getAuthToken());
         return new RestResponse(req, info, SchemaYamcsManagement.UserInfo.WRITE);
     }
 

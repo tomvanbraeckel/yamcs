@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.yamcs.protobuf.SchemaWeb;
 import org.yamcs.protobuf.Web.RestExceptionMessage;
 import org.yamcs.web.AbstractRequestHandler;
+import org.yamcs.web.rest.archive.ArchiveRequestHandler;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 
@@ -71,13 +72,13 @@ public abstract class RestRequestHandler extends AbstractRequestHandler {
                 log.debug("Original exception not sent to client", t);
                 sendError(req, HttpResponseStatus.INTERNAL_SERVER_ERROR); // text/plain
             }
-        } else if (BINARY_MIME_TYPE.equals(contentType)) {
+        } else if (PROTOBUF_MIME_TYPE.equals(contentType)) {
             ByteBuf buf = req.getChannelHandlerContext().alloc().buffer();
             ByteBufOutputStream channelOut = new ByteBufOutputStream(buf);
             try {
                 toException(t).build().writeTo(channelOut);
                 HttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, status, buf);
-                setContentTypeHeader(response, BINARY_MIME_TYPE);
+                setContentTypeHeader(response, PROTOBUF_MIME_TYPE);
                 setContentLength(response, buf.readableBytes());
                 req.getChannelHandlerContext().writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
             } catch (IOException e2) {
@@ -89,11 +90,6 @@ public abstract class RestRequestHandler extends AbstractRequestHandler {
             sendError(req, status); // text/plain
         }
     }
-    
-    /**
-     * Returns the path handled by this handler.
-     */
-    public abstract String getPath();
 
     /**
      * Wraps all the logic that deals with a RestRequest. Requests should always
@@ -106,7 +102,7 @@ public abstract class RestRequestHandler extends AbstractRequestHandler {
      *            the path offset wherein this handler operates. Use this to
      *            correctly index into {@link RestRequest#getPathSegment(int)}
      */
-    protected abstract RestResponse handleRequest(RestRequest req, int pathOffset) throws RestException;
+    public abstract RestResponse handleRequest(RestRequest req, int pathOffset) throws RestException;
     
     /**
      * Helper method to throw a BadRequestException on incorrect requests. This is some validation mechanism

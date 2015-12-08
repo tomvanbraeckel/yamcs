@@ -5,8 +5,8 @@ import java.util.Set;
 import org.yamcs.YProcessor;
 import org.yamcs.YamcsException;
 import org.yamcs.management.ManagementService;
+import org.yamcs.protobuf.Rest.EditClientRequest;
 import org.yamcs.protobuf.Rest.ListClientsResponse;
-import org.yamcs.protobuf.Rest.PatchClientRequest;
 import org.yamcs.protobuf.SchemaRest;
 import org.yamcs.protobuf.YamcsManagement.ClientInfo;
 import org.yamcs.protobuf.YamcsManagement.ClientInfo.ClientState;
@@ -17,11 +17,6 @@ import org.yamcs.protobuf.YamcsManagement.ProcessorManagementRequest.Operation;
  * Gives information on clients (aka sessions)
  */
 public class ClientRequestHandler extends RestRequestHandler {
-    
-    @Override
-    public String getPath() {
-        return "clients";
-    }
     
     @Override
     public RestResponse handleRequest(RestRequest req, int pathOffset) throws RestException {
@@ -53,7 +48,7 @@ public class ClientRequestHandler extends RestRequestHandler {
     }
     
     private RestResponse patchClient(RestRequest req, ClientInfo ci) throws RestException {
-        PatchClientRequest request = req.bodyAsMessage(SchemaRest.PatchClientRequest.MERGE).build();
+        EditClientRequest request = req.bodyAsMessage(SchemaRest.EditClientRequest.MERGE).build();
         String processor = null;
         if (request.hasProcessor()) processor = request.getProcessor();
         if (req.hasQueryParameter("processor")) processor = req.getQueryParameter("processor");
@@ -71,7 +66,7 @@ public class ClientRequestHandler extends RestRequestHandler {
                 yprocReq.setOperation(Operation.CONNECT_TO_PROCESSOR);
                 yprocReq.addClientId(ci.getId());
                 try {
-                    mservice.connectToProcessor(yprocReq.build(), req.authToken);
+                    mservice.connectToProcessor(yprocReq.build(), req.getAuthToken());
                     return new RestResponse(req);
                 } catch (YamcsException e) {
                     throw new BadRequestException(e.getMessage());

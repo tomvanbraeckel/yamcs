@@ -10,6 +10,8 @@ import static io.netty.handler.codec.http.HttpResponseStatus.UNAUTHORIZED;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -19,13 +21,16 @@ import org.yamcs.security.AuthenticationToken;
 import org.yamcs.security.Privilege;
 import org.yamcs.security.UsernamePasswordToken;
 import org.yamcs.time.SimulationTimeService;
-import org.yamcs.web.rest.ArchiveRequestHandler;
 import org.yamcs.web.rest.ClientRequestHandler;
+import org.yamcs.web.rest.DisplayRequestHandler;
 import org.yamcs.web.rest.InstanceRequestHandler;
-import org.yamcs.web.rest.MDBRequestHandler;
-import org.yamcs.web.rest.ProcessorRequestHandler;
+import org.yamcs.web.rest.LinkRequestHandler;
 import org.yamcs.web.rest.RestRequest;
+import org.yamcs.web.rest.RestRequestHandler;
 import org.yamcs.web.rest.UserRequestHandler;
+import org.yamcs.web.rest.archive.ArchiveRequestHandler;
+import org.yamcs.web.rest.mdb.MDBRequestHandler;
+import org.yamcs.web.rest.processor.ProcessorRequestHandler;
 import org.yamcs.web.websocket.WebSocketServerHandler;
 
 import io.netty.buffer.ByteBuf;
@@ -51,25 +56,26 @@ import io.netty.util.CharsetUtil;
  */
 public class HttpSocketServerHandler extends SimpleChannelInboundHandler<Object> {
 
-    //the request to get the list of displays goes here
-    public static final String DISPLAYS_PATH = "displays";
     public static final String STATIC_PATH = "_static";
     public static final String API_PATH = "api";
 
     final static Logger log = LoggerFactory.getLogger(HttpSocketServerHandler.class.getName());
 
     static StaticFileRequestHandler fileRequestHandler = new StaticFileRequestHandler();
-    
-    static DisplayRequestHandler displayRequestHandler = new DisplayRequestHandler(fileRequestHandler);
-    static InstanceRequestHandler instanceRequestHandler = new InstanceRequestHandler();
-    static UserRequestHandler userRequestHandler = new UserRequestHandler();
-    static MDBRequestHandler mdbRequestHandler = new MDBRequestHandler();
-    static ClientRequestHandler clientRequestHandler = new ClientRequestHandler();
-    static ProcessorRequestHandler processorRequestHandler = new ProcessorRequestHandler();
-    static ArchiveRequestHandler archiveRequestHandler = new ArchiveRequestHandler();
-    static SimulationTimeService.SimTimeRequestHandler simTimeRequestHandler = new SimulationTimeService.SimTimeRequestHandler();
-    
+    Map<String, RestRequestHandler> restHandlers = new HashMap<>();
     WebSocketServerHandler webSocketHandler = new WebSocketServerHandler();
+    
+    public HttpSocketServerHandler() {
+        restHandlers.put("archive", new ArchiveRequestHandler());
+        restHandlers.put("clients", new ClientRequestHandler());
+        restHandlers.put("displays",  new DisplayRequestHandler());
+        restHandlers.put("instances", new InstanceRequestHandler());
+        restHandlers.put("links", new LinkRequestHandler());
+        restHandlers.put("mdb", new MDBRequestHandler());
+        restHandlers.put("processors", new ProcessorRequestHandler());
+        restHandlers.put("simTime", new SimulationTimeService.SimTimeRequestHandler());
+        restHandlers.put("user", new UserRequestHandler());
+    }
     
     @Override
     public void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -111,20 +117,15 @@ public class HttpSocketServerHandler extends SimpleChannelInboundHandler<Object>
         }
         
         String[] path = uri.split("/", 3); //uri starts with / so path[0] is always empty
-        if (path.length == 1) {
-            sendNegativeHttpResponse(ctx, req, NOT_FOUND);
-            return;
-        }
-        if (STATIC_PATH.equals(path[1])) {
+        switch (path[1]) {
+        case STATIC_PATH:
             if (path.length == 2) { //do not accept "/_static/" (i.e. directory listing) requests 
                 sendNegativeHttpResponse(ctx, req, FORBIDDEN);
                 return;
             }
             fileRequestHandler.handleStaticFileRequest(ctx, req, path[2]);
             return;
-        }
-        
-        if (API_PATH.equals(path[1])) {
+        case API_PATH:
             if (path.length == 2 || "".equals(path[2])) {
                 sendNegativeHttpResponse(ctx, req, FORBIDDEN);
                 return;
@@ -133,50 +134,37 @@ public class HttpSocketServerHandler extends SimpleChannelInboundHandler<Object>
             RestRequest restReq = AbstractRequestHandler.toRestRequest(ctx, req, qsDecoder, authToken);
             
             String resource = restReq.getPathSegment(2);
-            if (instanceRequestHandler.getPath().equals(resource)) { 
-                instanceRequestHandler.handleRequestOrError(restReq, 3);
-                return;
-            } else if (displayRequestHandler.getPath().equals(resource)) {
-                displayRequestHandler.handleRequestOrError(restReq, 3);
-                return;
-            } else if (processorRequestHandler.getPath().equals(resource)) {
-                processorRequestHandler.handleRequestOrError(restReq, 3);
-                return;
-            } else if (clientRequestHandler.getPath().equals(resource)) {
-                clientRequestHandler.handleRequestOrError(restReq, 3);
-                return;
-            } else if (archiveRequestHandler.getPath().equals(resource)) {
-                archiveRequestHandler.handleRequestOrError(restReq, 3);
-                return;
-            } else if (mdbRequestHandler.getPath().equals(resource)) {
-                mdbRequestHandler.handleRequestOrError(restReq, 3);
-                return;
-            } else if (userRequestHandler.getPath().equals(resource)) {
-                userRequestHandler.handleRequestOrError(restReq, 3);
-                return;
+            RestRequestHandler restHandler = restHandlers.get(resource);
+            if (restHandler != null) {
+                restHandler.handleRequestOrError(restReq, 3);
             } else {
+                sendNegativeHttpResponse(ctx, req, NOT_FOUND);
+            }
+            return;
+        case "":
+            // overview of all instances 
+            fileRequestHandler.handleStaticFileRequest(ctx, req, "_site/index.html");
+            return;
+        default:
+            String yamcsInstance = path[1];
+            if (!HttpSocketServer.getInstance().isInstanceRegistered(yamcsInstance)) {
                 sendNegativeHttpResponse(ctx, req, NOT_FOUND);
                 return;
             }
-        }
-
-        String yamcsInstance = path[1];
-        if (!HttpSocketServer.getInstance().isInstanceRegistered(yamcsInstance)) {
-            sendNegativeHttpResponse(ctx, req, NOT_FOUND);
-            return;
-        }
-        
-        if (path.length > 2) {
-            String[] rpath = path[2].split("/", 2);
-            String handler = rpath[0];
-            if (WebSocketServerHandler.WEBSOCKET_PATH.equals(handler)) {
-                webSocketHandler.handleHttpRequest(ctx, req, yamcsInstance, authToken);
+            
+            if (path.length > 2) {
+                String[] rpath = path[2].split("/", 2);
+                String handler = rpath[0];
+                if (WebSocketServerHandler.WEBSOCKET_PATH.equals(handler)) {
+                    webSocketHandler.handleHttpRequest(ctx, req, yamcsInstance, authToken);
+                } else {
+                    // Everything else is handled by angular's router (enables deep linking in html5 mode)
+                    fileRequestHandler.handleStaticFileRequest(ctx, req, "_site/instance.html");                
+                }
             } else {
-                // Everything else is handled by angular's router (enables deep linking in html5 mode)
-                fileRequestHandler.handleStaticFileRequest(ctx, req, "index.html");                
+                fileRequestHandler.handleStaticFileRequest(ctx, req, "_site/instance.html");
             }
-        } else {
-            fileRequestHandler.handleStaticFileRequest(ctx, req, "index.html");
+            return;
         }
     }
     
@@ -193,7 +181,7 @@ public class HttpSocketServerHandler extends SimpleChannelInboundHandler<Object>
         }
 
         ChannelFuture f = ctx.writeAndFlush(res);
-        if (!isKeepAlive(req) || res.getStatus().code() != 200) {
+        if (!isKeepAlive(req) || res.getStatus().code() < 200 || res.getStatus().code() > 299) {
             f.addListener(ChannelFutureListener.CLOSE);
         }
     }
