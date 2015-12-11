@@ -11,7 +11,10 @@ import java.util.Arrays;
  *
  */
 public class VarIntList {
-    byte[] buf;
+    final protected byte[] buf;
+    /** Cache the hash code for the array */
+    private int hash;
+    
     public VarIntList(int[] a) {
         byte[] tmp = new byte[4*a.length];
         int pos=0;
@@ -26,6 +29,10 @@ public class VarIntList {
         buf = Arrays.copyOf(tmp, pos);
     }
 
+    protected VarIntList(byte[] buf) {
+        this.buf = buf;
+    }
+
     /**
      * 
      * @return the size of the backing array
@@ -33,6 +40,11 @@ public class VarIntList {
     public int arraySize() {
         return buf.length;
     }
+    
+    public byte[] getArray() {
+        return buf;
+    }
+    
     
     public IntIterator iterator() {
         return new IntIterator();
@@ -56,15 +68,29 @@ public class VarIntList {
         }
         
     }
-  /*
-    public final void write(int pos, int v) {
-        while ((v & ~0x7F) != 0) {
-            buf[pos++] = ((byte)((v & 0x7F) | 0x80));
-            v >>>= 7;
-        }
-        buf[pos++] = (byte) (v|0x80);
-    }
-*/
 
+
+    @Override
+    public int hashCode() {
+        if (hash == 0 && buf.length > 0) {
+            hash = Arrays.hashCode(buf);
+        }
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        
+        if (obj == null) return false;
+        
+        if (getClass() != obj.getClass()) return false;
+        
+        VarIntList other = (VarIntList) obj;
+        if (!Arrays.equals(buf, other.buf)) return false;
+        
+        
+        return true;
+    }
     
 }

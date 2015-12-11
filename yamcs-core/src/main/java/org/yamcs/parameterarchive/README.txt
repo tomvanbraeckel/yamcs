@@ -20,34 +20,52 @@ So what we do is to store once the timestamps in one record and make reference t
 
 
 == Database structure ==
-Each (parameter,type) combination is given an unique 4 bytes parameter_id. The parameter is identified by its fully qualified xtce name.
+Data is segmented in segments of 2^12 seconds each. One data segment contains all the values of the parameter and one time segment contains all the corresponding timestamps.
 
-
-
-TimeArray - an ordered sequence of timestamps stored as a t0,dt1,dt2... where t0 is some initial timestamp and dt0,dt1.. are deltas from the previous timetamp - so ti = t0+dt1+dt2+...dti 
-t0 is itself a delta from the beginning of a segment. The TimeArray is stored as a compacted VarInt array.
-
-
+Each (parameter, type) combination is given an unique 4 bytes parameter_id. 
 ParameterGroup - represents a list of parameter_id which are received together (share the same timestamp).
+Each ParameterGroup is given a ParameterGroup_id
 
 
-Each ParameterGroup is given a ParameterPartition_id
+TimeSegment - 
+byte 0:
+  version = 0
+byte 1+: an ordered sequence of varints:
+  n = array size
+  t0 = time zero - a delta from the beginning of the segment
+  dt1 = t1-t0
+  dt2 = t2-t1
+  ...
+
+
+
+ParameterValueArray:
+byte 0: 
+  version = 0
+byte 1:
+  type (integer, float, enumeration, etc)
+
+ParameterIdList: SortedVarIntList
+
+
+
+
 
 Column Families
-- one CF named "metadata" contains:  
-  - definition of parameter_id
-  - definition of Parameter Groups
+ for storing metadata we have 2 CFs:  
+   meta_p2pid:  contains the mapping between pararameter fully qualified name and parameter_id and type
+   meta_pgid2pg: contains the mapping between ParameterGroup_id and parameter_id
+ 
+ for storing parameter values and timestamps we have 2CFs per partition:
+    data_<partition_id> contains parameter values
+      key: parameter_id, segment_time
+      value: ValueSegment
   
-  
-- for each ParameterGroup one CF named "g" + ParameterGroup_id
-    contains the timestamp information
-- for each Parameter_id one CF named "p" + Paramete_id 
-   contains the parameter values
+    time_<partitionon_id> contains timestamps:
+       key: ParameterGroup_id, segment_time
+       value: TimeSegment
 
-
-
-The data is segmented in hourly segments. All values of the parameters into one segment are stored in one record.
-
+partition_id is basetimestamp in hexadecimal (without 0x in front)
 
 
 
