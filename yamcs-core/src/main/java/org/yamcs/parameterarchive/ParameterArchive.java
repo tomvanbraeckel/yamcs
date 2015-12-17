@@ -1,7 +1,6 @@
 package org.yamcs.parameterarchive;
 
 import java.io.File;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,6 +14,8 @@ import org.rocksdb.DBOptions;
 import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yamcs.yarch.YarchDatabase;
 
 
@@ -26,6 +27,7 @@ public class ParameterArchive {
     static final byte[] CF_NAME_time_prefix = "time_".getBytes(StandardCharsets.US_ASCII);
     static final byte[] CF_NAME_data_prefix = "data_".getBytes(StandardCharsets.US_ASCII);
     
+    private final Logger log = LoggerFactory.getLogger(ParameterArchive.class);
     private ParameterIdMap parameterIdMap;
     private ParameterGroupIdMap parameterGroupIdMap;
     private RocksDB rdb;
@@ -33,11 +35,11 @@ public class ParameterArchive {
     ColumnFamilyHandle p2pid_cfh;
     ColumnFamilyHandle pgid2pg_cfh;
     
-    final String instance;
+    final String yamcsInstance;
     private Map<Long, Partition> partitions = new HashMap<>();
     
     public ParameterArchive(String instance) throws RocksDBException {
-        this.instance = instance;
+        this.yamcsInstance = instance;
         String dbpath = YarchDatabase.getInstance(instance).getRoot() +"/ParameterArchive";
         File f = new File(dbpath+"/IDENTITY");
         if(f.exists()) {
@@ -49,7 +51,20 @@ public class ParameterArchive {
         parameterGroupIdMap = new ParameterGroupIdMap(rdb, pgid2pg_cfh);
     }
 
-    private void createDb(String dbpath) {
+    private void createDb(String dbpath) throws RocksDBException {
+        ColumnFamilyDescriptor cfd_p2pid = new ColumnFamilyDescriptor(CF_NAME_meta_p2pid);
+        ColumnFamilyDescriptor cfd_pgid2pg = new ColumnFamilyDescriptor(CF_NAME_meta_pgid2pg);
+        ColumnFamilyDescriptor cfd_default = new ColumnFamilyDescriptor(RocksDB.DEFAULT_COLUMN_FAMILY);
+        
+        
+        List<ColumnFamilyDescriptor> cfdList = Arrays.asList(cfd_p2pid, cfd_pgid2pg, cfd_default);
+        List<ColumnFamilyHandle> cfhList = new ArrayList<ColumnFamilyHandle>(cfdList.size());
+        DBOptions options = new DBOptions();
+        options.setCreateIfMissing(true);
+        options.setCreateMissingColumnFamilies(true);
+        rdb = RocksDB.open(options, dbpath, cfdList, cfhList);
+        p2pid_cfh = cfhList.get(0);
+        pgid2pg_cfh = cfhList.get(1);
         
     }
 
@@ -89,6 +104,10 @@ public class ParameterArchive {
                     partitions.put(partitionId, p);
                 }
                 p.dataCfh = cfhList.get(i);
+            } else {
+                if(!Arrays.equals(RocksDB.DEFAULT_COLUMN_FAMILY, cf)) {
+                    log.warn("Ignoring unknown column family "+new String(cf, StandardCharsets.US_ASCII));
+                }
             }
         }
         if(p2pid_cfh==null) {
@@ -126,10 +145,13 @@ public class ParameterArchive {
         return pdb;
     }
 
-    public ParameterIdMap getPidMap() {
+    public ParameterIdMap getParameterIdMap() {
         return parameterIdMap;
     }
     
+    public ParameterGroupIdMap getParameterGroupIdMap() {
+        return parameterGroupIdMap;
+    }
     
     static class Partition {
         final long partitionId;
@@ -153,5 +175,13 @@ public class ParameterArchive {
             if(a[i]!=prefix[i]) return false;
         }
         return true;
+    }
+    
+    public void close() {
+        rdb.close();
+    }
+
+    public String getYamcsInstance() {
+        return yamcsInstance;
     }
 }

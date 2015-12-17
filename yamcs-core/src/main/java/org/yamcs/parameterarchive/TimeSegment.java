@@ -2,6 +2,7 @@ package org.yamcs.parameterarchive;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.PrimitiveIterator;
 
 import org.yamcs.utils.SortedIntArray;
 import org.yamcs.utils.VarIntUtil;
@@ -16,6 +17,8 @@ import org.yamcs.utils.VarIntUtil;
 public class TimeSegment {
     public static final int NUMBITS_MASK=22; //2^22 millisecons ~= 69 minutes per segment    
     public static final int TIMESTAMP_MASK = (0xFFFFFFFF>>>(32-NUMBITS_MASK));
+    public static final long SEGMENT_MASK = ~TIMESTAMP_MASK;
+    
     public static final int VERSION = 0;
     
     final private long t0;    
@@ -37,7 +40,62 @@ public class TimeSegment {
     public int add(long instant) {
         return tsarray.add((int)(instant & TIMESTAMP_MASK));
     }
+    
+    /**
+     * get timestamp at position idx
+     * @param idx
+     * @return
+     */
+    public long get(int idx) {
+        return tsarray.get(idx) | t0;
+    }
 
+    /**
+     * Constructs an ascending iterator starting from a specified value (inclusive) 
+     * 
+     * @param startFrom
+     * @return
+     */
+    public PrimitiveIterator.OfLong getAscendingIterator(long startFrom) {
+        return new PrimitiveIterator.OfLong() {
+            PrimitiveIterator.OfInt it = tsarray.getAscendingIterator((int)(startFrom&TIMESTAMP_MASK));
+
+            @Override
+            public boolean hasNext() {
+                return it.hasNext();
+            }
+            
+            @Override
+            public long nextLong() {
+                return t0+ it.nextInt();
+                
+            }
+        };
+    }
+    
+    /**
+     * Constructs an descending iterator starting from a specified value (exclusive) 
+     * 
+     * @param startFrom
+     * @return
+     */
+    public PrimitiveIterator.OfLong getDescendingIterator(long startFrom) {
+        return new PrimitiveIterator.OfLong() {
+            PrimitiveIterator.OfInt it = tsarray.getDescendingIterator((int)(startFrom&TIMESTAMP_MASK));
+
+            @Override
+            public boolean hasNext() {
+                return it.hasNext();
+            }
+            
+            @Override
+            public long nextLong() {
+                return t0 + it.nextInt();
+                
+            }
+        };
+    }
+    
     /**
      * Encode the time array as a varint list composed of:
      *  version
@@ -52,7 +110,7 @@ public class TimeSegment {
         if(tsarray.size()==0) throw new IllegalStateException(" the time segment has no data");
         byte[] buf = new byte[4*(tsarray.size())+3];
         int pos = VarIntUtil.encode(buf, 0, tsarray.size());
-        int x=tsarray.get(0);
+        int x = tsarray.get(0);
         pos = VarIntUtil.encode(buf, pos, x);
         for(int i=1; i<tsarray.size(); i++) {
             int y = tsarray.get(i);
@@ -98,4 +156,41 @@ public class TimeSegment {
     public long getT0() {
         return t0;
     }
+    
+    
+    public static long getSegmentId(long instant) {
+        return instant >> NUMBITS_MASK;
+    }
+
+    /**
+     * returns true if the segment overlaps the [start,stop) interval
+     * @param segmentId
+     * @param start
+     * @param stop
+     * @return
+     */
+    public static boolean overlap(long segmentId, long start, long stop) {
+        long segmentStart = segmentId;
+        long segmentStop = getSegmentEnd(segmentId);
+        
+        return start<segmentStop && stop>segmentStart;
+        
+    }
+
+    private static long getSegmentEnd(long segmentId) {
+        return segmentId  | TIMESTAMP_MASK;
+    }
+
+    public int search(long t) {
+        return tsarray.search((int)(t&TIMESTAMP_MASK));
+    }
+
+    public int size() {
+        return tsarray.size();
+    }
+    
+    public String toString() {
+        return "[TimeSegment: t0:"+t0+", relative times: "+ tsarray.toString()+"]";
+    }
+  
 }

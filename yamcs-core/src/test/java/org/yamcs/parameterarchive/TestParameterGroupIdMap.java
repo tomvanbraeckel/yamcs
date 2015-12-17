@@ -24,8 +24,9 @@ public class TestParameterGroupIdMap {
         int[] p3 = new int[] {1,4,5};
         
         int pg1 = pgidMap.get(p1);
-        int pg2 = pgidMap.get(p2);
         int pg3 = pgidMap.get(p3);
+        int pg2 = pgidMap.get(p2);
+
         
         
         assertEquals(pg1, pg2);

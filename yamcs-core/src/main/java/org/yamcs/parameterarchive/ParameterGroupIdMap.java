@@ -1,7 +1,6 @@
 package org.yamcs.parameterarchive;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,6 +8,7 @@ import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
+import org.yamcs.utils.SortedIntArray;
 
 /**
  * Stores a map between 
@@ -28,7 +28,7 @@ public class ParameterGroupIdMap {
     final RocksDB db;
     final ColumnFamilyHandle pgid2pg_cfh;
     int highestPgId=0;
-    Map<SortedVarIntList, Integer> pg2pgidCache = new HashMap<>();
+    Map<SortedIntArray, Integer> pg2pgidCache = new HashMap<>();
     
     
     ParameterGroupIdMap(RocksDB db, ColumnFamilyHandle pgid2pg_cfh) {
@@ -37,19 +37,20 @@ public class ParameterGroupIdMap {
         readDb();
     }
     
-    
-    public synchronized int get(int[] parameterIdArray) throws RocksDBException {
-        Arrays.sort(parameterIdArray);
-        SortedVarIntList s = new SortedVarIntList(parameterIdArray);
+    public synchronized int get(SortedIntArray s) throws RocksDBException {
         Integer pgid = pg2pgidCache.get(s);
         if(pgid == null) {
             int x = ++highestPgId;;
             pgid = x;
-            db.put(encodeInt(x), s.getArray());
+            db.put(encodeInt(x), s.encodeToVarIntArray());
             pg2pgidCache.put(s, pgid);
         }
         
         return pgid;
+    }
+    
+    public int get(int[] parameterIdArray) throws RocksDBException {
+        return get(new SortedIntArray(parameterIdArray));
     }
     
     private byte[] encodeInt(int x) {
@@ -65,9 +66,14 @@ public class ParameterGroupIdMap {
             
             if(highestPgId < pgid) highestPgId = pgid;
             
-            SortedVarIntList svil = SortedVarIntList.fromBuffer(it.value());
+            SortedIntArray svil = SortedIntArray.decodeFromVarIntArray(it.value());
             pg2pgidCache.put(svil, pgid);
             it.next();
         }
+    }
+    
+    
+    public String toString() {
+        return pg2pgidCache.toString();
     }
 }

@@ -3,6 +3,7 @@ package org.yamcs.utils;
 import static org.junit.Assert.*;
 
 import java.util.HashSet;
+import java.util.PrimitiveIterator;
 import java.util.Set;
 
 import org.junit.Ignore;
@@ -48,6 +49,98 @@ public class SortedIntArrayTest {
             assertEquals(i, s.get(i));
         }
     }
+    
+    @Test
+    public void testEquals() {
+        SortedIntArray s1 = new SortedIntArray(1, 3, 7);
+        SortedIntArray s2 = new SortedIntArray(3, 1, 7);
+        SortedIntArray s3 = new SortedIntArray(1, 3);
+        assertEquals(s1.hashCode(), s2.hashCode());
+        
+        assertTrue(s1.equals(s2));
+        assertTrue(s2.equals(s1));
+        
+        assertFalse(s1.equals(s3));
+        assertFalse(s3.equals(s1));
+        
+        assertFalse(s1.hashCode() == s3.hashCode());
+    }
+    
+    @Test
+    public void testEncodeDecode() {
+        SortedIntArray s1 = new SortedIntArray(1,5,20);
+        byte[] encoded = s1.encodeToVarIntArray();
+        SortedIntArray s2 = SortedIntArray.decodeFromVarIntArray(encoded);
+        assertTrue(s1.equals(s2));
+    }
+    
+    @Test
+    public void testEncodeDecodeZeroLength() {
+        SortedIntArray s1 = new SortedIntArray();
+        byte[] encoded = s1.encodeToVarIntArray();
+        SortedIntArray s2 = SortedIntArray.decodeFromVarIntArray(encoded);
+        assertTrue(s1.equals(s2));
+        
+        assertTrue(s2.equals(s1));
+    }
+    
+    private void assertItEquals(PrimitiveIterator.OfInt it, int ...a) {
+        for(int i=0; i<a.length;i++) {
+            assertTrue(it.hasNext());
+            assertEquals(a[i], it.nextInt());
+        }
+        assertFalse(it.hasNext());
+    }
+    
+    @Test
+    public void testAscendingIterator() {
+        SortedIntArray s1 = new SortedIntArray(1,3,4);
+        
+        PrimitiveIterator.OfInt it = s1.getAscendingIterator(0);
+        assertItEquals(it, 1, 3, 4);
+        
+        it = s1.getAscendingIterator(1);
+        assertItEquals(it, 1, 3, 4);
+        
+        it = s1.getAscendingIterator(2);
+        assertItEquals(it, 3, 4);
+        
+        it = s1.getAscendingIterator(4);
+        assertItEquals(it, 4);
+        
+        it = s1.getAscendingIterator(5);
+        assertFalse(it.hasNext());
+    }
+    
+    @Test
+    public void testDescendingIterator() {
+        SortedIntArray s1 = new SortedIntArray(1, 3, 4);
+        
+        PrimitiveIterator.OfInt it = s1.getDescendingIterator(0);
+        assertFalse(it.hasNext());
+        
+        it = s1.getDescendingIterator(1);
+        assertFalse(it.hasNext());
+        
+        it = s1.getDescendingIterator(2);
+        assertItEquals(it, 1);
+        
+        it = s1.getDescendingIterator(4);
+        assertItEquals(it, 3, 1);
+        
+        it = s1.getDescendingIterator(5);
+        assertItEquals(it, 4, 3, 1);
+    }
+    
+    @Test
+    public void testIteratorsEmptyArray() {
+        SortedIntArray s1 = new SortedIntArray();
+        PrimitiveIterator.OfInt it = s1.getDescendingIterator(0);
+        assertFalse(it.hasNext());
+        
+        it = s1.getAscendingIterator(0);
+    }
+    
     
     @Ignore
     @Test

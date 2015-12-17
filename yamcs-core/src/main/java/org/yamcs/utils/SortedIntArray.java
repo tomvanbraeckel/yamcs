@@ -1,6 +1,7 @@
 package org.yamcs.utils;
 
 import java.util.Arrays;
+import java.util.PrimitiveIterator;
 
 /**
  * sorted int array
@@ -11,10 +12,15 @@ import java.util.Arrays;
  *
  */
 public class SortedIntArray {
+  
     public static int DEFAULT_CAPACITY = 10;
     private int[] a;
     private int length;
-
+    
+    //caches the hashCode
+    private int hash;
+    
+    
     /**
      * Creates a sorted int array with a default initial capacity
      * 
@@ -31,6 +37,17 @@ public class SortedIntArray {
      */
     public SortedIntArray(int capacity) {
         a = new int[capacity];
+    }
+    
+    /**
+     * Creates the SortedIntArray by copying all values from the input array and sorting them
+     * 
+     * @param array
+     */
+    public SortedIntArray(int... array) {
+        length = array.length;
+        a = Arrays.copyOf(array, length);
+        Arrays.sort(a);
     }
 
     /**
@@ -94,7 +111,141 @@ public class SortedIntArray {
         return length;
     }
 
-    public String toString() {
-        return Arrays.toString(a);
+    /**
+     * Constructs an ascending iterator starting from a specified value (inclusive) 
+     * 
+     * @param startFrom
+     * @return
+     */
+    public PrimitiveIterator.OfInt getAscendingIterator(int startFrom) {
+        return new PrimitiveIterator.OfInt() {
+            int pos;
+            {
+                pos = search(startFrom);
+                if(pos<0) {
+                    pos = -pos-1;
+                }
+            }
+            @Override
+            public boolean hasNext() {
+                return pos < length;
+            }
+            
+            @Override
+            public int nextInt() {
+                return a[pos++];
+                
+            }
+        };
     }
+    
+    /**
+     * Constructs an descending iterator starting from a specified value (exclusive) 
+     * 
+     * @param startFrom
+     * @return
+     */
+    public PrimitiveIterator.OfInt getDescendingIterator(int startFrom) {
+        return new PrimitiveIterator.OfInt() {
+            int pos;
+            {
+                pos = search(startFrom);
+                if(pos<0) {
+                    pos = -pos-1;
+                }
+                pos--;
+            }
+            @Override
+            public boolean hasNext() {
+                return pos>=0;
+            }
+            
+            @Override
+            public int nextInt() {
+                return a[pos--];
+                
+            }
+        };
+    }
+    
+    public String toString() {        
+        StringBuilder b = new StringBuilder();
+        int n = length-1;
+        
+        b.append('[');
+        for (int i = 0;; i++) {
+            b.append(a[i]);
+            if(i==n)
+                return b.append(']').toString();
+            b.append(", ");
+        }
+    }
+    
+    
+    @Override
+    public int hashCode() {
+        int h = hash;
+        if (h == 0 && length > 0) {
+            h = 1;
+            
+            for (int i = 0; i < length; i++) {
+                h = 31 * h + a[i];
+            }
+            hash = h;
+        }
+        return h;
+    }
+    
+    
+    public byte[] encodeToVarIntArray() {
+        byte[] buf = new byte[length*4];
+        
+        if(length==0) return buf;
+        
+        int pos = VarIntUtil.encode(buf, 0, a[0]);
+        
+        for(int i=1; i<length; i++) {
+            pos = VarIntUtil.encode(buf, pos, (a[i]-a[i-1]));
+        }
+        if(pos==buf.length) {
+            return buf;
+        } else {
+            return Arrays.copyOf(buf, pos);
+        }
+        
+    }
+    
+    public static SortedIntArray decodeFromVarIntArray(byte[] buf) {
+        if(buf.length==0) return new SortedIntArray(0);
+        SortedIntArray sia = new SortedIntArray();
+        
+        VarIntUtil.ArrayDecoder ad = VarIntUtil.newArrayDecoder(buf);
+        int s=0;
+        while(ad.hasNext()) {
+            s+=ad.next();
+            sia.add(s);
+        }
+        return sia;
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        
+        if (obj == null) return false;
+        
+        if (getClass() != obj.getClass()) return false;
+        
+        SortedIntArray other = (SortedIntArray) obj;
+        if (length != other.length) return false;
+        
+        for(int i=0; i<length; i++) {
+            if(a[i]!=other.a[i])    return false;
+        }
+       
+        return true;
+    }
+
+   
+
 }
