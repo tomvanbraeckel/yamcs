@@ -75,6 +75,15 @@ public class SortedIntArrayTest {
     }
     
     @Test
+    public void testEncodeDecodeNegative() {
+        SortedIntArray s1 = new SortedIntArray(-1, 5, 20);
+        byte[] encoded = s1.encodeToVarIntArray();
+        SortedIntArray s2 = SortedIntArray.decodeFromVarIntArray(encoded);
+        System.out.println("s2 encoded: "+s2);
+        
+        assertTrue(s1.equals(s2));
+    }
+    @Test
     public void testEncodeDecodeZeroLength() {
         SortedIntArray s1 = new SortedIntArray();
         byte[] encoded = s1.encodeToVarIntArray();
