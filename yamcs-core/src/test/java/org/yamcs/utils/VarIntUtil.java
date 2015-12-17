@@ -1,8 +1,6 @@
 package org.yamcs.utils;
 
 public class VarIntUtil {
-    
-    
     /**
      * Encodes x as varint in the buffer at position pos and returns the new position
      * 
@@ -20,6 +18,10 @@ public class VarIntUtil {
         return pos;
     }
     
+    //same as above but better for negative numbers
+    static public int encodeSigned(byte[] buf, int pos, int x) {
+    	return encode(buf, pos, encodeZigZag(x));       
+    }
     
     /**
      * decodes an array of varints
@@ -54,7 +56,30 @@ public class VarIntUtil {
         }
     }
     
+    
+    
+    public static class SignedArrayDecoder extends ArrayDecoder{
+         private SignedArrayDecoder(byte[] buf) {
+             super(buf);
+         }
+         
+         public int next() {
+             return decodeZigZag(super.next());
+         }
+    }
+    
     static public ArrayDecoder newArrayDecoder(byte[] buf) {
         return new ArrayDecoder(buf);
+    }
+    
+    
+    
+    //used to transform small signed integers into unsigned (see protobuf docs)
+    public static int decodeZigZag(int x) {
+        return (x >>> 1) ^ -(x & 1);
+    }
+    
+    public static int encodeZigZag(int x) {
+        return (x << 1) ^ (x >> 31);
     }
 }

@@ -1,5 +1,8 @@
 package org.yamcs.parameterarchive;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
@@ -14,12 +17,26 @@ public class GenericValueSegment extends ValueSegment {
     }
 
     @Override
-    public void add(int pos, ParameterValue parameterValue) {
-        values.add(pos, parameterValue.getEngValue());
+    public void add(int pos, Value v) {
+        values.add(pos, v);
     }
 
     @Override
     public ListIterator<Value> getIterator(int pos) {
         return values.listIterator(pos);
     }
+
+	@Override
+	public void writeTo(OutputStream stream) throws IOException {
+		for(Value v: values) {
+			v.writeDelimitedTo(stream);
+		}
+	}
+	
+	@Override
+	public void parseFrom(InputStream stream) throws IOException {
+		while(stream.available()>0) {
+			values.add(Value.parseDelimitedFrom(stream));
+		}
+	}
 }

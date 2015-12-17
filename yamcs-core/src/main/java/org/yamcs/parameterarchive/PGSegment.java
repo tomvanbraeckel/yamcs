@@ -53,7 +53,7 @@ public class PGSegment {
         
         int pos = timeSegment.add(instant);
         for(int i = 0;i<valueSegments.size(); i++) {
-            valueSegments.get(i).add(pos, sortedPvList.get(i));
+            valueSegments.get(i).add(pos, sortedPvList.get(i).getEngValue());
         }
     }
 
