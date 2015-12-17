@@ -9,8 +9,12 @@ import org.yamcs.protobuf.Yamcs.Value;
 import org.yamcs.utils.SortedIntArray;
 
 /**
- * Parameter Group segment - keeps references to Time and Value segments for a given parameter group. 
+ * Parameter Group segment - keeps references to Time and Value segments for a given parameter group and segment. 
  *  
+ *  This class is used during the parameter archive buildup
+ *   - it uses GenericValueSegment to store any kind of Value
+ *   - once the segment is full, the consolidate method will turn each GenericValueSegment into an storage optimised one.
+ *   
  * 
  * @author nm
  *
@@ -19,7 +23,7 @@ public class PGSegment {
     final int parameterGroupId;
     final SortedIntArray parameterIds;
     TimeSegment timeSegment;
-    List<ValueSegment> valueSegments;
+    List<GenericValueSegment> valueSegments;
     
     
     public PGSegment(int parameterGroupId, long segmentId, SortedIntArray parameterIds) {
@@ -36,17 +40,16 @@ public class PGSegment {
     
     /**
      * Add a new record 
-     *  timestamp goes into the timeSegment
+     *  instant goes into the timeSegment
      *  the values goes each into a value segment
      *  
-     *  the pvalues list has to be already sorted according to the definition of the ParameterGroup 
+     *  the sortedPvList list has to be already sorted according to the definition of the ParameterGroup 
      * 
      * 
      * @param instant
      * @param sortedPvList
      */
     public void addRecord(long instant, List<ParameterValue> sortedPvList) {
-        System.out.println("adding record to pg "+parameterGroupId+" "+sortedPvList);
         
         int pos = timeSegment.add(instant);
         for(int i = 0;i<valueSegments.size(); i++) {
@@ -82,23 +85,27 @@ public class PGSegment {
             Value v = it.next();
             pvr.consumer.addValue(t, v);
         }
-        
-        
-        
     }
+   
+   
     private void extractDescending(ParameterValueRequest pvr, ValueSegment vs) {
         int pos = timeSegment.search(pvr.stop);
-        if(pos<0) pos = -pos-2;
+        if(pos<0) pos = -pos-1;
         
         if(pos<0) return;
         ListIterator<Value> it = vs.getIterator(pos); 
                 
-        while(pos>=0) {
-            long t = timeSegment.get(pos--);
+        while(pos>0) {
+            long t = timeSegment.get(--pos);
             if(t<pvr.start) break;
-            Value v = it.next();
+            Value v = it.previous();
             pvr.consumer.addValue(t, v);
         }
+        
+    }
+    
+    
+    public void consolidate() {
         
     }
 }

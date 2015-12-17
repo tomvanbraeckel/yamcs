@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -21,49 +23,86 @@ import org.yamcs.time.TimeService;
 import org.yamcs.utils.SortedIntArray;
 import org.yamcs.utils.TimeEncoding;
 
+import com.google.common.util.concurrent.AbstractService;
+
 /**
  * Injects into the parameter archive, parameters from the realtime processor.
  * 
- * At the same time allows retrieval of parameters (for public consumption)
+ * The parameter values are collected into PGSegment objects 
+ * The PGSegments are consolidated into the archive when the segment end is older than current time - TIME_WINDOW_LENGTH
+ * 
+ * At the same time allows retrieval of parameters (for public consumption).
  * 
  * 
  * @author nm
  *
  */
-public class RealtimeParameterFiller implements ParameterConsumer {
+public class RealtimeParameterFiller extends AbstractService implements ParameterConsumer {
     final ParameterArchive parameterArchive;
-    
-    //segment time -> ParameterGroup_id -> PGSegment
+
+    //segment id -> ParameterGroup_id -> PGSegment
     TreeMap<Long, Map<Integer, PGSegment>> pgSegments = new TreeMap<>();
     final ParameterIdMap parameterIdMap;
     final ParameterGroupIdMap parameterGroupIdMap;
     private final Logger log = LoggerFactory.getLogger(RealtimeParameterFiller.class);
     final TimeService timeService;
 
-    static public long TIME_WINDOW_LENGTH = 3600*1000L;  //ignore any parameter that does not fit in a segment overlapping with this time window
+    static public final long CONSOLIDATE_OLDER_THAN = 3600*1000L; 
     ReadWriteLock lock = new ReentrantReadWriteLock();
     Lock writeLock = lock.writeLock();
     Lock readLock = lock.readLock();
-    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
+    ScheduledThreadPoolExecutor executor ;
+
+
+    //we accept and serve parameters that fit into the time window starting with this
     volatile long timeWindowStart;
-    
+
+
     public RealtimeParameterFiller(ParameterArchive parameterArchive) {
         this.parameterArchive = parameterArchive;
         parameterIdMap = parameterArchive.getParameterIdMap();
         parameterGroupIdMap = parameterArchive.getParameterGroupIdMap();
         timeService = YamcsServer.getTimeService(parameterArchive.getYamcsInstance());
-        timeWindowStart = (timeService.getMissionTime() - TIME_WINDOW_LENGTH) & TimeSegment.SEGMENT_MASK;
+     
+    }
+
+
+    @Override
+    protected void doStart() {
+        timeWindowStart = TimeSegment.getSegmentStart(timeService.getMissionTime() - CONSOLIDATE_OLDER_THAN);
+        executor = new ScheduledThreadPoolExecutor(1);
+        executor.scheduleAtFixedRate(this::doHouseKeeping, 60, 60, TimeUnit.SECONDS);
+
+        notifyStarted();
     }
 
     @Override
+    protected void doStop() {
+        
+    }
+    /**
+     * 
+     * @return the start of the timewindow for which parameter values can be obtained from this object
+     * 
+     */
+    public long getTimeWindowStart() {
+        return timeWindowStart;
+    }
+
+
+
+    @Override
     public void updateItems(int subscriptionId, List<ParameterValue> items) {
+        executor.execute(() -> {updateItems(subscriptionId, items);});
+    }
+
+    void doUpdateItems(int subscriptionId, List<ParameterValue> items) {
         writeLock.lock();
-        long t0 = getTimeWindowStart();
         try {
             Map<Long, SortedParameterList> m = new HashMap<>();
             for(ParameterValue pv: items) {
                 long t = pv.getAcquisitionTime();
-                if(t<t0) continue;
+                if(t<timeWindowStart) continue;
 
                 SortedParameterList l = m.get(t);
                 if(l==null) {
@@ -83,23 +122,46 @@ public class RealtimeParameterFiller implements ParameterConsumer {
         }
     }
 
-    /**
-     * Get the start of the time window for which the parameters are stored.
-     * 
-     * It is ({@link TimeService#getMissionTime()} - {@value #TIME_WINDOW_LENGTH}) & {@value TimeSegment#SEGMENT_MASK}, rounded down to the segment start
-     *
-     * 
-     * Any parameter whose acquisition time is before this instant is ignored by the RealtimeParameterFiller.
-     * 
-     * @return
-     */
-    private void updateTimeWindowStart() {
+
+    void doHouseKeeping() {
         long now = timeService.getMissionTime();
-        this.timeWindowStart = (now-TIME_WINDOW_LENGTH) & TimeSegment.SEGMENT_MASK;
+        long consolidateOlderThan = TimeSegment.getSegmentStart(now - CONSOLIDATE_OLDER_THAN);
+       
+        //note that we do not need a lock here because we do not touch the pgSegments structure and 
+        // because doUpdateItems is called on the same thread with us, we know it's not doing anything
+        NavigableMap<Long, Map<Integer, PGSegment>> m = pgSegments.headMap(consolidateOlderThan, true);
+        if(m.isEmpty()) return;
+        
+        List<PGSegment> listToConsolidate = new ArrayList<>();
+        
+        for(Map<Integer, PGSegment> m1: m.values()) {
+            listToConsolidate.addAll(m1.values());
+        }
+
+        for(PGSegment pgs: listToConsolidate) {
+            consolidate(pgs);
+        }
+        
+        writeLock.lock();
+        try {
+            for(Long segmentId: m.keySet()) {
+                pgSegments.remove(segmentId);
+            }
+            timeWindowStart = consolidateOlderThan;
+        } finally {
+            writeLock.unlock();
+        }
     }
-    
-    public long getTimeWindowStart() {
-        return timeWindowStart;
+
+
+
+    /**
+     * writes data into the archive
+     * @param pgs
+     */
+    private void consolidate(PGSegment pgs) {
+        // TODO Auto-generated method stub
+
     }
 
     private void processUpdate(long t, SortedParameterList pvList) {
@@ -131,14 +193,12 @@ public class RealtimeParameterFiller implements ParameterConsumer {
             if(pvr.stop!=TimeEncoding.INVALID_INSTANT && pvr.stop < timeWindowStart) {
                 return ; //no data in this interval
             }
-            
             doProcessRequest(pvr);
-            
         } finally {
             readLock.unlock();
         }
     }
-    
+
 
     private void doProcessRequest(ParameterValueRequest pvr) {
         Set<Long> segments;
@@ -148,15 +208,15 @@ public class RealtimeParameterFiller implements ParameterConsumer {
             segments = pgSegments.descendingKeySet();
         }
         for(long segmentId: segments) {
-           if(TimeSegment.overlap(segmentId, pvr.start, pvr.stop)) {
-               Map<Integer, PGSegment> m = pgSegments.get(segmentId);
-               PGSegment pgs = m.get(pvr.parameterGroupId);
-               if(pgs==null) continue;
-               
-               pgs.retrieveValues(pvr);
-               
-               
-           }
+            if(TimeSegment.overlap(segmentId, pvr.start, pvr.stop)) {
+                Map<Integer, PGSegment> m = pgSegments.get(segmentId);
+                PGSegment pgs = m.get(pvr.parameterGroupId);
+                if(pgs==null) continue;
+
+                pgs.retrieveValues(pvr);
+
+
+            }
         }
     }
 
@@ -173,4 +233,6 @@ public class RealtimeParameterFiller implements ParameterConsumer {
         }
 
     }
+
+
 }

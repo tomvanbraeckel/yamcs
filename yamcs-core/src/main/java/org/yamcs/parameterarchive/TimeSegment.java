@@ -157,11 +157,32 @@ public class TimeSegment {
         return t0;
     }
     
-    
-    public static long getSegmentId(long instant) {
-        return instant >> NUMBITS_MASK;
+    /**
+     * returns the start of the segment where instant fits
+     * @param instant
+     * @return
+     */
+    public static long getSegmentStart(long instant) {
+        return instant & SEGMENT_MASK;
     }
-
+    
+    /**
+     * returns the ID of the segment where the instant fits - this is the same with segment start
+     * @param instant
+     * @return
+     */
+    public static long getSegmentId(long instant) {
+        return instant & SEGMENT_MASK;
+    }
+    /**
+     * returns the end of the segment where the instant fits
+     * @param segmentId
+     * @return
+     */
+    public static long getSegmentEnd(long segmentId) {
+        return segmentId  | TIMESTAMP_MASK;
+    }
+    
     /**
      * returns true if the segment overlaps the [start,stop) interval
      * @param segmentId
@@ -177,9 +198,7 @@ public class TimeSegment {
         
     }
 
-    private static long getSegmentEnd(long segmentId) {
-        return segmentId  | TIMESTAMP_MASK;
-    }
+   
 
     public int search(long t) {
         return tsarray.search((int)(t&TIMESTAMP_MASK));

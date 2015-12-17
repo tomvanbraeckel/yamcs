@@ -21,6 +21,7 @@ import org.yamcs.yarch.YarchDatabase;
 public class RealtimeParameterFillerTest {
     String instance = "RealtimeParameterFillerTest";
     static Parameter p1, p2,p3,p4,p5;
+    static MockupTimeService timeService;
     
     @BeforeClass
     public static void beforeClass() {
@@ -35,7 +36,9 @@ public class RealtimeParameterFillerTest {
         p4.setQualifiedName("/test/p4");
         p5.setQualifiedName("/test/p5");
         TimeEncoding.setUp();
-        YamcsServer.setMockupTimeService(new MockupTimeService());
+        
+        timeService = new MockupTimeService();
+        YamcsServer.setMockupTimeService(timeService);
     }
     
     @Test
@@ -44,8 +47,10 @@ public class RealtimeParameterFillerTest {
         FileUtils.deleteRecursively(dbroot+"/"+instance);
         
         ParameterArchive parchive = new ParameterArchive(instance);
+        timeService.missionTime = 0;
         
         RealtimeParameterFiller filler = new RealtimeParameterFiller(parchive);
+        filler.startAsync().awaitRunning();
         
         ParameterValue pv1_0 = getParameterValue(p1, 0, "blala0");
         ParameterValue pv2_0 = getParameterValue(p2, 0, 10);
@@ -64,7 +69,7 @@ public class RealtimeParameterFillerTest {
         assertEquals(0, c0.times.size());
         
         
-        filler.updateItems(0, pvList);
+        filler.doUpdateItems(0, pvList);
         MyValueConsummer c1 = new MyValueConsummer();
         
         ParameterValueRequest pvr1 = new ParameterValueRequest(0, 1000, pg12id, p1id, true, c1);
@@ -80,7 +85,7 @@ public class RealtimeParameterFillerTest {
         
         ParameterValue pv1_1 = getParameterValue(p1, 100, "blala1");
         ParameterValue pv2_1 =  getParameterValue(p2, 200, 12);
-        filler.updateItems(0, Arrays.asList(pv2_1, pv1_1));
+        filler.doUpdateItems(0, Arrays.asList(pv2_1, pv1_1));
         
         MyValueConsummer c3 = new MyValueConsummer();
         int pg1id = parchive.getParameterGroupIdMap().get(new int[]{p1id});
@@ -103,13 +108,59 @@ public class RealtimeParameterFillerTest {
         
         ParameterValue pv1_2 = getParameterValue(p1, 100, "blala2");
         ParameterValue pv2_2 =  getParameterValue(p2, 100, 14);
-        filler.updateItems(0, Arrays.asList(pv2_2, pv1_2));
+        filler.doUpdateItems(0, Arrays.asList(pv2_2, pv1_2));
         
         MyValueConsummer c6 = new MyValueConsummer();
-        ParameterValueRequest pvr6 = new ParameterValueRequest(0, 1000, pg2id, p2id, true, c6);
+        ParameterValueRequest pvr6 = new ParameterValueRequest(0, 1000, pg12id, p2id, true, c6);
         filler.retrieveValues(pvr6);        
-        checkEquals(c6, pv2_1, pv2_2);
+        checkEquals(c6, pv2_0, pv2_2);
         
+        
+        MyValueConsummer c7 = new MyValueConsummer();
+        ParameterValueRequest pvr7 = new ParameterValueRequest(0, 1000, pg12id, p2id, false, c7);
+        filler.retrieveValues(pvr7);        
+        checkEquals(c7, pv2_2, pv2_0);
+        
+        
+        MyValueConsummer c8 = new MyValueConsummer();
+        ParameterValueRequest pvr8 = new ParameterValueRequest(0, 100, pg12id, p2id, true, c8);
+        filler.retrieveValues(pvr8);        
+        checkEquals(c8, pv2_0);
+        
+        MyValueConsummer c9 = new MyValueConsummer();
+        ParameterValueRequest pvr9 = new ParameterValueRequest(0, 100, pg12id, p2id, false, c9);
+        filler.retrieveValues(pvr9);        
+        checkEquals(c9, pv2_0);
+        
+        
+        MyValueConsummer c10 = new MyValueConsummer();
+        ParameterValueRequest pvr10 = new ParameterValueRequest(1, 100, pg12id, p2id, true, c10);
+        filler.retrieveValues(pvr10);        
+        assertEquals(0, c10.times.size());
+        
+        MyValueConsummer c11 = new MyValueConsummer();
+        ParameterValueRequest pvr11 = new ParameterValueRequest(1, 100, pg12id, p2id, false, c11);
+        filler.retrieveValues(pvr11);
+        assertEquals(0, c11.times.size());
+        
+        
+        MyValueConsummer c12 = new MyValueConsummer();
+        ParameterValueRequest pvr12 = new ParameterValueRequest(1, 101, pg12id, p2id, true, c12);
+        filler.retrieveValues(pvr12);        
+        checkEquals(c12, pv2_2);
+        
+        MyValueConsummer c13 = new MyValueConsummer();
+        ParameterValueRequest pvr13 = new ParameterValueRequest(1, 101, pg12id, p2id, false, c13);
+        filler.retrieveValues(pvr13);        
+        checkEquals(c13, pv2_2);
+        
+        timeService.missionTime = RealtimeParameterFiller.CONSOLIDATE_OLDER_THAN;
+        filler.doHouseKeeping();
+        
+        MyValueConsummer c14 = new MyValueConsummer();
+        ParameterValueRequest pvr14 = new ParameterValueRequest(1, 101, pg12id, p2id, false, c14);
+        filler.retrieveValues(pvr14);        
+        assertEquals(0, c14.times.size());
     }
     
     void checkEquals(MyValueConsummer c, ParameterValue...pvs) {
@@ -149,10 +200,10 @@ public class RealtimeParameterFillerTest {
     }
     
     private static class MockupTimeService implements TimeService {
+        long missionTime=0;
         @Override
         public long getMissionTime() {
-            return 0;
+            return missionTime;
         }
-        
     }
 }
