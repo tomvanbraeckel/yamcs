@@ -13,7 +13,7 @@ public class GenericValueSegmentTest {
 	@Test
 	public void test1() throws Exception {
 		Value v1 = ValueUtility.getSint32Value(3);
-		Value v2 = ValueUtility.getStringValue("asdfasdf");
+		Value v2 = ValueUtility.getSint32Value(30);
 		Value v3 = ValueUtility.getUint32Value(3);
 		
 		GenericValueSegment gvs = new GenericValueSegment(1);
