@@ -65,7 +65,6 @@ public class ParameterArchive {
         rdb = RocksDB.open(options, dbpath, cfdList, cfhList);
         p2pid_cfh = cfhList.get(0);
         pgid2pg_cfh = cfhList.get(1);
-        
     }
 
     private void openExistingDb(String dbpath) throws RocksDBException {
@@ -160,6 +159,7 @@ public class ParameterArchive {
         }
         ColumnFamilyHandle timeCfh;
         ColumnFamilyHandle dataCfh;
+        
     }
     /**
      * returns true if a starts with prefix

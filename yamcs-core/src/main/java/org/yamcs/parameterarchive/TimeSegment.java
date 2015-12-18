@@ -109,12 +109,12 @@ public class TimeSegment {
     public byte[] encode() {
         if(tsarray.size()==0) throw new IllegalStateException(" the time segment has no data");
         byte[] buf = new byte[4*(tsarray.size())+3];
-        int pos = VarIntUtil.encode(buf, 0, tsarray.size());
+        int pos = VarIntUtil.writeVarint32(buf, 0, tsarray.size());
         int x = tsarray.get(0);
-        pos = VarIntUtil.encode(buf, pos, x);
+        pos = VarIntUtil.writeVarint32(buf, pos, x);
         for(int i=1; i<tsarray.size(); i++) {
             int y = tsarray.get(i);
-            pos = VarIntUtil.encode(buf, pos, (y-x));
+            pos = VarIntUtil.writeVarint32(buf, pos, (y-x));
             x = y;
         }
         if(pos < buf.length) {

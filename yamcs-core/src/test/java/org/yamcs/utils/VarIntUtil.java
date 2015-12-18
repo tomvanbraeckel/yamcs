@@ -1,5 +1,8 @@
 package org.yamcs.utils;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+
 public class VarIntUtil {
     /**
      * Encodes x as varint in the buffer at position pos and returns the new position
@@ -8,7 +11,7 @@ public class VarIntUtil {
      * @param x
      * @return
      */
-    static public int encode(byte[] buf, int pos, int x) {
+    static public int writeVarint32(byte[] buf, int pos, int x) {
         while ((x & ~0x7F) != 0) {
             buf[pos++] = ((byte)((x & 0x7F) | 0x80));
             x >>>= 7;
@@ -18,9 +21,36 @@ public class VarIntUtil {
         return pos;
     }
     
+    public static void writeVarint32(ByteBuffer bb, int x) {
+        while ((x & ~0x7F) != 0) {
+            bb.put((byte)((x & 0x7F) | 0x80));
+            x >>>= 7;
+        }
+        bb.put((byte)(x & 0x7F));
+    }
+    
+    public static int readVarInt32(ByteBuffer bb) {
+        byte b = bb.get();
+        int v = b &0x7F;
+        for (int shift = 7; (b & 0x80) != 0; shift += 7) {
+            b = bb.get();
+            v |= (b & 0x7F) << shift;
+        }
+        return v;
+    }
+    
+    
+    public static void writeSignedVarint32(ByteBuffer bb, int x) {
+        writeVarint32(bb, encodeZigZag(x));
+    }
+    
+    public static int readSignedVarInt32(ByteBuffer bb) {
+        return decodeZigZag(readVarInt32(bb));
+    }
+    
     //same as above but better for negative numbers
     static public int encodeSigned(byte[] buf, int pos, int x) {
-    	return encode(buf, pos, encodeZigZag(x));       
+    	return writeVarint32(buf, pos, encodeZigZag(x));       
     }
     
     /**
@@ -82,4 +112,22 @@ public class VarIntUtil {
     public static int encodeZigZag(int x) {
         return (x << 1) ^ (x >> 31);
     }
+
+    public static void writeSizeDelimitedString(ByteBuffer bb, String s) {
+        byte[]b = s.getBytes(StandardCharsets.UTF_8);
+        writeVarint32(bb,  b.length);
+        bb.put(b);
+    }
+
+    public static String readSizeDelimitedString(ByteBuffer bb) {
+        int l = readVarInt32(bb);
+        byte[] b = new byte[l];
+        bb.get(b);
+        return new String(b, StandardCharsets.UTF_8);
+    }
+
+  
+
+  
+  
 }

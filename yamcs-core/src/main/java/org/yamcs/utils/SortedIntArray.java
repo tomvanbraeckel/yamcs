@@ -202,10 +202,10 @@ public class SortedIntArray {
         
         if(length==0) return buf;
         
-        int pos = VarIntUtil.encode(buf, 0, a[0]);
+        int pos = VarIntUtil.writeVarint32(buf, 0, a[0]);
         
         for(int i=1; i<length; i++) {
-            pos = VarIntUtil.encode(buf, pos, (a[i]-a[i-1]));
+            pos = VarIntUtil.writeVarint32(buf, pos, (a[i]-a[i-1]));
         }
         if(pos==buf.length) {
             return buf;

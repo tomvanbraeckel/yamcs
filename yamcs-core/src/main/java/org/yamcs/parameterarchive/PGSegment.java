@@ -76,13 +76,12 @@ public class PGSegment {
         if(pos<0) pos = -pos-1;
         if(pos>=timeSegment.size()) return;
         
-        ListIterator<Value> it = vs.getIterator(pos); 
                 
         while(pos<timeSegment.size()) {
             long t = timeSegment.get(pos++);
             if(t>=pvr.stop) break;
             
-            Value v = it.next();
+            Value v = vs.get(pos);
             pvr.consumer.addValue(t, v);
         }
     }
@@ -93,12 +92,11 @@ public class PGSegment {
         if(pos<0) pos = -pos-1;
         
         if(pos<0) return;
-        ListIterator<Value> it = vs.getIterator(pos); 
                 
         while(pos>0) {
             long t = timeSegment.get(--pos);
             if(t<pvr.start) break;
-            Value v = it.previous();
+            Value v = vs.get(pos);
             pvr.consumer.addValue(t, v);
         }
         
