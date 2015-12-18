@@ -44,7 +44,7 @@ public class DoubleValueSegment extends ValueSegment {
 
     @Override
     public int getMaxSerializedSize() {
-        return 4+4*doubles.length;
+        return 4+8*doubles.length;
     }
     
     static DoubleValueSegment consolidate(List<Value> values) {
