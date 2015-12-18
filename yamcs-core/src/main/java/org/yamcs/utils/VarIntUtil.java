@@ -21,7 +21,15 @@ public class VarIntUtil {
         return pos;
     }
     
-    public static void writeVarint32(ByteBuffer bb, int x) {
+    public static void writeVarInt32(ByteBuffer bb, int x) {
+        while ((x & ~0x7F) != 0) {
+            bb.put((byte)((x & 0x7F) | 0x80));
+            x >>>= 7;
+        }
+        bb.put((byte)(x & 0x7F));
+    }
+    
+    public static void writeVarint64(ByteBuffer bb, long x) {
         while ((x & ~0x7F) != 0) {
             bb.put((byte)((x & 0x7F) | 0x80));
             x >>>= 7;
@@ -41,7 +49,7 @@ public class VarIntUtil {
     
     
     public static void writeSignedVarint32(ByteBuffer bb, int x) {
-        writeVarint32(bb, encodeZigZag(x));
+        writeVarInt32(bb, encodeZigZag(x));
     }
     
     public static int readSignedVarInt32(ByteBuffer bb) {
@@ -115,7 +123,7 @@ public class VarIntUtil {
 
     public static void writeSizeDelimitedString(ByteBuffer bb, String s) {
         byte[]b = s.getBytes(StandardCharsets.UTF_8);
-        writeVarint32(bb,  b.length);
+        writeVarInt32(bb,  b.length);
         bb.put(b);
     }
 
@@ -125,6 +133,8 @@ public class VarIntUtil {
         bb.get(b);
         return new String(b, StandardCharsets.UTF_8);
     }
+
+   
 
   
 

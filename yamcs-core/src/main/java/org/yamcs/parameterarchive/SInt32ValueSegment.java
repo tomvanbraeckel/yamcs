@@ -20,7 +20,7 @@ public class SInt32ValueSegment extends ValueSegment {
     @Override
     public void writeTo(ByteBuffer bb) throws IOException {
         int n = values.length;
-        VarIntUtil.writeVarint32(bb, n);
+        VarIntUtil.writeVarInt32(bb, n);
         for(int i=0; i<n; i++) {
             VarIntUtil.writeSignedVarint32(bb, values[i]);
         }

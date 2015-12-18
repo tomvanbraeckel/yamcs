@@ -20,7 +20,7 @@ public class BooleanValueSegment extends ValueSegment {
     @Override
     public void writeTo(ByteBuffer bb) throws IOException {
         long[]la = bitSet.toLongArray();
-        VarIntUtil.writeVarint32(bb, la.length);
+        VarIntUtil.writeVarInt32(bb, la.length);
         
         for(long l:la) {
             bb.putLong(l);

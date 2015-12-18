@@ -40,7 +40,7 @@ public class StringValueSegment extends ValueSegment {
 
     @Override
     public void writeTo(ByteBuffer bb) throws IOException {
-        VarIntUtil.writeVarint32(bb, values.size());
+        VarIntUtil.writeVarInt32(bb, values.size());
         for(String v:values) {
             VarIntUtil.writeSizeDelimitedString(bb, v);
         }

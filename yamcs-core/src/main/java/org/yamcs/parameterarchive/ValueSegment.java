@@ -18,6 +18,8 @@ public abstract class ValueSegment {
     public static final int FORMAT_ID_StringValueSegment = 4;
     public static final int FORMAT_ID_EnumValueSegment = 5;
     public static final int FORMAT_ID_BooleanValueSegment = 6;
+    public static final int FORMAT_ID_FloatValueSegment = 7;
+    public static final int FORMAT_ID_DoubleValueSegment = 8;
     
     
     protected int formatId;

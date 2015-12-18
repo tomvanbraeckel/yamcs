@@ -50,15 +50,15 @@ public class EnumValueSegment extends StringValueSegment {
     @Override
     public void writeTo(ByteBuffer bb) throws IOException {
         int n = unique.size();
-        VarIntUtil.writeVarint32(bb, n);
+        VarIntUtil.writeVarInt32(bb, n);
         for(int i=0;i<n;i++) {
             VarIntUtil.writeSizeDelimitedString(bb, unique.get(i));
         }
         n = values.size();
         
-        VarIntUtil.writeVarint32(bb, n);
+        VarIntUtil.writeVarInt32(bb, n);
         for(int i=0;i<n;i++) {
-            VarIntUtil.writeVarint32(bb, valuemap.get(values.get(i)));
+            VarIntUtil.writeVarInt32(bb, valuemap.get(values.get(i)));
         }
     }
     

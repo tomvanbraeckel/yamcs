@@ -35,10 +35,10 @@ public class GenericValueSegment extends ValueSegment {
      */
     @Override
     public void writeTo(ByteBuffer bb) throws IOException {
-        VarIntUtil.writeVarint32(bb, values.size());
+        VarIntUtil.writeVarInt32(bb, values.size());
         for(Value v: values) {
             byte[] b = v.toByteArray();
-            VarIntUtil.writeVarint32(bb, b.length);
+            VarIntUtil.writeVarInt32(bb, b.length);
             bb.put(b);
         }
     }
@@ -73,10 +73,11 @@ public class GenericValueSegment extends ValueSegment {
             return StringValueSegment.consolidate(values);
         case BOOLEAN:
             return BooleanValueSegment.consolidate(values);
-        case BINARY:
-            
         case DOUBLE:
+            return DoubleValueSegment.consolidate(values);
         case FLOAT:
+            return FloatValueSegment.consolidate(values);
+        case BINARY:
         case TIMESTAMP:
         case SINT64:
         case UINT64:
