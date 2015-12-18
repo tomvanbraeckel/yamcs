@@ -29,7 +29,7 @@ public class VarIntUtil {
         bb.put((byte)(x & 0x7F));
     }
     
-    public static void writeVarint64(ByteBuffer bb, long x) {
+    public static void writeVarInt64(ByteBuffer bb, long x) {
         while ((x & ~0x7F) != 0) {
             bb.put((byte)((x & 0x7F) | 0x80));
             x >>>= 7;
@@ -47,6 +47,16 @@ public class VarIntUtil {
         return v;
     }
     
+    public static long readVarInt64(ByteBuffer bb) {
+        byte b = bb.get();
+        long v = b &0x7F;
+        for (int shift = 7; (b & 0x80) != 0; shift += 7) {
+            b = bb.get();
+            v |= (b & 0x7F) << shift;
+        }
+        return v;
+    }
+
     
     public static void writeSignedVarint32(ByteBuffer bb, int x) {
         writeVarInt32(bb, encodeZigZag(x));
@@ -134,6 +144,7 @@ public class VarIntUtil {
         return new String(b, StandardCharsets.UTF_8);
     }
 
+   
    
 
   

@@ -36,7 +36,7 @@ public class FloatCompress {
          //   double g = f + 10*rand.nextFloat();
             double g = f+10*rand.nextDouble();
             long xor = Double.doubleToLongBits(f)^Double.doubleToLongBits(g);
-            VarIntUtil.writeVarint64(bb, xor);
+            VarIntUtil.writeVarInt64(bb, xor);
         }
         
         System.out.println("bb.size: "+bb.position()+" percentage: "+100*bb.position()/bb.capacity() +"%");

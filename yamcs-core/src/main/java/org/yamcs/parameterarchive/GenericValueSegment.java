@@ -77,10 +77,12 @@ public class GenericValueSegment extends ValueSegment {
             return DoubleValueSegment.consolidate(values);
         case FLOAT:
             return FloatValueSegment.consolidate(values);
+        case UINT64:
+            return UInt64ValueSegment.consolidate(values);
         case BINARY:
         case TIMESTAMP:
         case SINT64:
-        case UINT64:
+        
         default:
             return this;
         }

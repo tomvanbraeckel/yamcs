@@ -20,6 +20,7 @@ public abstract class ValueSegment {
     public static final int FORMAT_ID_BooleanValueSegment = 6;
     public static final int FORMAT_ID_FloatValueSegment = 7;
     public static final int FORMAT_ID_DoubleValueSegment = 8;
+    public static final int FORMAT_ID_UInt64ValueSegment = 9;
     
     
     protected int formatId;

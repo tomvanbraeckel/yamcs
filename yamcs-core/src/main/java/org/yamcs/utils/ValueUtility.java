@@ -41,7 +41,10 @@ public class ValueUtility {
     public static Value getDoubleValue(double d) {
         return Value.newBuilder().setType(Value.Type.DOUBLE).setDoubleValue(d).build();
     }
-
+    public static Value getUint64Value(long l) {
+        return Value.newBuilder().setType(Value.Type.UINT64).setUint64Value(l).build(); 
+    }
+    
     public static Value getColumnValue(ColumnDefinition cd, Object v) {
         switch (cd.getType().val) { //TODO all types
         case INT:
@@ -173,6 +176,8 @@ public class ValueUtility {
             throw new IllegalStateException("Unexpected type " + a.getType());
         }
     }
+
+   
 
   
 
