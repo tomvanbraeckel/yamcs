@@ -1,6 +1,5 @@
 package org.yamcs.parameterarchive;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,7 +47,7 @@ public class EnumValueSegment extends StringValueSegment {
 
 
     @Override
-    public void writeTo(ByteBuffer bb) throws IOException {
+    public void writeTo(ByteBuffer bb) {
         int n = unique.size();
         VarIntUtil.writeVarInt32(bb, n);
         for(int i=0;i<n;i++) {
@@ -64,7 +63,7 @@ public class EnumValueSegment extends StringValueSegment {
     
     
     @Override
-    public void parseFrom(ByteBuffer bb) throws IOException {
+    public void parseFrom(ByteBuffer bb) throws DecodingException  {
         int n = VarIntUtil.readVarInt32(bb);
         List<String> unique = new ArrayList<String>(n);
         for(int i=0;i<n;i++) {

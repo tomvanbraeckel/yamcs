@@ -1,6 +1,5 @@
 package org.yamcs.parameterarchive;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -18,7 +17,7 @@ public class DoubleValueSegment extends ValueSegment {
    
             
     @Override
-    public void writeTo(ByteBuffer bb) throws IOException {
+    public void writeTo(ByteBuffer bb) {
         int n = doubles.length;
         VarIntUtil.writeVarInt32(bb, n);
         for(int i=0;i<n;i++) {
@@ -27,7 +26,7 @@ public class DoubleValueSegment extends ValueSegment {
     }
 
     @Override
-    public void parseFrom(ByteBuffer bb) throws IOException {
+    public void parseFrom(ByteBuffer bb) {
         int n = VarIntUtil.readVarInt32(bb);
         doubles = new double[n];
         

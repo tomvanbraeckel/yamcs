@@ -1,6 +1,5 @@
 package org.yamcs.parameterarchive;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -8,6 +7,8 @@ import java.util.List;
 import org.yamcs.protobuf.Yamcs.Value;
 import org.yamcs.protobuf.Yamcs.Value.Type;
 import org.yamcs.utils.VarIntUtil;
+
+import com.google.protobuf.InvalidProtocolBufferException;
 
 /**
  * GenericValueSegment keeps an ArrayList of Values. 
@@ -34,7 +35,7 @@ public class GenericValueSegment extends ValueSegment {
      * Encode using regular protobuf delimited field writes
      */
     @Override
-    public void writeTo(ByteBuffer bb) throws IOException {
+    public void writeTo(ByteBuffer bb) {
         VarIntUtil.writeVarInt32(bb, values.size());
         for(Value v: values) {
             byte[] b = v.toByteArray();
@@ -46,13 +47,17 @@ public class GenericValueSegment extends ValueSegment {
      * Decode using regular protobuf delimited field writes
      */
     @Override
-    public void parseFrom(ByteBuffer bb) throws IOException {
+    public void parseFrom(ByteBuffer bb) throws DecodingException {
         int num = VarIntUtil.readVarInt32(bb);
         for(int i=0;i<num; i++) {
             int size = VarIntUtil.readVarInt32(bb);
             byte[] b = new byte[size];
             bb.get(b);
-            values.add(Value.parseFrom(b));
+            try {
+                values.add(Value.parseFrom(b));
+            } catch (InvalidProtocolBufferException e) {
+                throw new DecodingException("Failed to decode Value: ",e);
+            }
         }
     }
 

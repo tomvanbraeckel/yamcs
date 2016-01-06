@@ -23,9 +23,10 @@ import org.yamcs.protobuf.Yamcs.Value;
 public class ParameterIdMap {
     final RocksDB db;
     final ColumnFamilyHandle p2pid_cfh;
-
+    final static int TIMESTAMP_PARA_ID=0;
+    
     Map<String, Map<Value.Type, Integer>> p2pidCache = new HashMap<>();
-    int highestParaId=0;
+    int highestParaId = TIMESTAMP_PARA_ID;
 
     ParameterIdMap(RocksDB db, ColumnFamilyHandle p2pid_cfh) {
         this.db = db;

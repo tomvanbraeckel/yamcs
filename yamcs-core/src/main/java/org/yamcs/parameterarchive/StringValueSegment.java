@@ -1,6 +1,5 @@
 package org.yamcs.parameterarchive;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +14,7 @@ public class StringValueSegment extends ValueSegment {
     protected List<String> values;
     
     
-    protected StringValueSegment(List<String> values, int formatId) {
+    protected StringValueSegment(List<String> values, byte formatId) {
         super(formatId);
         this.values = values;
     }
@@ -28,7 +27,7 @@ public class StringValueSegment extends ValueSegment {
 
 
 
-    protected StringValueSegment(int formatId) {
+    protected StringValueSegment(byte formatId) {
        super(formatId);
     }
 
@@ -39,7 +38,7 @@ public class StringValueSegment extends ValueSegment {
 
 
     @Override
-    public void writeTo(ByteBuffer bb) throws IOException {
+    public void writeTo(ByteBuffer bb) {
         VarIntUtil.writeVarInt32(bb, values.size());
         for(String v:values) {
             VarIntUtil.writeSizeDelimitedString(bb, v);
@@ -47,7 +46,7 @@ public class StringValueSegment extends ValueSegment {
     }
 
     @Override
-    public void parseFrom(ByteBuffer bb) throws IOException {
+    public void parseFrom(ByteBuffer bb) throws DecodingException {
         int n = VarIntUtil.readVarInt32(bb);
         values = new ArrayList<String>(n);
         for(int i=0; i<n; i++) {

@@ -1,6 +1,5 @@
 package org.yamcs.parameterarchive;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.BitSet;
 import java.util.List;
@@ -18,7 +17,7 @@ public class BooleanValueSegment extends ValueSegment {
     }
 
     @Override
-    public void writeTo(ByteBuffer bb) throws IOException {
+    public void writeTo(ByteBuffer bb) {
         long[]la = bitSet.toLongArray();
         VarIntUtil.writeVarInt32(bb, la.length);
         
@@ -28,7 +27,7 @@ public class BooleanValueSegment extends ValueSegment {
     }
 
     @Override
-    public void parseFrom(ByteBuffer bb) throws IOException {
+    public void parseFrom(ByteBuffer bb) {
         int n = VarIntUtil.readVarInt32(bb);
         long[]la = new long[n];
         for(int i=0; i<n; i++) {

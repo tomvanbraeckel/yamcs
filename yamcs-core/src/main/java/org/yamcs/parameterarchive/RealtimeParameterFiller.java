@@ -69,7 +69,7 @@ public class RealtimeParameterFiller extends AbstractService implements Paramete
 
     @Override
     protected void doStart() {
-        timeWindowStart = TimeSegment.getSegmentStart(timeService.getMissionTime() - CONSOLIDATE_OLDER_THAN);
+        timeWindowStart = SortedTimeSegment.getSegmentStart(timeService.getMissionTime() - CONSOLIDATE_OLDER_THAN);
         executor = new ScheduledThreadPoolExecutor(1);
         executor.scheduleAtFixedRate(this::doHouseKeeping, 60, 60, TimeUnit.SECONDS);
 
@@ -78,7 +78,8 @@ public class RealtimeParameterFiller extends AbstractService implements Paramete
 
     @Override
     protected void doStop() {
-        
+        executor.shutdown();
+        notifyStopped();
     }
     /**
      * 
@@ -125,7 +126,7 @@ public class RealtimeParameterFiller extends AbstractService implements Paramete
 
     void doHouseKeeping() {
         long now = timeService.getMissionTime();
-        long consolidateOlderThan = TimeSegment.getSegmentStart(now - CONSOLIDATE_OLDER_THAN);
+        long consolidateOlderThan = SortedTimeSegment.getSegmentStart(now - CONSOLIDATE_OLDER_THAN);
        
         //note that we do not need a lock here because we do not touch the pgSegments structure and 
         // because doUpdateItems is called on the same thread with us, we know it's not doing anything
@@ -138,9 +139,7 @@ public class RealtimeParameterFiller extends AbstractService implements Paramete
             listToConsolidate.addAll(m1.values());
         }
 
-        for(PGSegment pgs: listToConsolidate) {
-            consolidate(pgs);
-        }
+        consolidateAndWriteToArchive(listToConsolidate);
         
         writeLock.lock();
         try {
@@ -159,15 +158,21 @@ public class RealtimeParameterFiller extends AbstractService implements Paramete
      * writes data into the archive
      * @param pgs
      */
-    private void consolidate(PGSegment pgs) {
-        // TODO Auto-generated method stub
-
+    private void consolidateAndWriteToArchive(List<PGSegment> pgList) {
+        for(PGSegment pgs: pgList) {
+            pgs.consolidate();
+        }
+        try {
+            parameterArchive.writeToArchive(pgList);
+        } catch (RocksDBException e) {
+           log.error("failed to write data to the archive", e);
+        }
     }
 
     private void processUpdate(long t, SortedParameterList pvList) {
         try {
             int parameterGroupId = parameterGroupIdMap.get(pvList.parameterIdArray);
-            long segmentId = TimeSegment.getSegmentId(t);
+            long segmentId = SortedTimeSegment.getSegmentId(t);
             Map<Integer, PGSegment> m = pgSegments.get(segmentId);
             if(m==null) {
                 m = new HashMap<Integer, PGSegment>();
@@ -208,7 +213,7 @@ public class RealtimeParameterFiller extends AbstractService implements Paramete
             segments = pgSegments.descendingKeySet();
         }
         for(long segmentId: segments) {
-            if(TimeSegment.overlap(segmentId, pvr.start, pvr.stop)) {
+            if(SortedTimeSegment.overlap(segmentId, pvr.start, pvr.stop)) {
                 Map<Integer, PGSegment> m = pgSegments.get(segmentId);
                 PGSegment pgs = m.get(pvr.parameterGroupId);
                 if(pgs==null) continue;

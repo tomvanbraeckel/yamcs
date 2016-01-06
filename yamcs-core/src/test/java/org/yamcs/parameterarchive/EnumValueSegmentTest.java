@@ -2,7 +2,6 @@ package org.yamcs.parameterarchive;
 
 import static org.junit.Assert.*;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,7 +12,7 @@ import org.junit.Test;
 
 public class EnumValueSegmentTest {
     @Test
-    public void test1() throws IOException {
+    public void test1() throws DecodingException {
         EnumValueSegment evs = new EnumValueSegment(Arrays.asList("on", "on", "on", "off", "off", "on", "off"));
         int s = evs.getMaxSerializedSize();
         System.out.println("max size: "+s);
@@ -34,7 +33,7 @@ public class EnumValueSegmentTest {
     
     @Ignore
     @Test
-    public void test2() throws IOException {
+    public void test2() throws DecodingException {
         String on="on";
         String off="off";
         List<String> list= new ArrayList<String>();

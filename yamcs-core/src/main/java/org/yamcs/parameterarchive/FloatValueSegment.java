@@ -1,6 +1,5 @@
 package org.yamcs.parameterarchive;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -17,7 +16,7 @@ public class FloatValueSegment extends ValueSegment {
     float[] floats;
             
     @Override
-    public void writeTo(ByteBuffer bb) throws IOException {
+    public void writeTo(ByteBuffer bb) {
         int n = floats.length;
         VarIntUtil.writeVarInt32(bb, n);
         for(int i=0;i<n;i++) {
@@ -26,7 +25,7 @@ public class FloatValueSegment extends ValueSegment {
     }
 
     @Override
-    public void parseFrom(ByteBuffer bb) throws IOException {
+    public void parseFrom(ByteBuffer bb) {
         int n = VarIntUtil.readVarInt32(bb);
         floats = new float[n];
         

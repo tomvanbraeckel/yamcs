@@ -18,11 +18,25 @@ Usually some of those parameters will be some counters or other things that chan
  
 So what we do is to store once the timestamps in one record and make reference to that record from all the parameters sharing those timestamps.
 
+===============
+The parameter archive stores tuples of shape:
+(t, pv0, pv1, pv2,...)
+
+Where pv0, pv1.. are parameter values all having the timestamp t.
+
+
+ 
+
 
 == Database structure ==
-Data is segmented in segments of 2^12 seconds each. One data segment contains all the values of the parameter and one time segment contains all the corresponding timestamps.
+Data is time partitioned in partitions of 2^31 milliseconds duration (=~ 25 days). Each partition is stored in its own ColumnDataFamily in RocksDB (which means separate files)
 
-Each (parameter, type) combination is given an unique 4 bytes parameter_id. 
+Inside each partition, data is segmented in segments of 2^22 miliseconds (=~ 70 minutes) duration.
+One data segment contains all the values of the parameter and one time segment contains all the corresponding timestamps.
+
+Each (parameter, type) combination is given an unique 4 bytes parameter_id. The parameter_id=0 is reserved for the timestamp.
+
+ 
 ParameterGroup - represents a list of parameter_id which are received together (share the same timestamp).
 Each ParameterGroup is given a ParameterGroup_id
 
@@ -53,17 +67,15 @@ ParameterIdList: SortedVarIntList
 
 Column Families
  for storing metadata we have 2 CFs:  
-   meta_p2pid:  contains the mapping between pararameter fully qualified name and parameter_id and type
+   meta_p2pid:  contains the mapping between parameter fully qualified name and parameter_id and type
    meta_pgid2pg: contains the mapping between ParameterGroup_id and parameter_id
  
  for storing parameter values and timestamps we have 2CFs per partition:
     data_<partition_id> contains parameter values
-      key: parameter_id, segment_time
-      value: ValueSegment
-  
-    time_<partitionon_id> contains timestamps:
-       key: ParameterGroup_id, segment_time
-       value: TimeSegment
+      key: parameter_id, ParameterGroup_id, segment_time
+      value: ValueSegment or TimeSegment (if parameter_id =0)
+ 
+   
 
 partition_id is basetimestamp in hexadecimal (without 0x in front)
 

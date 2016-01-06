@@ -2,7 +2,6 @@ package org.yamcs.parameterarchive;
 
 import static org.junit.Assert.*;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,7 +14,7 @@ import org.yamcs.utils.ValueUtility;
 
 public class StringValueSegmentTest {
     @Test
-    public void test1() throws IOException {
+    public void test1() throws DecodingException {
         StringValueSegment svs = new StringValueSegment(Arrays.asList("on", "on", "on", "off", "off", "on", "off"));
         int s = svs.getMaxSerializedSize();
         System.out.println("max size: "+s);
@@ -35,7 +34,7 @@ public class StringValueSegmentTest {
     
     @Ignore
     @Test
-    public void test2() throws IOException {
+    public void test2() throws DecodingException {
         String on="on";
         String off="off";
         List<String> list= new ArrayList<String>();
@@ -65,7 +64,7 @@ public class StringValueSegmentTest {
     }
     
     @Test
-    public void testStringVsEnum() throws IOException {
+    public void testStringVsEnum() throws DecodingException {
         List<Value> values= new ArrayList<Value>();
         for(int i=0;i<1000; i++) {
             values.add(ValueUtility.getStringValue("random "+i+" value"));
