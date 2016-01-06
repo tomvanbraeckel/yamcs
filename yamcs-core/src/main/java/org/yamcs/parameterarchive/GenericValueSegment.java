@@ -20,7 +20,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 public class GenericValueSegment extends ValueSegment {
     List<Value> values = new ArrayList<Value>();
 
-    public GenericValueSegment(int parameterId) {
+    public GenericValueSegment() {
         super(FORMAT_ID_GenericValueSegment);
     }
     

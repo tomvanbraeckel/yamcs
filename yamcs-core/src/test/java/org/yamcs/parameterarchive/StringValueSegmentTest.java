@@ -13,6 +13,26 @@ import org.yamcs.protobuf.Yamcs.Value;
 import org.yamcs.utils.ValueUtility;
 
 public class StringValueSegmentTest {
+    
+    @Test
+    public void test0() throws DecodingException {
+        StringValueSegment svs = new StringValueSegment(Arrays.asList("blala0", "blala200"));
+        int s = svs.getMaxSerializedSize();
+        System.out.println("max size: "+s);
+        ByteBuffer bb = ByteBuffer.allocate(s);
+        svs.writeTo(bb);
+        int length = bb.position();
+        System.out.println("encoded size: "+length);
+        
+        StringValueSegment evs1 = new StringValueSegment();
+        bb.rewind();
+        evs1.parseFrom(bb);
+        assertEquals(length, bb.position());
+        
+        assertEquals(svs.values, evs1.values);
+        
+    }
+    
     @Test
     public void test1() throws DecodingException {
         StringValueSegment svs = new StringValueSegment(Arrays.asList("on", "on", "on", "off", "off", "on", "off"));

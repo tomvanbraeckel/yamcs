@@ -1,13 +1,13 @@
 package org.yamcs.parameterarchive;
 
-public class ParameterValueRequest {
+public class SingleParameterValueRequest {
     long start, stop;
     int parameterGroupId;
     int parameterId;
     boolean ascending;
     ValueConsumer consumer;
     
-    public ParameterValueRequest(long start, long stop, int parameterGroupId,
+    public SingleParameterValueRequest(long start, long stop, int parameterGroupId,
             int parameterId, boolean ascending, ValueConsumer consumer) {
         super();
         this.start = start;

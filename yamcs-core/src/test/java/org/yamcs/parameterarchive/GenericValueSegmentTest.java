@@ -15,7 +15,7 @@ public class GenericValueSegmentTest {
         Value v2 = ValueUtility.getSint32Value(30);
         Value v3 = ValueUtility.getUint32Value(3);
 
-        GenericValueSegment gvs = new GenericValueSegment(1);
+        GenericValueSegment gvs = new GenericValueSegment();
         gvs.add(0, v1);
         gvs.add(1, v2);
         gvs.add(2, v3);
@@ -25,7 +25,7 @@ public class GenericValueSegmentTest {
         System.out.println("buf.length: "+bb.position());
         
         bb.rewind();
-        GenericValueSegment gvs1 = new GenericValueSegment(1);
+        GenericValueSegment gvs1 = new GenericValueSegment();
         gvs1.parseFrom(bb);
 
         assertEquals(3, gvs1.values.size());

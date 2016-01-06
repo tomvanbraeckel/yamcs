@@ -192,7 +192,7 @@ public class RealtimeParameterFiller extends AbstractService implements Paramete
 
     }
 
-    public void retrieveValues(ParameterValueRequest pvr) {
+    public void retrieveValues(SingleParameterValueRequest pvr) {
         readLock.lock();
         try {
             if(pvr.stop!=TimeEncoding.INVALID_INSTANT && pvr.stop < timeWindowStart) {
@@ -205,7 +205,7 @@ public class RealtimeParameterFiller extends AbstractService implements Paramete
     }
 
 
-    private void doProcessRequest(ParameterValueRequest pvr) {
+    private void doProcessRequest(SingleParameterValueRequest pvr) {
         Set<Long> segments;
         if(pvr.ascending) {
             segments = pgSegments.navigableKeySet();
@@ -219,8 +219,6 @@ public class RealtimeParameterFiller extends AbstractService implements Paramete
                 if(pgs==null) continue;
 
                 pgs.retrieveValues(pvr);
-
-
             }
         }
     }

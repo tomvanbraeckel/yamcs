@@ -155,8 +155,11 @@ public class SortedTimeSegment extends ValueSegment {
      * @param x
      * @return
      */
-    public int search(long t) {
-        return tsarray.search((int)(t&TIMESTAMP_MASK));
+    public int search(long instant) {
+        if((instant&SEGMENT_MASK) != segmentStart) {
+            throw new IllegalArgumentException("This timestamp does not fit into this segment");
+        }
+        return tsarray.search((int)(instant&TIMESTAMP_MASK));
     }
 
     public int size() {
@@ -221,5 +224,9 @@ public class SortedTimeSegment extends ValueSegment {
     @Override
     public Value get(int index) {        
         return ValueHelper.newTimestampValue(getTime(index));
+    }
+
+    public long getSegmentEnd() {
+        return getSegmentEnd(segmentStart);
     }
 }

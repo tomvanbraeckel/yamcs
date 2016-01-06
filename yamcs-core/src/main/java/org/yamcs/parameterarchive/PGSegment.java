@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.yamcs.ParameterValue;
-import org.yamcs.protobuf.Yamcs.Value;
 import org.yamcs.utils.SortedIntArray;
 
 /**
@@ -21,9 +20,9 @@ import org.yamcs.utils.SortedIntArray;
 public class PGSegment {
     final int parameterGroupId;
     final SortedIntArray parameterIds;
-    SortedTimeSegment timeSegment;
-    List<GenericValueSegment> valueSegments;
-    List<ValueSegment> consolidatedValueSegments;
+    private SortedTimeSegment timeSegment;
+    private List<GenericValueSegment> valueSegments;
+    private List<ValueSegment> consolidatedValueSegments;
     
     private boolean consolidated = false;
     
@@ -34,10 +33,8 @@ public class PGSegment {
         timeSegment = new SortedTimeSegment(segmentStart);
         valueSegments = new ArrayList<>(parameterIds.size());
         for(int i=0; i<parameterIds.size(); i++) {
-            int parameterId = parameterIds.get(i);
-            valueSegments.add(new GenericValueSegment(parameterId));
+            valueSegments.add(new GenericValueSegment());
         }
-        
     }
     
     /**
@@ -60,7 +57,7 @@ public class PGSegment {
         }
     }
 
-    public void retrieveValues(ParameterValueRequest pvr) {
+    public void retrieveValues(SingleParameterValueRequest pvr) {
         int pidx = parameterIds.search(pvr.parameterId);
         if(pidx<0) {
             throw new IllegalArgumentException("Received a parameter id "+pvr.parameterId+" that is not part of this parameter group");
@@ -68,47 +65,12 @@ public class PGSegment {
         ValueSegment vs = valueSegments.get(pidx);
         
         if(pvr.ascending) {
-            extractAscending(pvr, vs);
+            SgementIterator.extractAscending(pvr, timeSegment, vs);
         } else {
-            extractDescending(pvr, vs);
+            SgementIterator.extractDescending(pvr, timeSegment, vs);
         }
     }
-    
-   private void extractAscending(ParameterValueRequest pvr, ValueSegment vs) {
-        int pos = timeSegment.search(pvr.start);
-        if(pos<0) pos = -pos-1;
-        if(pos>=timeSegment.size()) return;
-        
-                
-        while(pos<timeSegment.size()) {
-            long t = timeSegment.getTime(pos);
-            if(t>=pvr.stop) break;
-            
-            Value v = vs.get(pos);
-            pvr.consumer.addValue(t, v);
-            pos++;
-        }
-    }
-   
-   
-    private void extractDescending(ParameterValueRequest pvr, ValueSegment vs) {
-        int pos = timeSegment.search(pvr.stop);
-        if(pos<0) {
-            pos = -pos-2;
-        }
-        
-        if(pos<0) return;
-                
-        while(pos>=0) {
-            long t = timeSegment.getTime(pos);
-            if(t<=pvr.start) break;
-            Value v = vs.get(pos);
-            pvr.consumer.addValue(t, v);
-            pos--;
-        }
-        
-    }
-    
+ 
     
     public void consolidate() {
         consolidated = true;
@@ -128,6 +90,10 @@ public class PGSegment {
 
     public int getParameterGroupId() {
         return parameterGroupId;
+    }
+    
+    public int getParameterId(int index) {
+        return parameterIds.get(index);
     }
 
     public List<ValueSegment> getConsolidatedValueSegments() {
