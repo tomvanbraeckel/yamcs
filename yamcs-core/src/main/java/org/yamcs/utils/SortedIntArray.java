@@ -7,7 +7,6 @@ import java.util.PrimitiveIterator;
  * sorted int array
  * 
  * 
- * copy on write
  * @author nm
  *
  */
@@ -51,11 +50,12 @@ public class SortedIntArray {
     }
 
     /**
-     * add value to the array and return the position on which has been added
+     * Inserts value to the array and return the position on which has been added
+     * 
      * 
      * @param id
      */
-    public int add(int x) {
+    public int insert(int x) {
         int pos = Arrays.binarySearch(a, 0, length, x);
         if( pos<0 ) pos = -pos-1;
 
@@ -223,7 +223,7 @@ public class SortedIntArray {
         int s=0;
         while(ad.hasNext()) {
             s+=ad.next();
-            sia.add(s);
+            sia.insert(s);
         }
         return sia;
     }

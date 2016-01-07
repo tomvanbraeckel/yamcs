@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Consumer;
 
 import org.rocksdb.RocksDBException;
 import org.slf4j.Logger;
@@ -42,8 +43,8 @@ public class RealtimeParameterFiller extends AbstractService implements Paramete
 
     //segment id -> ParameterGroup_id -> PGSegment
     TreeMap<Long, Map<Integer, PGSegment>> pgSegments = new TreeMap<>();
-    final ParameterIdMap parameterIdMap;
-    final ParameterGroupIdMap parameterGroupIdMap;
+    final ParameterIdDb parameterIdMap;
+    final ParameterGroupIdDb parameterGroupIdMap;
     private final Logger log = LoggerFactory.getLogger(RealtimeParameterFiller.class);
     final TimeService timeService;
 
@@ -192,20 +193,20 @@ public class RealtimeParameterFiller extends AbstractService implements Paramete
 
     }
 
-    public void retrieveValues(SingleParameterValueRequest pvr) {
+    public void retrieveValues(SingleParameterValueRequest pvr, Consumer<TimedValue> consumer) {
         readLock.lock();
         try {
             if(pvr.stop!=TimeEncoding.INVALID_INSTANT && pvr.stop < timeWindowStart) {
                 return ; //no data in this interval
             }
-            doProcessRequest(pvr);
+            doProcessRequest(pvr, consumer);
         } finally {
             readLock.unlock();
         }
     }
 
 
-    private void doProcessRequest(SingleParameterValueRequest pvr) {
+    private void doProcessRequest(SingleParameterValueRequest pvr, Consumer<TimedValue> consumer) {
         Set<Long> segments;
         if(pvr.ascending) {
             segments = pgSegments.navigableKeySet();
@@ -218,7 +219,7 @@ public class RealtimeParameterFiller extends AbstractService implements Paramete
                 PGSegment pgs = m.get(pvr.parameterGroupId);
                 if(pgs==null) continue;
 
-                pgs.retrieveValues(pvr);
+                pgs.retrieveValues(pvr, consumer);
             }
         }
     }
@@ -231,7 +232,7 @@ public class RealtimeParameterFiller extends AbstractService implements Paramete
 
         void add(ParameterValue pv) {
             int parameterId = parameterIdMap.get(pv.getParameter().getQualifiedName(), pv.getEngValue().getType());
-            int pos = parameterIdArray.add(parameterId);
+            int pos = parameterIdArray.insert(parameterId);
             sortedPvList.add(pos, pv);
         }
 

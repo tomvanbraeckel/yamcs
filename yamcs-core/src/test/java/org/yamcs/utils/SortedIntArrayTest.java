@@ -15,16 +15,16 @@ public class SortedIntArrayTest {
         SortedIntArray s = new SortedIntArray();
         assertEquals(0, s.size());
 
-        s.add(2);
+        s.insert(2);
         assertEquals(1, s.size());
         assertEquals(2, s.get(0));
 
-        s.add(3);
+        s.insert(3);
         assertEquals(2, s.size());
         assertEquals(2, s.get(0));
         assertEquals(3, s.get(1));
 
-        s.add(1);
+        s.insert(1);
         assertEquals(3, s.size());
         assertEquals(1, s.get(0));
         assertEquals(2, s.get(1));
@@ -38,10 +38,10 @@ public class SortedIntArrayTest {
         assertEquals(0, s.size());
         int n = 1000;
         for(int i =0; i<n/2; i++) {
-            s.add(i);
+            s.insert(i);
         }
         for(int i=n-1; i>=n/2; i--) {
-            s.add(i);
+            s.insert(i);
         }
         assertEquals(n, s.size());
 
@@ -161,7 +161,7 @@ public class SortedIntArrayTest {
         SortedIntArray sia = new SortedIntArray();
         long t0=System.currentTimeMillis();
         for(int i =0; i<n; i++) {
-            sia.add(i);
+            sia.insert(i);
         }
         System.out.println("Populate sortedintarray: "+(System.currentTimeMillis()-t0)+" ms");
         System.out.println("allocated memory (KB): "+runtime.totalMemory()/1024);

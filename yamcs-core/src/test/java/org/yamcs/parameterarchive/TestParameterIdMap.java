@@ -19,7 +19,7 @@ public class TestParameterIdMap {
         RocksDB db = RocksDB.open(f.getAbsolutePath());
         ColumnFamilyHandle cfh =  db.getDefaultColumnFamily();
         
-        ParameterIdMap pidMap = new ParameterIdMap(db, cfh);
+        ParameterIdDb pidMap = new ParameterIdDb(db, cfh);
         int p1 = pidMap.get("/test1/bla", Value.Type.BOOLEAN);
         int p2 = pidMap.get("/test1/bla", Value.Type.BOOLEAN);
         assertEquals(p1, p2);
@@ -32,7 +32,7 @@ public class TestParameterIdMap {
         
         db = RocksDB.open(f.getAbsolutePath());
         cfh =  db.getDefaultColumnFamily();
-        pidMap = new ParameterIdMap(db, cfh);
+        pidMap = new ParameterIdDb(db, cfh);
         int p4 = pidMap.get("/test1/bla", Value.Type.BOOLEAN);
         assertEquals(p1, p4);
         int p5 = pidMap.get("/test1/bla", Value.Type.DOUBLE);

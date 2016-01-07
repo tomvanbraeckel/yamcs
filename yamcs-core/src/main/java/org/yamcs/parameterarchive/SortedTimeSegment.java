@@ -43,7 +43,7 @@ public class SortedTimeSegment extends ValueSegment {
         if((instant&SEGMENT_MASK) != segmentStart) {
             throw new IllegalArgumentException("This timestamp does not fit into this segment");
         }
-        return tsarray.add((int)(instant & TIMESTAMP_MASK));
+        return tsarray.insert((int)(instant & TIMESTAMP_MASK));
     }
     
     /**
@@ -212,7 +212,7 @@ public class SortedTimeSegment extends ValueSegment {
         int s=0;
         for(int i=0;i<size;i++) {
             s+=VarIntUtil.readVarInt32(buf);
-            tsarray.add(s);
+            tsarray.insert(s);
         }
     }
 

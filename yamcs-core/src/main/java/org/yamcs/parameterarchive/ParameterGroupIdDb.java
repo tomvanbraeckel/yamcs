@@ -24,14 +24,14 @@ import org.yamcs.utils.SortedIntArray;
  * @author nm
  *
  */
-public class ParameterGroupIdMap {
+public class ParameterGroupIdDb {
     final RocksDB db;
     final ColumnFamilyHandle pgid2pg_cfh;
     int highestPgId=0;
     Map<SortedIntArray, Integer> pg2pgidCache = new HashMap<>();
     
     
-    ParameterGroupIdMap(RocksDB db, ColumnFamilyHandle pgid2pg_cfh) {
+    ParameterGroupIdDb(RocksDB db, ColumnFamilyHandle pgid2pg_cfh) {
         this.db = db;
         this.pgid2pg_cfh = pgid2pg_cfh;
         readDb();

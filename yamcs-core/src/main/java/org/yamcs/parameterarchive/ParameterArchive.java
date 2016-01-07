@@ -1,7 +1,6 @@
 package org.yamcs.parameterarchive;
 
 import java.io.File;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
+import java.util.function.Consumer;
 
 import org.rocksdb.ColumnFamilyDescriptor;
 import org.rocksdb.ColumnFamilyHandle;
@@ -22,7 +22,6 @@ import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yamcs.utils.StringConvertors;
 import org.yamcs.yarch.YarchDatabase;
 
 public class ParameterArchive {
@@ -32,8 +31,8 @@ public class ParameterArchive {
     static final byte[] CF_NAME_data_prefix = "data_".getBytes(StandardCharsets.US_ASCII);
 
     private final Logger log = LoggerFactory.getLogger(ParameterArchive.class);
-    private ParameterIdMap parameterIdMap;
-    private ParameterGroupIdMap parameterGroupIdMap;
+    private ParameterIdDb parameterIdMap;
+    private ParameterGroupIdDb parameterGroupIdMap;
     private RocksDB rdb;
 
     ColumnFamilyHandle p2pid_cfh;
@@ -41,7 +40,7 @@ public class ParameterArchive {
 
     final String yamcsInstance;
     private TreeMap<Long, Partition> partitions = new TreeMap<Long, ParameterArchive.Partition>();
-    ValueSegmentEncoderDecoder vsEncoder = new ValueSegmentEncoderDecoder();           
+    ValueSegmentEncoderDecoder vsEncoder = new ValueSegmentEncoderDecoder();
 
     public ParameterArchive(String instance) throws RocksDBException {
         this.yamcsInstance = instance;
@@ -52,8 +51,8 @@ public class ParameterArchive {
         } else {
             createDb(dbpath);
         }
-        parameterIdMap = new ParameterIdMap(rdb, p2pid_cfh);
-        parameterGroupIdMap = new ParameterGroupIdMap(rdb, pgid2pg_cfh);
+        parameterIdMap = new ParameterIdDb(rdb, p2pid_cfh);
+        parameterGroupIdMap = new ParameterGroupIdDb(rdb, pgid2pg_cfh);
     }
 
     private void createDb(String dbpath) throws RocksDBException {
@@ -140,11 +139,11 @@ public class ParameterArchive {
         return pdb;
     }
 
-    public ParameterIdMap getParameterIdMap() {
+    public ParameterIdDb getParameterIdMap() {
         return parameterIdMap;
     }
 
-    public ParameterGroupIdMap getParameterGroupIdMap() {
+    public ParameterGroupIdDb getParameterGroupIdMap() {
         return parameterGroupIdMap;
     }
 
@@ -186,11 +185,11 @@ public class ParameterArchive {
     private void writeToBatch(WriteBatch writeBatch, PGSegment pgs) throws RocksDBException{
         long segStart = pgs.getSegmentStart();
         long partitionId = Partition.getPartitionId(segStart);
-        Partition p = getPartition(partitionId);
+        Partition p = createAndGetPartition(partitionId);
 
         //write the time segment
         SortedTimeSegment timeSegment = pgs.getTimeSegment();
-        byte[] key = new DataKey(ParameterIdMap.TIMESTAMP_PARA_ID, pgs.getParameterGroupId(), pgs.getSegmentStart()).encode();
+        byte[] key = new SegmentKey(ParameterIdDb.TIMESTAMP_PARA_ID, pgs.getParameterGroupId(), pgs.getSegmentStart()).encode();
         byte[] value = vsEncoder.encode(timeSegment);
         writeBatch.put(p.dataCfh, key, value);
 
@@ -199,7 +198,7 @@ public class ParameterArchive {
         for(int i=0; i<consolidated.size(); i++) {
             ValueSegment vs= consolidated.get(i);
             int parameterId = pgs.getParameterId(i);
-            key = new DataKey(parameterId, pgs.getParameterGroupId(), pgs.getSegmentStart()).encode();
+            key = new SegmentKey(parameterId, pgs.getParameterGroupId(), pgs.getSegmentStart()).encode();
             value = vsEncoder.encode(vs);
             writeBatch.put(p.dataCfh, key, value);
         }
@@ -212,7 +211,7 @@ public class ParameterArchive {
      * @return
      * @throws RocksDBException 
      */
-    private Partition getPartition(long partitionId) throws RocksDBException {
+    private Partition createAndGetPartition(long partitionId) throws RocksDBException {
         synchronized(partitions) {
             Partition p = partitions.get(partitionId);
             if(p==null) {
@@ -228,140 +227,95 @@ public class ParameterArchive {
     }
 
 
-    public void retrieveValues(SingleParameterValueRequest pvr) throws RocksDBException, DecodingException {
+    public void retrieveValues(SingleParameterValueRequest pvr, Consumer<TimedValue> consumer) throws RocksDBException, DecodingException {
         long startPartition = Partition.getPartitionId(pvr.start);
         long stopPartition = Partition.getPartitionId(pvr.stop);
 
-        NavigableMap<Long,Partition> parts = partitions.subMap(startPartition, true, stopPartition, true);
-        if(pvr.ascending) {
-            for(Partition p:parts.values()) {
-                retrieveAscendingValuesFromPartition(p, pvr);
-            }
-        } else {
-            for(Partition p:parts.descendingMap().values()) {
-                retrieveDescendingValuesFromPartition(p, pvr);
-            }
+        NavigableMap<Long,Partition> parts = getPartitions(startPartition, stopPartition);
+        if(!pvr.ascending) {
+            parts = parts.descendingMap();
         }
-    }
-
-
-    private void retrieveAscendingValuesFromPartition(Partition p, SingleParameterValueRequest pvr) throws RocksDBException, DecodingException {
-        RocksIterator it = rdb.newIterator(p.dataCfh);
-        it.seek(new DataKey(pvr.parameterId, pvr.parameterGroupId, SortedTimeSegment.getSegmentStart(pvr.start)).encode());
-
-        while(it.isValid()) {
-
-            DataKey key = DataKey.decode(it.key());
-            if((key.parameterGroupId!=pvr.parameterGroupId) || (key.parameterId!=pvr.parameterId)) {
-                break;
-            }
-            if(key.segmentStart>pvr.stop) {
-                break;
-            }
-            ValueSegment valueSegment = vsEncoder.decode(it.value(), key.segmentStart);
-            byte[] timeKey = new DataKey(ParameterIdMap.TIMESTAMP_PARA_ID, pvr.parameterGroupId, key.segmentStart).encode();
-            byte[] tv = rdb.get(p.dataCfh, timeKey);
-            if(tv==null) {
-                String msg = "Cannot find a time segment for parameterGroupId="+pvr.parameterGroupId+" segmentStart = "+key.segmentStart+" despite having a value segment for parameterId: "+pvr.parameterId;
-                log.error(msg);
-                throw new RuntimeException(msg);
-            }
-            SortedTimeSegment timeSegment = (SortedTimeSegment) vsEncoder.decode(tv, key.segmentStart);
-            SgementIterator.extractAscending(pvr, timeSegment, valueSegment);
-            it.next();
+        for(Partition p:parts.values()) {
+            retrieveValuesFromPartition(p, pvr, consumer);
         }
     }
 
 
 
-
-    private void retrieveDescendingValuesFromPartition(Partition p, SingleParameterValueRequest pvr) throws DecodingException, RocksDBException {
+    private void retrieveValuesFromPartition(Partition p, SingleParameterValueRequest pvr, Consumer<TimedValue> consumer) throws DecodingException, RocksDBException {
         RocksIterator it = rdb.newIterator(p.dataCfh);
         try {
-            it.seek(new DataKey(pvr.parameterId, pvr.parameterGroupId, SortedTimeSegment.getSegmentStart(pvr.stop)).encode());
-            if(!it.isValid()) {
-                it.seekToLast();
-            }
-            if(!it.isValid()) return; //shouldn't' happen - means there is no data in the partition
-            
-            DataKey key = DataKey.decode(it.key());            
-            if((key.parameterGroupId!=pvr.parameterGroupId) || (key.parameterId!=pvr.parameterId)) {
-                it.prev();
-            }
-            
-            while(it.isValid()) {
-                key = DataKey.decode(it.key());
-                if((key.parameterGroupId!=pvr.parameterGroupId) || (key.parameterId!=pvr.parameterId)) {
-                    break;
-                }
-                if(key.segmentStart < SortedTimeSegment.getSegmentStart(pvr.start)) {
-                    break;
-                }
-                ValueSegment valueSegment = vsEncoder.decode(it.value(), key.segmentStart);
-                byte[] timeKey = new DataKey(ParameterIdMap.TIMESTAMP_PARA_ID, pvr.parameterGroupId, key.segmentStart).encode();
-                byte[] tv = rdb.get(p.dataCfh, timeKey);
-                if(tv==null) {
+            PartitionIterator pit = new PartitionIterator(it, pvr.parameterId, pvr.parameterGroupId, pvr.start, pvr.stop, pvr.ascending);
+
+            while(pit.isValid()) {
+                SegmentKey key = pit.key();
+
+                
+                SortedTimeSegment timeSegment = getTimeSegment(p, key.segmentStart, pvr.parameterGroupId);
+                if(timeSegment==null) {
                     String msg = "Cannot find a time segment for parameterGroupId="+pvr.parameterGroupId+" segmentStart = "+key.segmentStart+" despite having a value segment for parameterId: "+pvr.parameterId;
                     log.error(msg);
                     throw new RuntimeException(msg);
                 }
-                SortedTimeSegment timeSegment = (SortedTimeSegment) vsEncoder.decode(tv, key.segmentStart);
-                SgementIterator.extractDescending(pvr, timeSegment, valueSegment);
-                it.prev();
+                ValueSegment valueSegment = pit.value();
+                new SegmentIterator(timeSegment, valueSegment, pvr.start, pvr.stop, pvr.ascending).forEachRemaining(consumer);
+                pit.next();
             }
         } finally {
             it.dispose();
         }
     }
-
-    static class DataKey {
-        final int parameterId;
-        final int parameterGroupId;
-        final long segmentStart;
-
-
-        public DataKey(int parameterId, int parameterGroupId, long segmentStart) {
-            this.parameterId = parameterId;
-            this.parameterGroupId = parameterGroupId;
-            this.segmentStart = segmentStart;
-        }
-
-        public byte[] encode() {
-            ByteBuffer bb = ByteBuffer.allocate(16);
-            bb.putInt(parameterId);
-            bb.putInt(parameterGroupId);
-            bb.putLong(segmentStart);
-            return bb.array();
-        }
-
-        public static DataKey decode(byte[] b) {
-            ByteBuffer bb = ByteBuffer.wrap(b);
-            int parameterId = bb.getInt();
-            int parameterGroupId = bb.getInt();
-            long segmentStart = bb.getLong();
-            return new DataKey(parameterId, parameterGroupId, segmentStart);
+    
+    /** 
+     * a copy of the partitions from start to stop inclusive
+     * @param startPartition
+     * @param stopPartition
+     * @return
+     */
+    public NavigableMap<Long, Partition> getPartitions(long startPartition, long stopPartition) {
+        synchronized(partitions) {
+            TreeMap<Long, Partition> r = new TreeMap<Long, ParameterArchive.Partition>();
+            r.putAll(partitions.subMap(startPartition, true, stopPartition, true));
+            return r;
         }
     }
-
+    
     static class Partition {
         public static final int NUMBITS_MASK=31; //2^31 millisecons =~ 24 days per partition    
-        public static final int TIMESTAMP_MASK = (0xFFFFFFFF>>>(32-NUMBITS_MASK));
+        public static final long TIMESTAMP_MASK = (0xFFFFFFFF>>>(32-NUMBITS_MASK));
         public static final long PARTITION_MASK = ~TIMESTAMP_MASK;
 
         final long partitionId;
+        ColumnFamilyHandle dataCfh;
+
         Partition(long partitionId) {
             this.partitionId = partitionId;
         }        
-        ColumnFamilyHandle dataCfh;
 
 
         static long getPartitionId(long instant) {
             return instant & PARTITION_MASK;
         }
 
+        static long getPartitionStart(long instant) {
+            return getPartitionId(instant);
+        }
 
         public static long getPartitionEnd(long partitionId) {
             return partitionId  | TIMESTAMP_MASK;
         }
+    }
+
+    public RocksIterator getIterator(Partition p) {
+        return rdb.newIterator(p.dataCfh);
+    }
+
+    public SortedTimeSegment getTimeSegment(Partition p, long segmentStart,  int parameterGroupId) throws RocksDBException, DecodingException {
+        byte[] timeKey = new SegmentKey(ParameterIdDb.TIMESTAMP_PARA_ID, parameterGroupId, segmentStart).encode();
+        byte[] tv = rdb.get(p.dataCfh, timeKey);
+        if(tv==null) {
+            return null;
+        }
+        return (SortedTimeSegment) vsEncoder.decode(tv, segmentStart);
     }
 }

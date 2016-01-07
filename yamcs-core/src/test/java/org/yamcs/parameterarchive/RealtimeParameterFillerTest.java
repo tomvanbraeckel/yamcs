@@ -59,14 +59,14 @@ public class RealtimeParameterFillerTest {
 
         //ascending request on empty data
         MyValueConsummer c0a = new MyValueConsummer();
-        SingleParameterValueRequest pvr0a = new SingleParameterValueRequest(0, 1000, pg1id, p1id, true, c0a);
-        filler.retrieveValues(pvr0a);
+        SingleParameterValueRequest pvr0a = new SingleParameterValueRequest(0, 1000, pg1id, p1id, true);
+        filler.retrieveValues(pvr0a, c0a);
         assertEquals(0, c0a.times.size());
 
         //descending request on empty data
         MyValueConsummer c0d = new MyValueConsummer();
-        SingleParameterValueRequest pvr0d = new SingleParameterValueRequest(0, 1000, pg1id, p1id, true, c0d);
-        filler.retrieveValues(pvr0d);
+        SingleParameterValueRequest pvr0d = new SingleParameterValueRequest(0, 1000, pg1id, p1id, true);
+        filler.retrieveValues(pvr0d, c0d);
         assertEquals(0, c0d.times.size());
 
 
@@ -75,39 +75,39 @@ public class RealtimeParameterFillerTest {
         
         //ascending request on one value
         MyValueConsummer c1a = new MyValueConsummer();       
-        SingleParameterValueRequest pvr1a = new SingleParameterValueRequest(0, 1000, pg1id, p1id, true, c1a);
-        filler.retrieveValues(pvr1a);
+        SingleParameterValueRequest pvr1a = new SingleParameterValueRequest(0, 1000, pg1id, p1id, true);
+        filler.retrieveValues(pvr1a, c1a);
         checkEquals(c1a, pv1_0);
         
         //descending request on one value
         MyValueConsummer c1d = new MyValueConsummer();       
-        SingleParameterValueRequest pvr1d = new SingleParameterValueRequest(0, 1000, pg1id, p1id, false, c1d);
-        filler.retrieveValues(pvr1d);
+        SingleParameterValueRequest pvr1d = new SingleParameterValueRequest(0, 1000, pg1id, p1id, false);
+        filler.retrieveValues(pvr1d, c1d);
         checkEquals(c1d, pv1_0);
         
         //ascending request on one value with start fixed on the value timestamp
         MyValueConsummer c2a = new MyValueConsummer();       
-        SingleParameterValueRequest pvr2a = new SingleParameterValueRequest(100, 1000, pg1id, p1id, true, c2a);
-        filler.retrieveValues(pvr2a);
+        SingleParameterValueRequest pvr2a = new SingleParameterValueRequest(100, 1000, pg1id, p1id, true);
+        filler.retrieveValues(pvr2a, c2a);
         checkEquals(c2a, pv1_0);
         
         //descending request on one value with start fixed on the value timestamp
         MyValueConsummer c2d = new MyValueConsummer();       
-        SingleParameterValueRequest pvr2d = new SingleParameterValueRequest(0, 100, pg1id, p1id, false, c2d);
-        filler.retrieveValues(pvr2d);
+        SingleParameterValueRequest pvr2d = new SingleParameterValueRequest(0, 100, pg1id, p1id, false);
+        filler.retrieveValues(pvr2d, c2d);
         checkEquals(c2d, pv1_0);
         
         
         //ascending request on one value with stop fixed on the value timestamp
         MyValueConsummer c3a = new MyValueConsummer();       
-        SingleParameterValueRequest pvr3a = new SingleParameterValueRequest(0, 100, pg1id, p1id, true, c3a);
-        filler.retrieveValues(pvr3a);
+        SingleParameterValueRequest pvr3a = new SingleParameterValueRequest(0, 100, pg1id, p1id, true);
+        filler.retrieveValues(pvr3a, c3a);
         assertEquals(0, c3a.times.size());
         
         //descending request on one value with stop fixed on the value timestamp
         MyValueConsummer c3d = new MyValueConsummer();       
-        SingleParameterValueRequest pvr3d = new SingleParameterValueRequest(1000, 100, pg1id, p1id, false, c3d);
-        filler.retrieveValues(pvr3d);
+        SingleParameterValueRequest pvr3d = new SingleParameterValueRequest(1000, 100, pg1id, p1id, false);
+        filler.retrieveValues(pvr3d, c3d);
         assertEquals(0, c3d.times.size());
         
         //one more value
@@ -116,38 +116,38 @@ public class RealtimeParameterFillerTest {
 
         //ascending request on two value
         MyValueConsummer c4a = new MyValueConsummer();       
-        SingleParameterValueRequest pvr4a = new SingleParameterValueRequest(0, 1000, pg1id, p1id, true, c4a);
-        filler.retrieveValues(pvr4a);
+        SingleParameterValueRequest pvr4a = new SingleParameterValueRequest(0, 1000, pg1id, p1id, true);
+        filler.retrieveValues(pvr4a, c4a);
         checkEquals(c4a, pv1_0, pv1_1);
         
         //descending request on two value
         MyValueConsummer c4d = new MyValueConsummer();       
-        SingleParameterValueRequest pvr4d = new SingleParameterValueRequest(0, 1000, pg1id, p1id, false, c4d);
-        filler.retrieveValues(pvr4d);
+        SingleParameterValueRequest pvr4d = new SingleParameterValueRequest(0, 1000, pg1id, p1id, false);
+        filler.retrieveValues(pvr4d, c4d);
         checkEquals(c4d, pv1_1, pv1_0);
         
         //ascending request on two value with start on first value
         MyValueConsummer c5a = new MyValueConsummer();       
-        SingleParameterValueRequest pvr5a = new SingleParameterValueRequest(100, 1000, pg1id, p1id, true, c5a);
-        filler.retrieveValues(pvr5a);
+        SingleParameterValueRequest pvr5a = new SingleParameterValueRequest(100, 1000, pg1id, p1id, true);
+        filler.retrieveValues(pvr5a, c5a);
         checkEquals(c5a, pv1_0, pv1_1);
         
         //descending request on two value with start on second value
         MyValueConsummer c5d = new MyValueConsummer();       
-        SingleParameterValueRequest pvr5d = new SingleParameterValueRequest(0, 200, pg1id, p1id, false, c5d);
-        filler.retrieveValues(pvr5d);
+        SingleParameterValueRequest pvr5d = new SingleParameterValueRequest(0, 200, pg1id, p1id, false);
+        filler.retrieveValues(pvr5d, c5d);
         checkEquals(c5d, pv1_1, pv1_0);
         
         //ascending request on two value with start on the first value and stop on second 
         MyValueConsummer c6a = new MyValueConsummer();       
-        SingleParameterValueRequest pvr6a = new SingleParameterValueRequest(100, 200, pg1id, p1id, true, c6a);
-        filler.retrieveValues(pvr6a);
+        SingleParameterValueRequest pvr6a = new SingleParameterValueRequest(100, 200, pg1id, p1id, true);
+        filler.retrieveValues(pvr6a, c6a);
         checkEquals(c6a, pv1_0);
         
         //descending request on two value with start on the second value and stop on first 
         MyValueConsummer c6d = new MyValueConsummer();       
-        SingleParameterValueRequest pvr6d = new SingleParameterValueRequest(100, 200, pg1id, p1id, false, c6d);
-        filler.retrieveValues(pvr6d);
+        SingleParameterValueRequest pvr6d = new SingleParameterValueRequest(100, 200, pg1id, p1id, false);
+        filler.retrieveValues(pvr6d, c6d);
         checkEquals(c6d, pv1_1);
         
     }
@@ -174,8 +174,8 @@ public class RealtimeParameterFillerTest {
 
         MyValueConsummer c0 = new MyValueConsummer();
         int pg12id = parchive.getParameterGroupIdMap().get(new int[]{p1id, p2id});
-        SingleParameterValueRequest pvr0 = new SingleParameterValueRequest(0, 1000, pg12id, p1id, true, c0);
-        filler.retrieveValues(pvr0);
+        SingleParameterValueRequest pvr0 = new SingleParameterValueRequest(0, 1000, pg12id, p1id, true);
+        filler.retrieveValues(pvr0, c0);
 
 
         assertEquals(0, c0.times.size());
@@ -183,19 +183,19 @@ public class RealtimeParameterFillerTest {
 
         filler.doUpdateItems(0, pvList);
         MyValueConsummer c1 = new MyValueConsummer();       
-        SingleParameterValueRequest pvr1 = new SingleParameterValueRequest(0, 1000, pg12id, p1id, true, c1);
-        filler.retrieveValues(pvr1);
+        SingleParameterValueRequest pvr1 = new SingleParameterValueRequest(0, 1000, pg12id, p1id, true);
+        filler.retrieveValues(pvr1, c1);
         checkEquals(c1, pv1_0);
 
         MyValueConsummer c1d = new MyValueConsummer();       
-        SingleParameterValueRequest pvr1d = new SingleParameterValueRequest(-1, 1000, pg12id, p1id, false, c1d);
-        filler.retrieveValues(pvr1d);
+        SingleParameterValueRequest pvr1d = new SingleParameterValueRequest(-1, 1000, pg12id, p1id, false);
+        filler.retrieveValues(pvr1d, c1d);
         checkEquals(c1d, pv1_0);
 
 
         MyValueConsummer c2 = new MyValueConsummer();
-        SingleParameterValueRequest pvr2 = new SingleParameterValueRequest(0, 1000, pg12id, p2id, true, c2);
-        filler.retrieveValues(pvr2);
+        SingleParameterValueRequest pvr2 = new SingleParameterValueRequest(0, 1000, pg12id, p2id, true);
+        filler.retrieveValues(pvr2, c2);
         checkEquals(c2, pv2_0);
 
 
@@ -206,20 +206,20 @@ public class RealtimeParameterFillerTest {
 
         MyValueConsummer c3 = new MyValueConsummer();
         int pg1id = parchive.getParameterGroupIdMap().get(new int[]{p1id});
-        SingleParameterValueRequest pvr3 = new SingleParameterValueRequest(0, 1000, pg1id, p1id, true, c3);
-        filler.retrieveValues(pvr3);
+        SingleParameterValueRequest pvr3 = new SingleParameterValueRequest(0, 1000, pg1id, p1id, true);
+        filler.retrieveValues(pvr3, c3);
         checkEquals(c3, pv1_1);
 
 
         MyValueConsummer c4 = new MyValueConsummer();
         int pg2id = parchive.getParameterGroupIdMap().get(new int[]{p2id});
-        SingleParameterValueRequest pvr4 = new SingleParameterValueRequest(0, 1000, pg2id, p2id, true, c4);
-        filler.retrieveValues(pvr4);
+        SingleParameterValueRequest pvr4 = new SingleParameterValueRequest(0, 1000, pg2id, p2id, true);
+        filler.retrieveValues(pvr4, c4);
         checkEquals(c4, pv2_1);
 
         MyValueConsummer c5 = new MyValueConsummer();
-        SingleParameterValueRequest pvr5 = new SingleParameterValueRequest(0, 1000, pg2id, p2id, false, c5);
-        filler.retrieveValues(pvr5);
+        SingleParameterValueRequest pvr5 = new SingleParameterValueRequest(0, 1000, pg2id, p2id, false);
+        filler.retrieveValues(pvr5, c5);
         checkEquals(c5, pv2_1);
 
 
@@ -229,55 +229,55 @@ public class RealtimeParameterFillerTest {
         filler.doUpdateItems(0, Arrays.asList(pv2_2, pv1_2));
 
         MyValueConsummer c6 = new MyValueConsummer();
-        SingleParameterValueRequest pvr6 = new SingleParameterValueRequest(0, 1000, pg12id, p2id, true, c6);
-        filler.retrieveValues(pvr6);        
+        SingleParameterValueRequest pvr6 = new SingleParameterValueRequest(0, 1000, pg12id, p2id, true);
+        filler.retrieveValues(pvr6, c6);        
         checkEquals(c6, pv2_0, pv2_2);
 
 
         MyValueConsummer c7 = new MyValueConsummer();
-        SingleParameterValueRequest pvr7 = new SingleParameterValueRequest(-1, 1000, pg12id, p2id, false, c7);
-        filler.retrieveValues(pvr7);        
+        SingleParameterValueRequest pvr7 = new SingleParameterValueRequest(-1, 1000, pg12id, p2id, false);
+        filler.retrieveValues(pvr7, c7);        
         checkEquals(c7, pv2_2, pv2_0);
 
 
         MyValueConsummer c8 = new MyValueConsummer();
-        SingleParameterValueRequest pvr8 = new SingleParameterValueRequest(0, 100, pg12id, p2id, true, c8);
-        filler.retrieveValues(pvr8);        
+        SingleParameterValueRequest pvr8 = new SingleParameterValueRequest(0, 100, pg12id, p2id, true);
+        filler.retrieveValues(pvr8, c8);        
         checkEquals(c8, pv2_0);
 
         MyValueConsummer c9 = new MyValueConsummer();
-        SingleParameterValueRequest pvr9 = new SingleParameterValueRequest(0, 100, pg12id, p2id, false, c9);
-        filler.retrieveValues(pvr9);        
+        SingleParameterValueRequest pvr9 = new SingleParameterValueRequest(0, 100, pg12id, p2id, false);
+        filler.retrieveValues(pvr9, c9);        
         checkEquals(c9, pv2_2);
 
 
         MyValueConsummer c10 = new MyValueConsummer();
-        SingleParameterValueRequest pvr10 = new SingleParameterValueRequest(1, 100, pg12id, p2id, true, c10);
-        filler.retrieveValues(pvr10);        
+        SingleParameterValueRequest pvr10 = new SingleParameterValueRequest(1, 100, pg12id, p2id, true);
+        filler.retrieveValues(pvr10, c10);        
         assertEquals(0, c10.times.size());
 
         MyValueConsummer c11 = new MyValueConsummer();
-        SingleParameterValueRequest pvr11 = new SingleParameterValueRequest(0, 99, pg12id, p2id, false, c11);
-        filler.retrieveValues(pvr11);
+        SingleParameterValueRequest pvr11 = new SingleParameterValueRequest(0, 99, pg12id, p2id, false);
+        filler.retrieveValues(pvr11, c11);
         assertEquals(0, c11.times.size());
 
 
         MyValueConsummer c12 = new MyValueConsummer();
-        SingleParameterValueRequest pvr12 = new SingleParameterValueRequest(1, 101, pg12id, p2id, true, c12);
-        filler.retrieveValues(pvr12);        
+        SingleParameterValueRequest pvr12 = new SingleParameterValueRequest(1, 101, pg12id, p2id, true);
+        filler.retrieveValues(pvr12, c12);        
         checkEquals(c12, pv2_2);
 
         MyValueConsummer c13 = new MyValueConsummer();
-        SingleParameterValueRequest pvr13 = new SingleParameterValueRequest(1, 101, pg12id, p2id, false, c13);
-        filler.retrieveValues(pvr13);        
+        SingleParameterValueRequest pvr13 = new SingleParameterValueRequest(1, 101, pg12id, p2id, false);
+        filler.retrieveValues(pvr13, c13);        
         checkEquals(c13, pv2_2);
 
         timeService.missionTime = RealtimeParameterFiller.CONSOLIDATE_OLDER_THAN;
         filler.doHouseKeeping();
 
         MyValueConsummer c14 = new MyValueConsummer();
-        SingleParameterValueRequest pvr14 = new SingleParameterValueRequest(1, 101, pg12id, p2id, false, c14);
-        filler.retrieveValues(pvr14);        
+        SingleParameterValueRequest pvr14 = new SingleParameterValueRequest(1, 101, pg12id, p2id, false);
+        filler.retrieveValues(pvr14, c14);        
         assertEquals(0, c14.times.size());
     }
 

@@ -49,8 +49,8 @@ public class ParameterArchiveTest {
         
         FileUtils.deleteRecursively(dbroot+"/ParameterArchive");
         ParameterArchive parchive = new ParameterArchive(instance);
-        ParameterIdMap pidMap = parchive.getParameterIdMap();
-        ParameterGroupIdMap pgidMap = parchive.getParameterGroupIdMap();
+        ParameterIdDb pidMap = parchive.getParameterIdMap();
+        ParameterGroupIdDb pgidMap = parchive.getParameterGroupIdMap();
         assertNotNull(pidMap);
         assertNotNull(pgidMap);
         int p1id = pidMap.get("/test/p1", Type.BINARY);
@@ -94,14 +94,14 @@ public class ParameterArchiveTest {
         
         //ascending request on empty data
         MyValueConsummer c0a = new MyValueConsummer();
-        SingleParameterValueRequest pvr0a = new SingleParameterValueRequest(0, 1000, pg1id, p1id, true, c0a);
-        parchive.retrieveValues(pvr0a);
+        SingleParameterValueRequest pvr0a = new SingleParameterValueRequest(0, 1000, pg1id, p1id, true);
+        parchive.retrieveValues(pvr0a, c0a);
         assertEquals(0, c0a.times.size());
 
         //descending request on empty data
         MyValueConsummer c0d = new MyValueConsummer();
-        SingleParameterValueRequest pvr0d = new SingleParameterValueRequest(0, 1000, pg1id, p1id, true, c0d);
-        parchive.retrieveValues(pvr0d);
+        SingleParameterValueRequest pvr0d = new SingleParameterValueRequest(0, 1000, pg1id, p1id, true);
+        parchive.retrieveValues(pvr0d, c0d);
         assertEquals(0, c0d.times.size());
         
         pgSegment1.consolidate();
@@ -109,38 +109,38 @@ public class ParameterArchiveTest {
         
         //ascending request on two value
         MyValueConsummer c4a = new MyValueConsummer();       
-        SingleParameterValueRequest pvr4a = new SingleParameterValueRequest(0, TimeEncoding.MAX_INSTANT, pg1id, p1id, true, c4a);
-        parchive.retrieveValues(pvr4a);
+        SingleParameterValueRequest pvr4a = new SingleParameterValueRequest(0, TimeEncoding.MAX_INSTANT, pg1id, p1id, true);
+        parchive.retrieveValues(pvr4a, c4a);
         checkEquals(c4a, pv1_0, pv1_1);
         
         //descending request on two value
         MyValueConsummer c4d = new MyValueConsummer();       
-        SingleParameterValueRequest pvr4d = new SingleParameterValueRequest(0, TimeEncoding.MAX_INSTANT, pg1id, p1id, false, c4d);
-        parchive.retrieveValues(pvr4d);
+        SingleParameterValueRequest pvr4d = new SingleParameterValueRequest(0, TimeEncoding.MAX_INSTANT, pg1id, p1id, false);
+        parchive.retrieveValues(pvr4d, c4d);
         checkEquals(c4d, pv1_1, pv1_0);
         
         //ascending request on two value with start on first value
         MyValueConsummer c5a = new MyValueConsummer();       
-        SingleParameterValueRequest pvr5a = new SingleParameterValueRequest(100, 1000, pg1id, p1id, true, c5a);
-        parchive.retrieveValues(pvr5a);
+        SingleParameterValueRequest pvr5a = new SingleParameterValueRequest(100, 1000, pg1id, p1id, true);
+        parchive.retrieveValues(pvr5a, c5a);
         checkEquals(c5a, pv1_0, pv1_1);
         
         //descending request on two value with start on second value
         MyValueConsummer c5d = new MyValueConsummer();       
-        SingleParameterValueRequest pvr5d = new SingleParameterValueRequest(0, 200, pg1id, p1id, false, c5d);
-        parchive.retrieveValues(pvr5d);
+        SingleParameterValueRequest pvr5d = new SingleParameterValueRequest(0, 200, pg1id, p1id, false);
+        parchive.retrieveValues(pvr5d, c5d);
         checkEquals(c5d, pv1_1, pv1_0);
         
         //ascending request on two value with start on the first value and stop on second 
         MyValueConsummer c6a = new MyValueConsummer();       
-        SingleParameterValueRequest pvr6a = new SingleParameterValueRequest(100, 200, pg1id, p1id, true, c6a);
-        parchive.retrieveValues(pvr6a);
+        SingleParameterValueRequest pvr6a = new SingleParameterValueRequest(100, 200, pg1id, p1id, true);
+        parchive.retrieveValues(pvr6a, c6a);
         checkEquals(c6a, pv1_0);
         
         //descending request on two value with start on the second value and stop on first 
         MyValueConsummer c6d = new MyValueConsummer();       
-        SingleParameterValueRequest pvr6d = new SingleParameterValueRequest(100, 200, pg1id, p1id, false, c6d);
-        parchive.retrieveValues(pvr6d);
+        SingleParameterValueRequest pvr6d = new SingleParameterValueRequest(100, 200, pg1id, p1id, false);
+        parchive.retrieveValues(pvr6d, c6d);
         checkEquals(c6d, pv1_1);
 
         
@@ -163,27 +163,27 @@ public class ParameterArchiveTest {
 
         //ascending request on four value
         MyValueConsummer c7a = new MyValueConsummer();       
-        SingleParameterValueRequest pvr7a = new SingleParameterValueRequest(0, t3+1, pg1id, p1id, true, c7a);
-        parchive.retrieveValues(pvr7a);
+        SingleParameterValueRequest pvr7a = new SingleParameterValueRequest(0, t3+1, pg1id, p1id, true);
+        parchive.retrieveValues(pvr7a, c7a);
         checkEquals(c7a, pv1_0, pv1_1, pv1_2, pv1_3);
         
         //descending request on four value
         MyValueConsummer c7d = new MyValueConsummer();       
-        SingleParameterValueRequest pvr7d = new SingleParameterValueRequest(0, t3+1, pg1id, p1id, false, c7d);
-        parchive.retrieveValues(pvr7d);
+        SingleParameterValueRequest pvr7d = new SingleParameterValueRequest(0, t3+1, pg1id, p1id, false);
+        parchive.retrieveValues(pvr7d, c7d);
         checkEquals(c7d, pv1_3, pv1_2, pv1_1, pv1_0);
         
         
         //ascending request on the last partition
         MyValueConsummer c8a = new MyValueConsummer();       
-        SingleParameterValueRequest pvr8a = new SingleParameterValueRequest(t3, t3+1, pg1id, p1id, true, c8a);
-        parchive.retrieveValues(pvr8a);
+        SingleParameterValueRequest pvr8a = new SingleParameterValueRequest(t3, t3+1, pg1id, p1id, true);
+        parchive.retrieveValues(pvr8a, c8a);
         checkEquals(c8a, pv1_3);
         
         //descending request on the last partition
         MyValueConsummer c8d = new MyValueConsummer();       
-        SingleParameterValueRequest pvr8d = new SingleParameterValueRequest(t2, t3, pg1id, p1id, false, c8d);
-        parchive.retrieveValues(pvr8d);
+        SingleParameterValueRequest pvr8d = new SingleParameterValueRequest(t2, t3, pg1id, p1id, false);
+        parchive.retrieveValues(pvr8d, c8d);
         checkEquals(c8d, pv1_3);
         
     }

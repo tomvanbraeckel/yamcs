@@ -18,7 +18,7 @@ public class TestParameterGroupIdMap {
         RocksDB db = RocksDB.open(f.getAbsolutePath());
         ColumnFamilyHandle cfh =  db.getDefaultColumnFamily();
         
-        ParameterGroupIdMap pgidMap = new ParameterGroupIdMap(db, cfh);
+        ParameterGroupIdDb pgidMap = new ParameterGroupIdDb(db, cfh);
         int[] p1 = new int[] {1,3,4};
         int[] p2 = new int[] {1,3,4};
         int[] p3 = new int[] {1,4,5};
@@ -36,7 +36,7 @@ public class TestParameterGroupIdMap {
         
         db = RocksDB.open(f.getAbsolutePath());
         cfh =  db.getDefaultColumnFamily();
-        pgidMap = new ParameterGroupIdMap(db, cfh);
+        pgidMap = new ParameterGroupIdDb(db, cfh);
         int pg4 = pgidMap.get(p1);
         assertEquals(pg1, pg4);
         

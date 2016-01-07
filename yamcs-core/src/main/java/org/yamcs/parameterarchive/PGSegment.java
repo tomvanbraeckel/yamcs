@@ -2,6 +2,7 @@ package org.yamcs.parameterarchive;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.yamcs.ParameterValue;
 import org.yamcs.utils.SortedIntArray;
@@ -57,18 +58,14 @@ public class PGSegment {
         }
     }
 
-    public void retrieveValues(SingleParameterValueRequest pvr) {
+    public void retrieveValues(SingleParameterValueRequest pvr, Consumer<TimedValue> consumer) {
         int pidx = parameterIds.search(pvr.parameterId);
         if(pidx<0) {
             throw new IllegalArgumentException("Received a parameter id "+pvr.parameterId+" that is not part of this parameter group");
         }
         ValueSegment vs = valueSegments.get(pidx);
         
-        if(pvr.ascending) {
-            SgementIterator.extractAscending(pvr, timeSegment, vs);
-        } else {
-            SgementIterator.extractDescending(pvr, timeSegment, vs);
-        }
+        new SegmentIterator(timeSegment, vs, pvr.start, pvr.stop, pvr.ascending).forEachRemaining(consumer);
     }
  
     
