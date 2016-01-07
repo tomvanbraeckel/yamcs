@@ -32,4 +32,16 @@ public class TestUtils {
             assertEquals(pv.getEngValue(), c.values.get(i));
         }
     }
+    
+    
+    static void checkEquals(ParameterIdValueList plist, long expectedTime, ParameterValue... expectedPv) {
+        assertEquals(expectedTime, plist.instant);
+        assertEquals(expectedPv.length, plist.values.size());
+        for(int i=0; i<expectedPv.length; i++) {
+           ParameterValue pv = expectedPv[i];
+           Value v = plist.values.get(i);
+           assertEquals(pv.getEngValue(), v);
+        }
+    }
+
 }

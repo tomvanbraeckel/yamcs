@@ -15,20 +15,21 @@ import org.yamcs.parameterarchive.ParameterArchive.Partition;
 
 public class DataRetrieval {
     final ParameterArchive parchive;
-    int[] parameterIds;
-    int[] parameterGroupIds;
-    long start, stop;
-    boolean ascending;
+    final MultipleParameterValueRequest mpvr;
 
     ValueSegmentEncoderDecoder vsEncoder = new ValueSegmentEncoderDecoder();
     private final Logger log = LoggerFactory.getLogger(DataRetrieval.class);
 
-    public DataRetrieval(ParameterArchive parchive) {
+    public DataRetrieval(ParameterArchive parchive, MultipleParameterValueRequest mpvr) {
         this.parchive = parchive;
+        this.mpvr = mpvr;
     }
 
     public void retrieve(Consumer<ParameterIdValueList> consumer) throws RocksDBException, DecodingException {
-        NavigableMap<Long, Partition> parts = parchive.getPartitions(start, stop);
+        NavigableMap<Long, Partition> parts = parchive.getPartitions(mpvr.start, mpvr.stop);
+        if(!mpvr.ascending) {
+            parts = parts.descendingMap();
+        }
         for(Partition p: parts.values()) {
             retrieveFromPartition(p, consumer);
         }
@@ -36,14 +37,14 @@ public class DataRetrieval {
 
     private void retrieveFromPartition(Partition p, Consumer<ParameterIdValueList> consumer) throws RocksDBException, DecodingException {
        
-        RocksIterator[] its = new RocksIterator[parameterIds.length];
+        RocksIterator[] its = new RocksIterator[mpvr.parameterIds.length];
         
-        PriorityQueue<PartitionIterator> queue = new PriorityQueue<PartitionIterator>(new PartitionIteratorComparator());
+        PriorityQueue<PartitionIterator> queue = new PriorityQueue<PartitionIterator>(new PartitionIteratorComparator(mpvr.ascending));
         SegmentMerger merger = null;
         
-        for(int i =0 ; i<parameterIds.length; i++) {
+        for(int i =0 ; i<mpvr.parameterIds.length; i++) {
             its[i] = parchive.getIterator(p);
-            PartitionIterator pi = new PartitionIterator(its[i], parameterIds[i],  parameterGroupIds[i], start, stop, ascending);
+            PartitionIterator pi = new PartitionIterator(its[i], mpvr.parameterIds[i],  mpvr.parameterGroupIds[i], mpvr.start, mpvr.stop, mpvr.ascending);
             if(pi.isValid()) {
                 queue.add(pi);
             }
@@ -52,11 +53,11 @@ public class DataRetrieval {
             PartitionIterator pit = queue.poll();
             SegmentKey key = pit.key();
             if(merger ==null) {
-                merger = new SegmentMerger(key);
+                merger = new SegmentMerger(key, mpvr.ascending);
             } else {
                 if(key.segmentStart!=merger.key.segmentStart) {
                     sendAllData(merger, consumer);
-                    merger = new SegmentMerger(key);
+                    merger = new SegmentMerger(key, mpvr.ascending);
                 }
             }
             
@@ -70,14 +71,18 @@ public class DataRetrieval {
             merger.currentParameterGroupId = pit.getParameterGroupId();
             merger.currentParameterId = pit.getParameterId();
             
-            new SegmentIterator(timeSegment, valueSegment, start, stop, ascending).forEachRemaining(merger);
+            new SegmentIterator(timeSegment, valueSegment, mpvr.start, mpvr.stop, mpvr.ascending).forEachRemaining(merger);
             pit.next();
             if(pit.isValid()) {
                 queue.add(pit);
             }
         }
+        if(merger!=null) {
+            sendAllData(merger, consumer);
+        }
         
-        for(int i =0 ; i<parameterIds.length; i++) {
+        
+        for(int i =0 ; i<mpvr.parameterIds.length; i++) {
             its[i].dispose();
         }
     }
@@ -88,12 +93,22 @@ public class DataRetrieval {
 
     static class SegmentMerger implements Consumer<TimedValue>{
         final SegmentKey key;
-        TreeMap<Long,ParameterIdValueList> values = new TreeMap<>();  
+        TreeMap<Long,ParameterIdValueList> values;
         int currentParameterId;
         int currentParameterGroupId;
         
-        public SegmentMerger(SegmentKey key) {
+        public SegmentMerger(SegmentKey key, final boolean ascending) {
             this.key = key;
+            values = new TreeMap<>(new Comparator<Long>() {
+                @Override
+                public int compare(Long o1, Long o2) {
+                    if(ascending){
+                        return o1.compareTo(o2);
+                    } else {
+                        return o2.compareTo(o1);
+                    }
+                }
+            });  
         }
         
         @Override
@@ -112,10 +127,27 @@ public class DataRetrieval {
         }
         
     }
+    
     static class PartitionIteratorComparator implements Comparator<PartitionIterator> {
+        final boolean ascending;
+        public PartitionIteratorComparator(boolean ascending) {
+            this.ascending = ascending;
+        }
+
         @Override
         public int compare(PartitionIterator pit1, PartitionIterator pit2) {
-            return Long.compare(pit1.key().segmentStart, pit2.key().segmentStart);
+            int c;
+            if(ascending){
+                c = Long.compare(pit1.key().segmentStart, pit2.key().segmentStart);
+            } else {
+                c= Long.compare(pit2.key().segmentStart, pit1.key().segmentStart);
+            }
+            
+            if(c!=0) {
+                return c;
+            }
+            //make sure the parameters are extracted in the order of their id (rather than some random order from PriorityQueue)
+            return Integer.compare(pit1.getParameterId(), pit2.getParameterId());
         }
     }
 }

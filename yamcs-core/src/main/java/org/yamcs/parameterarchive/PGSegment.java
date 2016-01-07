@@ -50,7 +50,12 @@ public class PGSegment {
      * @param sortedPvList
      */
     public void addRecord(long instant, List<ParameterValue> sortedPvList) {
-        if(consolidated) throw new IllegalStateException("PGSegment is consolidated");
+        if(consolidated) {
+            throw new IllegalStateException("PGSegment is consolidated");
+        }
+        if(sortedPvList.size()!=valueSegments.size()) {
+            throw new IllegalArgumentException("Wrong number of values passed: "+sortedPvList.size()+";expected "+valueSegments.size());
+        }
         
         int pos = timeSegment.add(instant);
         for(int i = 0;i<valueSegments.size(); i++) {

@@ -1,5 +1,6 @@
 package org.yamcs.parameterarchive;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.python.antlr.runtime.misc.IntArray;
@@ -14,8 +15,8 @@ class ParameterIdValueList {
     final long instant;
     final int parameterGroupId;
     
-    IntArray pids;
-    List<Value> values;
+    IntArray pids = new IntArray();
+    List<Value> values = new ArrayList<>();
     
     public ParameterIdValueList(long instant, int parameterGroupId) {
         this.instant = instant;
