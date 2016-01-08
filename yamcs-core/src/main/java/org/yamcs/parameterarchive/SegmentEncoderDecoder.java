@@ -2,10 +2,12 @@ package org.yamcs.parameterarchive;
 
 import java.nio.ByteBuffer;
 
-public class ValueSegmentEncoderDecoder {
+import org.yamcs.utils.DecodingException;
+
+public class SegmentEncoderDecoder {
     final byte VERSION =1;
     
-    public byte[] encode(ValueSegment valueSegment) {
+    public byte[] encode(BaseSegment valueSegment) {
         ByteBuffer bb = ByteBuffer.allocate(2+valueSegment.getMaxSerializedSize());
         bb.put(VERSION);
         bb.put(valueSegment.getFormatId());
@@ -22,7 +24,7 @@ public class ValueSegmentEncoderDecoder {
     }
     
     
-    public ValueSegment decode(byte[] buf, long segmentStart) throws DecodingException {
+    public BaseSegment decode(byte[] buf, long segmentStart) throws DecodingException {
         ByteBuffer bb = ByteBuffer.wrap(buf);
         byte version = bb.get();
         if(version!=VERSION) {
@@ -31,7 +33,7 @@ public class ValueSegmentEncoderDecoder {
      
         byte formatId = bb.get();
         
-        ValueSegment vs = ValueSegment.newValueSegment(formatId, segmentStart);
+        BaseSegment vs = BaseSegment.newValueSegment(formatId, segmentStart);
         vs.parseFrom(bb);
         return vs;
     }

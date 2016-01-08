@@ -8,11 +8,12 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.junit.Test;
+import org.yamcs.utils.DecodingException;
 import org.yamcs.utils.ValueUtility;
 
 public class FloatValueSegmentTest {
     @Test
-    public void test() throws IOException {
+    public void test() throws IOException, DecodingException {
         FloatValueSegment fvs = FloatValueSegment.consolidate(Arrays.asList(ValueUtility.getFloatValue((float)1.2), ValueUtility.getFloatValue((float)2.3), ValueUtility.getFloatValue((float) 3)));
         assertEquals(16, fvs.getMaxSerializedSize());
         

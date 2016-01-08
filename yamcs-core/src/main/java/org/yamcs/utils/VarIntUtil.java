@@ -37,12 +37,15 @@ public class VarIntUtil {
         bb.put((byte)(x & 0x7F));
     }
     
-    public static int readVarInt32(ByteBuffer bb) {
+    public static int readVarInt32(ByteBuffer bb) throws DecodingException {
         byte b = bb.get();
         int v = b &0x7F;
         for (int shift = 7; (b & 0x80) != 0; shift += 7) {
+            if(shift>28) throw new DecodingException("Invalid VarInt32: more than 5 bytes!");
+            
             b = bb.get();
             v |= (b & 0x7F) << shift;
+            
         }
         return v;
     }
@@ -62,7 +65,7 @@ public class VarIntUtil {
         writeVarInt32(bb, encodeZigZag(x));
     }
     
-    public static int readSignedVarInt32(ByteBuffer bb) {
+    public static int readSignedVarInt32(ByteBuffer bb) throws DecodingException {
         return decodeZigZag(readVarInt32(bb));
     }
     
@@ -137,18 +140,10 @@ public class VarIntUtil {
         bb.put(b);
     }
 
-    public static String readSizeDelimitedString(ByteBuffer bb) {
+    public static String readSizeDelimitedString(ByteBuffer bb) throws DecodingException {
         int l = readVarInt32(bb);
         byte[] b = new byte[l];
         bb.get(b);
         return new String(b, StandardCharsets.UTF_8);
     }
-
-   
-   
-
-  
-
-  
-  
 }

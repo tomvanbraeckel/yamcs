@@ -10,6 +10,7 @@ import java.util.List;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.yamcs.protobuf.Yamcs.Value;
+import org.yamcs.utils.DecodingException;
 import org.yamcs.utils.ValueUtility;
 
 public class StringValueSegmentTest {

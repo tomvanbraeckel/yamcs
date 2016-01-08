@@ -5,6 +5,7 @@ import java.util.PrimitiveIterator;
 
 import org.yamcs.protobuf.ValueHelper;
 import org.yamcs.protobuf.Yamcs.Value;
+import org.yamcs.utils.DecodingException;
 import org.yamcs.utils.SortedIntArray;
 import org.yamcs.utils.VarIntUtil;
 
@@ -204,9 +205,10 @@ public class SortedTimeSegment extends ValueSegment {
      * 
      * @param buf
      * @return
+     * @throws DecodingException 
      */
     @Override
-    public void parseFrom(ByteBuffer buf) {
+    public void parseFrom(ByteBuffer buf) throws DecodingException {
         int size = VarIntUtil.readVarInt32(buf);
         tsarray = new SortedIntArray(size);
         int s=0;

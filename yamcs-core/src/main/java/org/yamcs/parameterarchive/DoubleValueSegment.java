@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 import org.yamcs.protobuf.Yamcs.Value;
+import org.yamcs.utils.DecodingException;
 import org.yamcs.utils.ValueUtility;
 import org.yamcs.utils.VarIntUtil;
 
@@ -26,7 +27,7 @@ public class DoubleValueSegment extends ValueSegment {
     }
 
     @Override
-    public void parseFrom(ByteBuffer bb) {
+    public void parseFrom(ByteBuffer bb) throws DecodingException {
         int n = VarIntUtil.readVarInt32(bb);
         doubles = new double[n];
         

@@ -7,11 +7,12 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.junit.Test;
+import org.yamcs.utils.DecodingException;
 import org.yamcs.utils.ValueUtility;
 
 public class Uint64ValueSegmentTest {
     @Test
-    public void test() throws IOException {
+    public void test() throws IOException, DecodingException {
         UInt64ValueSegment fvs = UInt64ValueSegment.consolidate(Arrays.asList(ValueUtility.getUint64Value(1), ValueUtility.getUint64Value(2), ValueUtility.getUint64Value(3)));
         assertEquals(28, fvs.getMaxSerializedSize());
         

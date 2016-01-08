@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.yamcs.protobuf.Yamcs.Value;
+import org.yamcs.utils.DecodingException;
 import org.yamcs.utils.ValueUtility;
 import org.yamcs.utils.VarIntUtil;
 

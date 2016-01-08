@@ -26,6 +26,8 @@ public class TestParameterIdMap {
         
         int p3 = pidMap.get("/test1/bla", Value.Type.DOUBLE);
         assertTrue(p3 > p1);
+        int p10 = pidMap.get("/test1/bla", Value.Type.DOUBLE, Value.Type.SINT32);
+        assertTrue(p10 > p3);
         
         
         db.close();
@@ -40,6 +42,10 @@ public class TestParameterIdMap {
         
         int p6 = pidMap.get("/test2/bla", Value.Type.DOUBLE);
         assertTrue(p6 > p3);
+        
+        int p11 = pidMap.get("/test1/bla", Value.Type.DOUBLE, Value.Type.SINT32);
+        assertEquals(p10, p11);
+        
     }
 
 }

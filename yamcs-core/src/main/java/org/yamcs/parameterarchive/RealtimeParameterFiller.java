@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.yamcs.ParameterValue;
 import org.yamcs.YamcsServer;
 import org.yamcs.parameter.ParameterConsumer;
+import org.yamcs.protobuf.Yamcs.Value;
 import org.yamcs.time.TimeService;
 import org.yamcs.utils.SortedIntArray;
 import org.yamcs.utils.TimeEncoding;
@@ -231,7 +232,11 @@ public class RealtimeParameterFiller extends AbstractService implements Paramete
         List<ParameterValue> sortedPvList = new ArrayList<ParameterValue>();
 
         void add(ParameterValue pv) {
-            int parameterId = parameterIdMap.get(pv.getParameter().getQualifiedName(), pv.getEngValue().getType());
+            String fqn = pv.getParameter().getQualifiedName();
+            Value.Type engType = pv.getEngValue().getType();
+            Value.Type rawType = (pv.getRawValue()==null)? null: pv.getRawValue().getType();
+            int parameterId = parameterIdMap.get(fqn, engType, rawType);
+            
             int pos = parameterIdArray.insert(parameterId);
             sortedPvList.add(pos, pv);
         }

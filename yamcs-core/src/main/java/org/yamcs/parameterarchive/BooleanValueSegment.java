@@ -5,6 +5,7 @@ import java.util.BitSet;
 import java.util.List;
 
 import org.yamcs.protobuf.Yamcs.Value;
+import org.yamcs.utils.DecodingException;
 import org.yamcs.utils.ValueUtility;
 import org.yamcs.utils.VarIntUtil;
 
@@ -27,7 +28,7 @@ public class BooleanValueSegment extends ValueSegment {
     }
 
     @Override
-    public void parseFrom(ByteBuffer bb) {
+    public void parseFrom(ByteBuffer bb) throws DecodingException {
         int n = VarIntUtil.readVarInt32(bb);
         long[]la = new long[n];
         for(int i=0; i<n; i++) {

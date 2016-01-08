@@ -7,12 +7,13 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.junit.Test;
+import org.yamcs.utils.DecodingException;
 import org.yamcs.utils.ValueUtility;
 
 public class BooleanValueSegmentTest {
 
     @Test
-    public void test() throws IOException {
+    public void test() throws IOException, DecodingException {
         BooleanValueSegment bvs = BooleanValueSegment.consolidate(Arrays.asList(ValueUtility.getBooleanValue(true), ValueUtility.getBooleanValue(true), ValueUtility.getBooleanValue(false)));
         assertEquals(12, bvs.getMaxSerializedSize());
         

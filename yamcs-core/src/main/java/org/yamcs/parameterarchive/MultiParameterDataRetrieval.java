@@ -11,13 +11,14 @@ import org.rocksdb.RocksIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yamcs.parameterarchive.ParameterArchive.Partition;
+import org.yamcs.utils.DecodingException;
 
 
 public class MultiParameterDataRetrieval {
     final ParameterArchive parchive;
     final MultipleParameterValueRequest mpvr;
 
-    ValueSegmentEncoderDecoder vsEncoder = new ValueSegmentEncoderDecoder();
+    SegmentEncoderDecoder vsEncoder = new SegmentEncoderDecoder();
     private final Logger log = LoggerFactory.getLogger(MultiParameterDataRetrieval.class);
 
     public MultiParameterDataRetrieval(ParameterArchive parchive, MultipleParameterValueRequest mpvr) {

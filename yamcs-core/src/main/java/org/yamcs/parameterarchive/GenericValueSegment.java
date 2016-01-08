@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.yamcs.protobuf.Yamcs.Value;
 import org.yamcs.protobuf.Yamcs.Value.Type;
+import org.yamcs.utils.DecodingException;
 import org.yamcs.utils.VarIntUtil;
 
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -121,5 +122,29 @@ public class GenericValueSegment extends ValueSegment {
         }
         
         return r;
+    }
+
+
+
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        GenericValueSegment other = (GenericValueSegment) obj;
+        if (values == null) {
+            if (other.values != null)
+                return false;
+        } else if (!values.equals(other.values))
+            return false;
+        return true;
+    }
+
+    int size() {
+        return values.size();
     }
 }

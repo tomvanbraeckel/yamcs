@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.junit.Ignore;
 import org.junit.Test;
+import org.yamcs.utils.DecodingException;
 
 public class EnumValueSegmentTest {
     @Test

@@ -1,4 +1,4 @@
-package org.yamcs.parameterarchive;
+package org.yamcs.utils;
 
 public class DecodingException extends Exception {
     public DecodingException() {

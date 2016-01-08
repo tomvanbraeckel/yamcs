@@ -1,6 +1,7 @@
 package org.yamcs.parameterarchive;
 
 import org.rocksdb.RocksIterator;
+import org.yamcs.utils.DecodingException;
 
 /**
  * Iterates over the segments of one partition for a parameter_id, ParameterGroup_id, between a start and stop
@@ -16,7 +17,7 @@ public class PartitionIterator {
     private final int parameterId, parameterGroupId;
     private final long start, stop;
     private final boolean ascending;
-    ValueSegmentEncoderDecoder vsEncoder = new ValueSegmentEncoderDecoder();
+    SegmentEncoderDecoder vsEncoder = new SegmentEncoderDecoder();
     
     public PartitionIterator(RocksIterator iterator, int parameterId, int parameterGroupId, long start, long stop, boolean ascending) {
         this.parameterId = parameterId;
@@ -111,7 +112,7 @@ public class PartitionIterator {
     }
     
     ValueSegment value() throws DecodingException {
-        return vsEncoder.decode(iterator.value(), currentKey.segmentStart);
+        return (ValueSegment) vsEncoder.decode(iterator.value(), currentKey.segmentStart);
     } 
     
     boolean isValid() {

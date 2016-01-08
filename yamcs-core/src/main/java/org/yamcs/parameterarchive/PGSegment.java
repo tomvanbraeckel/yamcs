@@ -23,10 +23,13 @@ public class PGSegment {
     final SortedIntArray parameterIds;
     private SortedTimeSegment timeSegment;
     private List<GenericValueSegment> valueSegments;
+    private List<GenericValueSegment> rawValueSegments;
+    
     private List<ValueSegment> consolidatedValueSegments;
+    private List<ValueSegment> consolidatedRawValueSegments;
     
     private boolean consolidated = false;
-    
+    private final boolean storeRawValues = true;
     
     public PGSegment(int parameterGroupId, long segmentStart, SortedIntArray parameterIds) {
         this.parameterGroupId = parameterGroupId;
@@ -35,6 +38,9 @@ public class PGSegment {
         valueSegments = new ArrayList<>(parameterIds.size());
         for(int i=0; i<parameterIds.size(); i++) {
             valueSegments.add(new GenericValueSegment());
+            if(storeRawValues) {
+                rawValueSegments.add(new GenericValueSegment());
+            }
         }
     }
     
@@ -59,7 +65,12 @@ public class PGSegment {
         
         int pos = timeSegment.add(instant);
         for(int i = 0;i<valueSegments.size(); i++) {
-            valueSegments.get(i).add(pos, sortedPvList.get(i).getEngValue());
+            ParameterValue pv = sortedPvList.get(i);
+            valueSegments.get(i).add(pos, pv.getEngValue());
+            
+            if(storeRawValues && pv.getRawValue()!=null) {
+                rawValueSegments.get(i).add(pos, pv.getRawValue());
+            }
         }
     }
 
@@ -79,6 +90,20 @@ public class PGSegment {
         consolidatedValueSegments  = new ArrayList<ValueSegment>(valueSegments.size());
         for(GenericValueSegment gvs: valueSegments) {
             consolidatedValueSegments.add(gvs.consolidate());
+        }
+        if(storeRawValues) {
+            consolidatedRawValueSegments  = new ArrayList<ValueSegment>(valueSegments.size());
+            
+            //the raw values will only be stored if they are different than the engineering values
+            for(int i=0;i<valueSegments.size(); i++) {
+                GenericValueSegment rvs = rawValueSegments.get(i);
+                GenericValueSegment vs = valueSegments.get(i);
+                if((rvs.size()==0) || rvs.equals(vs)) {
+                    consolidatedRawValueSegments.add(null);
+                } else {
+                    consolidatedRawValueSegments.add(rvs.consolidate());
+                }
+            }
         }
     }
 

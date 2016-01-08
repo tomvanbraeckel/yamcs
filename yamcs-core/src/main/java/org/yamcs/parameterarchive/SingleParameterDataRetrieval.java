@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yamcs.parameterarchive.MultiParameterDataRetrieval.PartitionIteratorComparator;
 import org.yamcs.parameterarchive.ParameterArchive.Partition;
+import org.yamcs.utils.DecodingException;
 
 public class SingleParameterDataRetrieval {
     final private SingleParameterValueRequest spvr;
@@ -60,7 +61,7 @@ public class SingleParameterDataRetrieval {
                     log.error(msg);
                     throw new RuntimeException(msg);
                 }
-                ValueSegment valueSegment = pit.value();
+                BaseSegment valueSegment = pit.value();
                 retriveValuesFromSegment(timeSegment, valueSegment, spvr, consumer);
                 pit.next();
             }
@@ -91,7 +92,7 @@ public class SingleParameterDataRetrieval {
                 log.error(msg);
                 throw new RuntimeException(msg);
             }
-            ValueSegment valueSegment = pit.value();
+            BaseSegment valueSegment = pit.value();
             retriveValuesFromSegment(timeSegment, valueSegment, spvr, merger);
             pit.next();
             if(pit.isValid()) {
@@ -108,7 +109,7 @@ public class SingleParameterDataRetrieval {
 
 
 
-    private void retriveValuesFromSegment(SortedTimeSegment timeSegment, ValueSegment valueSegment, SingleParameterValueRequest pvr,
+    private void retriveValuesFromSegment(SortedTimeSegment timeSegment, BaseSegment valueSegment, SingleParameterValueRequest pvr,
             Consumer<ParameterValueArray> consumer) {
         int posStart, posStop;
         if(pvr.ascending) {

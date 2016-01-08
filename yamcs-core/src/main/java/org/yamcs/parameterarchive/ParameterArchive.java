@@ -21,6 +21,7 @@ import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yamcs.utils.DecodingException;
 import org.yamcs.yarch.YarchDatabase;
 
 public class ParameterArchive {
@@ -39,7 +40,7 @@ public class ParameterArchive {
 
     final String yamcsInstance;
     private TreeMap<Long, Partition> partitions = new TreeMap<Long, ParameterArchive.Partition>();
-    ValueSegmentEncoderDecoder vsEncoder = new ValueSegmentEncoderDecoder();
+    SegmentEncoderDecoder vsEncoder = new SegmentEncoderDecoder();
 
     public ParameterArchive(String instance) throws RocksDBException {
         this.yamcsInstance = instance;
@@ -195,7 +196,7 @@ public class ParameterArchive {
         //and then the consolidated value segments
         List<ValueSegment> consolidated = pgs.getConsolidatedValueSegments();
         for(int i=0; i<consolidated.size(); i++) {
-            ValueSegment vs= consolidated.get(i);
+            BaseSegment vs= consolidated.get(i);
             int parameterId = pgs.getParameterId(i);
             key = new SegmentKey(parameterId, pgs.getParameterGroupId(), pgs.getSegmentStart()).encode();
             value = vsEncoder.encode(vs);

@@ -8,11 +8,12 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.junit.Test;
+import org.yamcs.utils.DecodingException;
 import org.yamcs.utils.ValueUtility;
 
 public class Uint32ValueSegmentTest {
     @Test
-    public void test() throws IOException {
+    public void test() throws IOException, DecodingException {
         UInt32ValueSegment fvs = UInt32ValueSegment.consolidate(Arrays.asList(ValueUtility.getUint32Value(1), ValueUtility.getUint32Value(2), ValueUtility.getUint32Value(3)));
         assertEquals(16, fvs.getMaxSerializedSize());
         

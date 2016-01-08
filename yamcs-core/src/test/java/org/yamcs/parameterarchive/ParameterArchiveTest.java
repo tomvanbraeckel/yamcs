@@ -3,7 +3,6 @@ package org.yamcs.parameterarchive;
 import static org.junit.Assert.*;
 import static org.yamcs.parameterarchive.TestUtils.*;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -18,6 +17,7 @@ import org.yamcs.ParameterValue;
 import org.yamcs.YamcsServer;
 import org.yamcs.protobuf.Yamcs.Value;
 import org.yamcs.protobuf.Yamcs.Value.Type;
+import org.yamcs.utils.DecodingException;
 import org.yamcs.utils.FileUtils;
 import org.yamcs.utils.SortedIntArray;
 import org.yamcs.utils.TimeEncoding;
@@ -447,18 +447,6 @@ public class ParameterArchiveTest {
         MultiValueConsumer c = new MultiValueConsumer();
         mpdr.retrieve(c);
         return c.list;
-    }
-
-    @Test
-    public void testarrays() throws Exception {
-        String[] sa = new String[]{"A", "b", "c"};
-        
-        int [] la = new int[3];
-        Object o = la;
-        Object o1 = Array.newInstance(o.getClass().getComponentType(), 3);
-        
-        
-        System.out.println("o1.class: "+o1.getClass()+" o.class: "+o.getClass()+" la class: "+la.getClass());
     }
 
 

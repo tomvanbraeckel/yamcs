@@ -64,8 +64,8 @@ public class IntArray {
      * @return
      */
     public int get(int pos) {
-        if(pos >= length) throw new IndexOutOfBoundsException("Index: "+pos+" length: "+length);
-        
+        rangeCheck(pos);
+
         return a[pos];
     }
     
@@ -91,7 +91,15 @@ public class IntArray {
         return length;
     }
 
- 
+    public void set(int pos, int x) {
+        rangeCheck(pos);
+        a[pos] = x;
+    }
+    
+    private void rangeCheck(int pos) {
+        if(pos >= length) throw new IndexOutOfBoundsException("Index: "+pos+" length: "+length);
+    }
+    
     
     public String toString() {        
         StringBuilder b = new StringBuilder();
@@ -105,7 +113,6 @@ public class IntArray {
             b.append(", ");
         }
     }
-    
     
     @Override
     public int hashCode() {
@@ -138,4 +145,6 @@ public class IntArray {
        
         return true;
     }
+
+   
 }
