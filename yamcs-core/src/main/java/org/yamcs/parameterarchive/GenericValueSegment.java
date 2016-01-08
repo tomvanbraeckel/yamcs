@@ -106,4 +106,20 @@ public class GenericValueSegment extends ValueSegment {
     public Value get(int index) {
         return values.get(index);
     }
+    
+    @Override
+    public Value[] getRange(int posStart, int posStop, boolean ascending) {
+        Value[] r = new Value[posStop-posStart];
+        if(ascending) {
+            for(int i = posStart; i<posStop; i++) {
+                r[i-posStart] = values.get(i);
+            }
+        } else {
+            for(int i = posStop; i>posStart; i--) {
+                r[posStop-i] = values.get(i);
+            }
+        }
+        
+        return r;
+    }
 }

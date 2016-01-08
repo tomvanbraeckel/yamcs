@@ -56,5 +56,21 @@ public class BooleanValueSegment extends ValueSegment {
         }
         return bvs;
     }
+
+    @Override
+    public boolean[] getRange(int posStart, int posStop, boolean ascending) {
+        boolean[] r = new boolean[posStop-posStart];
+        if(ascending) {
+            for(int i = posStart; i<posStop; i++) {
+                r[i-posStart] = bitSet.get(i);
+            }
+        } else {
+            for(int i = posStop; i>posStart; i--) {
+                r[posStop-i] = bitSet.get(i);
+            }
+        }
+        
+        return r;
+    }
     
 }

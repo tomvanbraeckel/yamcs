@@ -48,6 +48,21 @@ public class UInt64ValueSegment extends ValueSegment {
         return 4+8*values.length; //4 for the size plus 8 for each element
     }
 
+    @Override
+    public long[] getRange(int posStart, int posStop, boolean ascending) {
+        long[] r = new long[posStop-posStart];
+        if(ascending) {
+            for(int i = posStart; i<posStop; i++) {
+                r[i-posStart] = values[i];
+            }
+        } else {
+            for(int i = posStop; i>posStart; i--) {
+                r[posStop-i] = values[i];
+            }
+        }
+        
+        return r;
+    }
 
     @Override
     public Value get(int index) {

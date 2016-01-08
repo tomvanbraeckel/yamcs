@@ -216,7 +216,7 @@ public class RealtimeParameterFiller extends AbstractService implements Paramete
         for(long segmentId: segments) {
             if(SortedTimeSegment.overlap(segmentId, pvr.start, pvr.stop)) {
                 Map<Integer, PGSegment> m = pgSegments.get(segmentId);
-                PGSegment pgs = m.get(pvr.parameterGroupId);
+                PGSegment pgs = m.get(pvr.parameterGroupIds[0]);
                 if(pgs==null) continue;
 
                 pgs.retrieveValues(pvr, consumer);

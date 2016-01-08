@@ -229,4 +229,18 @@ public class SortedTimeSegment extends ValueSegment {
     public long getSegmentEnd() {
         return getSegmentEnd(segmentStart);
     }
+
+    public long[] getRange(int posStart, int posStop, boolean ascending) {
+        long[] r = new long[posStop-posStart];
+        if(ascending) {
+            for(int i = posStart; i<posStop; i++) {
+                r[i-posStart] = tsarray.get(i)|segmentStart;
+            }
+        } else {
+            for(int i = posStop; i>posStart; i--) {
+                r[posStop-i] = tsarray.get(i)|segmentStart;
+            }
+        }
+        return r;
+    }
 }

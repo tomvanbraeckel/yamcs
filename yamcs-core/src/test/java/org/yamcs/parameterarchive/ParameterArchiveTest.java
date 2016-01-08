@@ -3,13 +3,17 @@ package org.yamcs.parameterarchive;
 import static org.junit.Assert.*;
 import static org.yamcs.parameterarchive.TestUtils.*;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.rocksdb.RocksDBException;
 import org.yamcs.ParameterValue;
 import org.yamcs.YamcsServer;
 import org.yamcs.protobuf.Yamcs.Value;
@@ -23,10 +27,12 @@ import org.yamcs.yarch.YarchDatabase;
 
 public class ParameterArchiveTest {
     String instance = "ParameterArchiveTest";
-    
+
     static MockupTimeService timeService;
     static Parameter p1, p2,p3,p4,p5;
-    
+    ParameterArchive parchive;
+    ParameterIdDb pidMap;
+    ParameterGroupIdDb pgidMap;
     @BeforeClass
     public static void beforeClass() {
         p1 = new Parameter("p1");
@@ -45,40 +51,46 @@ public class ParameterArchiveTest {
         YamcsServer.setMockupTimeService(timeService);
     }
 
-    
-    @Test
-    public void test1() throws Exception {
+    @Before
+    public void openDb() throws Exception {
         String dbroot = YarchDatabase.getInstance(instance).getRoot();
-        
+
         FileUtils.deleteRecursively(dbroot+"/ParameterArchive");
-        ParameterArchive parchive = new ParameterArchive(instance);
-        ParameterIdDb pidMap = parchive.getParameterIdMap();
-        ParameterGroupIdDb pgidMap = parchive.getParameterGroupIdMap();
+        parchive = new ParameterArchive(instance);
+        pidMap = parchive.getParameterIdMap();
+        ParameterGroupIdDb pgidMap= parchive.getParameterGroupIdMap();
         assertNotNull(pidMap);
         assertNotNull(pgidMap);
-        int p1id = pidMap.get("/test/p1", Type.BINARY);
-        
+    }
+
+    @After
+    public void closeDb() throws Exception {
         parchive.close();
-        
+    }
+
+    @Test
+    public void test1() throws Exception {
+        //create a parameter in the map
+        int p1id = pidMap.get("/test/p1", Type.BINARY);
+
+        //close and reopen the archive to check that the parameter is still there
+        parchive.close();
+
         parchive = new ParameterArchive(instance);
         pidMap = parchive.getParameterIdMap();
         pgidMap = parchive.getParameterGroupIdMap();
         assertNotNull(pidMap);
         assertNotNull(pgidMap);
         int p2id = pidMap.get("/test/p2", Type.SINT32);
-        
+
         assertFalse(p1id==p2id);
         assertEquals(p1id, pidMap.get("/test/p1", Type.BINARY));
     }
-    
-    
+
+
     @Test
     public void testSingleParameter() throws Exception{
-        String dbroot = YarchDatabase.getInstance(instance).getRoot();
-        FileUtils.deleteRecursively(dbroot+"/ParameterArchive");
 
-        ParameterArchive parchive = new ParameterArchive(instance);
-        
         ParameterValue pv1_0 = getParameterValue(p1, 100, "blala100");
 
 
@@ -86,64 +98,48 @@ public class ParameterArchiveTest {
 
         int pg1id = parchive.getParameterGroupIdMap().get(new int[]{p1id});
         PGSegment pgSegment1 = new PGSegment(pg1id, 0, new SortedIntArray(new int[] {p1id}));
-        
+
         pgSegment1.addRecord(100, Arrays.asList(pv1_0));
         ParameterValue pv1_1 = getParameterValue(p1, 200, "blala200");
         pgSegment1.addRecord(200, Arrays.asList(pv1_1));
-        
-        
+
+
         //ascending request on empty data
-        MyValueConsummer c0a = new MyValueConsummer();
-        SingleParameterValueRequest pvr0a = new SingleParameterValueRequest(0, 1000, pg1id, p1id, true);
-        parchive.retrieveValues(pvr0a, c0a);
-        assertEquals(0, c0a.times.size());
+        List<ParameterValueArray> l0a= retrieveSingleParamSingleGroup(0, 1000, p1id, pg1id, true);
+        assertEquals(0, l0a.size());
 
         //descending request on empty data
-        MyValueConsummer c0d = new MyValueConsummer();
-        SingleParameterValueRequest pvr0d = new SingleParameterValueRequest(0, 1000, pg1id, p1id, true);
-        parchive.retrieveValues(pvr0d, c0d);
-        assertEquals(0, c0d.times.size());
-        
+        List<ParameterValueArray> l0d = retrieveSingleParamSingleGroup(0, 1000,  p1id, pg1id, true);
+        assertEquals(0, l0d.size());
+
         pgSegment1.consolidate();
         parchive.writeToArchive(Arrays.asList(pgSegment1));
-        
-        //ascending request on two value
-        MyValueConsummer c4a = new MyValueConsummer();       
-        SingleParameterValueRequest pvr4a = new SingleParameterValueRequest(0, TimeEncoding.MAX_INSTANT, pg1id, p1id, true);
-        parchive.retrieveValues(pvr4a, c4a);
-        checkEquals(c4a, pv1_0, pv1_1);
-        
-        //descending request on two value
-        MyValueConsummer c4d = new MyValueConsummer();       
-        SingleParameterValueRequest pvr4d = new SingleParameterValueRequest(0, TimeEncoding.MAX_INSTANT, pg1id, p1id, false);
-        parchive.retrieveValues(pvr4d, c4d);
-        checkEquals(c4d, pv1_1, pv1_0);
-        
-        //ascending request on two value with start on first value
-        MyValueConsummer c5a = new MyValueConsummer();       
-        SingleParameterValueRequest pvr5a = new SingleParameterValueRequest(100, 1000, pg1id, p1id, true);
-        parchive.retrieveValues(pvr5a, c5a);
-        checkEquals(c5a, pv1_0, pv1_1);
-        
-        //descending request on two value with start on second value
-        MyValueConsummer c5d = new MyValueConsummer();       
-        SingleParameterValueRequest pvr5d = new SingleParameterValueRequest(0, 200, pg1id, p1id, false);
-        parchive.retrieveValues(pvr5d, c5d);
-        checkEquals(c5d, pv1_1, pv1_0);
-        
-        //ascending request on two value with start on the first value and stop on second 
-        MyValueConsummer c6a = new MyValueConsummer();       
-        SingleParameterValueRequest pvr6a = new SingleParameterValueRequest(100, 200, pg1id, p1id, true);
-        parchive.retrieveValues(pvr6a, c6a);
-        checkEquals(c6a, pv1_0);
-        
-        //descending request on two value with start on the second value and stop on first 
-        MyValueConsummer c6d = new MyValueConsummer();       
-        SingleParameterValueRequest pvr6d = new SingleParameterValueRequest(100, 200, pg1id, p1id, false);
-        parchive.retrieveValues(pvr6d, c6d);
-        checkEquals(c6d, pv1_1);
 
-        
+        //ascending request on two value
+        List<ParameterValueArray> l4a = retrieveSingleParamSingleGroup(0, TimeEncoding.MAX_INSTANT, p1id, pg1id , true);
+        checkEquals(l4a.get(0), pv1_0, pv1_1);
+
+        //descending request on two value
+        List<ParameterValueArray> l4d = retrieveSingleParamSingleGroup(0, TimeEncoding.MAX_INSTANT, p1id, pg1id, false);
+        checkEquals(l4d.get(0), pv1_1, pv1_0);
+
+        //ascending request on two value with start on first value
+        List<ParameterValueArray> l5a = retrieveSingleParamSingleGroup(100, 1000, p1id, pg1id, true);
+        checkEquals(l5a.get(0), pv1_0, pv1_1);
+
+        //descending request on two value with start on second value
+        List<ParameterValueArray> l5d = retrieveSingleParamSingleGroup(0, 200, p1id, pg1id , false);
+        checkEquals(l5d.get(0), pv1_1, pv1_0);
+
+        //ascending request on two value with start on the first value and stop on second 
+        List<ParameterValueArray> l6a = retrieveSingleParamSingleGroup(100, 200, p1id, pg1id,  true);
+        checkEquals(l6a.get(0), pv1_0);
+
+        //descending request on two value with start on the second value and stop on first 
+        List<ParameterValueArray> l6d = retrieveSingleParamSingleGroup(100, 200,  p1id, pg1id, false);
+        checkEquals(l6d.get(0), pv1_1);
+
+
         //new value in a different segment but same partition
         long t2 = SortedTimeSegment.getSegmentEnd(0)+100;
         PGSegment pgSegment2 = new PGSegment(pg1id, SortedTimeSegment.getSegmentStart(t2), new SortedIntArray(new int[] {p1id}));
@@ -151,7 +147,7 @@ public class ParameterArchiveTest {
         pgSegment2.addRecord(t2, Arrays.asList(pv1_2));
         pgSegment2.consolidate();
         parchive.writeToArchive(Arrays.asList(pgSegment2));
-                
+
         //new value in a different partition
         long t3 = ParameterArchive.Partition.getPartitionEnd(0)+100;
         PGSegment pgSegment3 = new PGSegment(pg1id, SortedTimeSegment.getSegmentStart(t3), new SortedIntArray(new int[] {p1id}));
@@ -159,35 +155,42 @@ public class ParameterArchiveTest {
         pgSegment3.addRecord(t3, Arrays.asList(pv1_3));
         pgSegment3.consolidate();
         parchive.writeToArchive(Arrays.asList(pgSegment3));
-         
 
-        //ascending request on four value
-        MyValueConsummer c7a = new MyValueConsummer();       
-        SingleParameterValueRequest pvr7a = new SingleParameterValueRequest(0, t3+1, pg1id, p1id, true);
-        parchive.retrieveValues(pvr7a, c7a);
-        checkEquals(c7a, pv1_0, pv1_1, pv1_2, pv1_3);
-        
-        //descending request on four value
-        MyValueConsummer c7d = new MyValueConsummer();       
-        SingleParameterValueRequest pvr7d = new SingleParameterValueRequest(0, t3+1, pg1id, p1id, false);
-        parchive.retrieveValues(pvr7d, c7d);
-        checkEquals(c7d, pv1_3, pv1_2, pv1_1, pv1_0);
-        
-        
+
+        //ascending request on four values
+        List<ParameterValueArray> l7a = retrieveSingleParamSingleGroup(0, t3+1, p1id, pg1id, true);
+        checkEquals(l7a.get(0), pv1_0, pv1_1);
+        checkEquals(l7a.get(1), pv1_2);
+        checkEquals(l7a.get(2), pv1_3);
+
+        //descending request on four values
+        List<ParameterValueArray> l7d = retrieveSingleParamSingleGroup(0, t3+1, p1id, pg1id, false);
+        checkEquals(l7d.get(0), pv1_3);
+        checkEquals(l7d.get(1), pv1_2);
+        checkEquals(l7d.get(2), pv1_1, pv1_0);
+
+
         //ascending request on the last partition
-        MyValueConsummer c8a = new MyValueConsummer();       
-        SingleParameterValueRequest pvr8a = new SingleParameterValueRequest(t3, t3+1, pg1id, p1id, true);
-        parchive.retrieveValues(pvr8a, c8a);
-        checkEquals(c8a, pv1_3);
-        
+        List<ParameterValueArray> l8a = retrieveSingleParamSingleGroup(t3, t3+1, p1id, pg1id, true);
+        checkEquals(l8a.get(0), pv1_3);
+
         //descending request on the last partition
-        MyValueConsummer c8d = new MyValueConsummer();       
-        SingleParameterValueRequest pvr8d = new SingleParameterValueRequest(t2, t3, pg1id, p1id, false);
-        parchive.retrieveValues(pvr8d, c8d);
-        checkEquals(c8d, pv1_3);
-        
+        List<ParameterValueArray> l8d = retrieveSingleParamSingleGroup(t2, t3, p1id, pg1id, false);
+        checkEquals(l8d.get(0), pv1_3);
+
+        parchive.close();
+
     }
-    
+
+    List<ParameterValueArray> retrieveSingleParamSingleGroup(long start, long stop, int parameterId, int parameterGroupId, boolean ascending) throws Exception {
+        //ascending request on empty data
+        SingleValueConsumer c = new SingleValueConsumer();
+        SingleParameterValueRequest spvr = new SingleParameterValueRequest(start, stop, parameterId, parameterGroupId, ascending);
+        SingleParameterDataRetrieval spdr = new SingleParameterDataRetrieval(parchive, spvr);
+        spdr.retrieve(c);
+        return c.list;
+    }
+
     ParameterValue getParameterValue(Parameter p, long instant, String sv) {
         ParameterValue pv = new ParameterValue(p);
         pv.setAcquisitionTime(instant);
@@ -195,147 +198,278 @@ public class ParameterArchiveTest {
         pv.setEngineeringValue(v);
         return pv;
     }
-    
-    
-    @Test
-    public void testMultipleParameter() throws Exception{
-        String dbroot = YarchDatabase.getInstance(instance).getRoot();
-        FileUtils.deleteRecursively(dbroot+"/ParameterArchive");
 
-        ParameterArchive parchive = new ParameterArchive(instance);
-        
-        ParameterValue pv1_0 = getParameterValue(p1, 100, "p1_blala100");
-        ParameterValue pv2_0 = getParameterValue(p2, 100, "p2_blala100");
+
+
+
+
+    @Test
+    public void testSingleParameterMultipleGroups() throws Exception{
+        ParameterValue pv1_0 = getParameterValue(p1, 100, "pv1_0");
+        ParameterValue pv2_0 = getParameterValue(p2, 100, "pv2_0");
+        ParameterValue pv1_1 = getParameterValue(p1, 200, "pv1_1");
+        ParameterValue pv1_2 = getParameterValue(p1, 300, "pv1_2");
 
 
         int p1id = parchive.getParameterIdMap().get(p1.getQualifiedName(), pv1_0.getEngValue().getType());
         int p2id = parchive.getParameterIdMap().get(p2.getQualifiedName(), pv2_0.getEngValue().getType());
-        
+
         int pg1id = parchive.getParameterGroupIdMap().get(new int[]{p1id, p2id});
         int pg2id = parchive.getParameterGroupIdMap().get(new int[]{p1id});
-        
+
+
+
+
         //ascending on empty db
-        MultipleParameterValueRequest mpvr0a = new MultipleParameterValueRequest(0, TimeEncoding.MAX_INSTANT, new int[]{p1id, p2id}, new int[]{pg1id, pg1id}, true);
-        DataRetrieval dr0a = new DataRetrieval(parchive, mpvr0a);
-        MultiValueConsumer c0a = new MultiValueConsumer();
-        dr0a.retrieve(c0a);
-        assertEquals(0, c0a.list.size());
-        
+        List<ParameterValueArray> l0a = retrieveSingleValueMultigroup(0, TimeEncoding.MAX_INSTANT, p1id, new int[]{pg1id, pg2id}, true); 
+        assertEquals(0, l0a.size());
         //descending on empty db
-        MultipleParameterValueRequest mpvr0d = new MultipleParameterValueRequest(0, TimeEncoding.MAX_INSTANT, new int[]{p1id, p2id}, new int[]{pg1id, pg1id}, false);
-        DataRetrieval dr0d = new DataRetrieval(parchive, mpvr0d);
-        MultiValueConsumer c0d = new MultiValueConsumer();
-        dr0d.retrieve(c0d);
-        assertEquals(0, c0d.list.size());
-        
-        ParameterValue pv1_1 = getParameterValue(p1, 200, "p1_blala200");
-        ParameterValue pv1_2 = getParameterValue(p1, 300, "p1_blala300");
-        
+        List<ParameterValueArray> l0d = retrieveSingleValueMultigroup(0, TimeEncoding.MAX_INSTANT, p1id, new int[]{pg1id, pg2id}, false); 
+        assertEquals(0, l0d.size());
+
+
         PGSegment pgSegment1 = new PGSegment(pg1id, 0, new SortedIntArray(new int[] {p1id, p2id}));
         pgSegment1.addRecord(100, Arrays.asList(pv1_0, pv2_0));
         pgSegment1.consolidate();
-        
+
         PGSegment pgSegment2 = new PGSegment(pg2id, 0, new SortedIntArray(new int[] {p1id}));
         pgSegment2.addRecord(200, Arrays.asList(pv1_1));
         pgSegment2.addRecord(300, Arrays.asList(pv1_2));
         pgSegment2.consolidate();
-        
+
         parchive.writeToArchive(Arrays.asList(pgSegment1, pgSegment2));
-        
-        //ascending, retrieving one parameter from he group of two
-        MultipleParameterValueRequest mpvr1a = new MultipleParameterValueRequest(0, TimeEncoding.MAX_INSTANT, new int[]{p1id}, new int[]{pg1id}, true);
-        DataRetrieval dr1a = new DataRetrieval(parchive, mpvr1a);
-        MultiValueConsumer c1a = new MultiValueConsumer();
-        dr1a.retrieve(c1a);
-        assertEquals(1, c1a.list.size());
-        checkEquals(c1a.list.get(0), 100, pv1_0);
-        
-        //descending, retrieving one parameter from the group of two
-        MultipleParameterValueRequest mpvr1d = new MultipleParameterValueRequest(0, TimeEncoding.MAX_INSTANT, new int[]{p1id}, new int[]{pg1id}, false);
-        DataRetrieval dr1d = new DataRetrieval(parchive, mpvr1d);
-        MultiValueConsumer c1d = new MultiValueConsumer();
-        dr1d.retrieve(c1d);
-        assertEquals(1, c1d.list.size());
-        checkEquals(c1a.list.get(0), 100, pv1_0);
-        
-        //ascending, retrieving one para from the group of one
-        MultipleParameterValueRequest mpvr2a = new MultipleParameterValueRequest(0, TimeEncoding.MAX_INSTANT, new int[]{p1id}, new int[]{pg2id}, true);
-        DataRetrieval dr2a = new DataRetrieval(parchive, mpvr2a);
-        MultiValueConsumer c2a = new MultiValueConsumer();
-        dr2a.retrieve(c2a);
-        assertEquals(2, c2a.list.size());
-        checkEquals(c2a.list.get(0), 200, pv1_1);
-        checkEquals(c2a.list.get(1), 300, pv1_2);
-        
-        //descending, retrieving one para from the group of one
-        MultipleParameterValueRequest mpvr2d = new MultipleParameterValueRequest(0, TimeEncoding.MAX_INSTANT, new int[]{p1id}, new int[]{pg2id}, false);
-        DataRetrieval dr2d = new DataRetrieval(parchive, mpvr2d);
-        MultiValueConsumer c2d = new MultiValueConsumer();
-        dr2d.retrieve(c2d);
-        assertEquals(2, c2d.list.size());
-        checkEquals(c2d.list.get(0), 300, pv1_2);
-        checkEquals(c2d.list.get(1), 200, pv1_1);
-        
-        
-        
-        //ascending retrieving two para
-        MultipleParameterValueRequest mpvr3a = new MultipleParameterValueRequest(0, TimeEncoding.MAX_INSTANT, new int[]{p1id, p2id}, new int[]{pg1id, pg1id}, true);
-        DataRetrieval dr3a = new DataRetrieval(parchive, mpvr3a);
-        MultiValueConsumer c3a = new MultiValueConsumer();
-        dr3a.retrieve(c3a);
-        assertEquals(1, c3a.list.size());
-        checkEquals(c3a.list.get(0), 100, pv1_0, pv2_0);
-        
-        //descending retrieving two para
-        MultipleParameterValueRequest mpvr3d = new MultipleParameterValueRequest(0, TimeEncoding.MAX_INSTANT, new int[]{p2id, p1id}, new int[]{pg1id, pg1id}, false);
-        DataRetrieval dr3d = new DataRetrieval(parchive, mpvr3d);
-        MultiValueConsumer c3d = new MultiValueConsumer();
-        dr3d.retrieve(c3d);
-        assertEquals(1, c3d.list.size());
-        checkEquals(c3d.list.get(0), 100, pv1_0, pv2_0);
-        
+
+        //ascending on 3 values from same segment
+        List<ParameterValueArray> l1a = retrieveSingleValueMultigroup(0, TimeEncoding.MAX_INSTANT, p1id, new int[]{pg1id, pg2id}, true); 
+        assertEquals(1, l1a.size());
+        checkEquals(l1a.get(0), pv1_0, pv1_1, pv1_2);
+
+        //descending on 3 values from same segment 
+        List<ParameterValueArray> l1d = retrieveSingleValueMultigroup(0, TimeEncoding.MAX_INSTANT, p1id, new int[]{pg1id, pg2id}, false); 
+        assertEquals(1, l1d.size());
+        checkEquals(l1d.get(0), pv1_2, pv1_1, pv1_0);
+
+
         //new value in a different segment but same partition
         long t2 = SortedTimeSegment.getSegmentEnd(0)+100;
         PGSegment pgSegment3 = new PGSegment(pg1id, SortedTimeSegment.getSegmentStart(t2), new SortedIntArray(new int[] {p1id, p2id}));
-        ParameterValue pv1_3 = getParameterValue(p1, t2, "p1_blala_t2");
-        ParameterValue pv2_1 = getParameterValue(p1, t2, "p1_blala_t2");
+        ParameterValue pv1_3 = getParameterValue(p1, t2, "pv1_3");
+        ParameterValue pv2_1 = getParameterValue(p1, t2, "pv2_1");
         pgSegment3.addRecord(t2, Arrays.asList(pv1_3, pv2_1));
         pgSegment3.consolidate();
         parchive.writeToArchive(Arrays.asList(pgSegment3));
-                
+
         //new value in a different partition
         long t3 = ParameterArchive.Partition.getPartitionEnd(0)+100;
         PGSegment pgSegment4 = new PGSegment(pg1id, SortedTimeSegment.getSegmentStart(t3), new SortedIntArray(new int[] {p1id, p2id}));
-        ParameterValue pv1_4 = getParameterValue(p1, t3, "p1_blalat3");
-        ParameterValue pv2_2 = getParameterValue(p1, t3, "p2_blalat3");
+        ParameterValue pv1_4 = getParameterValue(p1, t3, "pv1_4");
+        ParameterValue pv2_2 = getParameterValue(p1, t3, "pv2_2");
         pgSegment4.addRecord(t3, Arrays.asList(pv1_4, pv2_2));
         pgSegment4.consolidate();
         parchive.writeToArchive(Arrays.asList(pgSegment4));
-       
-        //ascending retrieving two para
-        MultipleParameterValueRequest mpvr4a = new MultipleParameterValueRequest(0, TimeEncoding.MAX_INSTANT, new int[]{p1id, p2id}, new int[]{pg1id, pg1id}, true);
-        DataRetrieval dr4a = new DataRetrieval(parchive, mpvr4a);
-        MultiValueConsumer c4a = new MultiValueConsumer();
-        dr4a.retrieve(c4a);
-        assertEquals(3, c4a.list.size());
-        checkEquals(c4a.list.get(0), 100, pv1_0, pv2_0);
-        checkEquals(c4a.list.get(1), t2, pv1_3, pv2_1);
-        checkEquals(c4a.list.get(2), t3, pv1_4, pv2_2);
-        
-        //descending retrieving two para
-        MultipleParameterValueRequest mpvr4d = new MultipleParameterValueRequest(0, TimeEncoding.MAX_INSTANT, new int[]{p2id, p1id}, new int[]{pg1id, pg1id}, false);
-        DataRetrieval dr4d = new DataRetrieval(parchive, mpvr4d);
-        MultiValueConsumer c4d = new MultiValueConsumer();
-        dr4d.retrieve(c4d);
-        assertEquals(3, c4d.list.size());
-        checkEquals(c4d.list.get(0), t3, pv1_4, pv2_2);
-        checkEquals(c4d.list.get(1), t2, pv1_3, pv2_1);
-        checkEquals(c4d.list.get(2), 100, pv1_0, pv2_0);
-        
+
+
+        //ascending on 5 values from three segments ascending
+        List<ParameterValueArray> l2a = retrieveSingleValueMultigroup(0, TimeEncoding.MAX_INSTANT, p1id, new int[]{pg1id, pg2id}, true); 
+        assertEquals(3, l2a.size());
+        checkEquals(l2a.get(0), pv1_0, pv1_1, pv1_2);
+        checkEquals(l2a.get(1), pv1_3);
+        checkEquals(l2a.get(2), pv1_4);
+
+        //descending on 3 values from three segments descending 
+        List<ParameterValueArray> l2d = retrieveSingleValueMultigroup(0, TimeEncoding.MAX_INSTANT, p1id, new int[]{pg1id, pg2id}, false); 
+        assertEquals(3, l2d.size());
+        checkEquals(l2d.get(0), pv1_4);
+        checkEquals(l2d.get(1), pv1_3);
+        checkEquals(l2d.get(2), pv1_2, pv1_1, pv1_0);
+
+        //partial retrieval from first segment ascending
+        List<ParameterValueArray> l3a = retrieveSingleValueMultigroup(101, TimeEncoding.MAX_INSTANT, p1id, new int[]{pg1id, pg2id}, true); 
+        assertEquals(3, l3a.size());
+        checkEquals(l3a.get(0), pv1_1, pv1_2);
+        checkEquals(l3a.get(1), pv1_3);
+        checkEquals(l3a.get(2), pv1_4);
+
+        //partial retrieval from first segment descending
+        List<ParameterValueArray> l3d = retrieveSingleValueMultigroup(101, TimeEncoding.MAX_INSTANT, p1id, new int[]{pg1id, pg2id}, false); 
+        assertEquals(3, l3d.size());
+        checkEquals(l3d.get(0), pv1_4);
+        checkEquals(l3d.get(1), pv1_3);
+        checkEquals(l3d.get(2), pv1_2, pv1_1);
+
+        //ascending with empty request inside existing segment
+        List<ParameterValueArray> l4a = retrieveSingleValueMultigroup(101, 102, p1id, new int[]{pg1id, pg2id}, true); 
+        assertEquals(0, l4a.size());
+
+        //descending with empty request inside existing segment
+        List<ParameterValueArray> l4d = retrieveSingleValueMultigroup(101, 102, p1id, new int[]{pg1id, pg2id}, false); 
+        assertEquals(0, l4d.size());
     }
-    
-    
-   
+
+
+    private List<ParameterValueArray> retrieveSingleValueMultigroup(long start, long stop, int parameterId, int[] parameterGroupIds, boolean ascending) throws RocksDBException, DecodingException {
+        SingleParameterValueRequest spvr = new SingleParameterValueRequest(start, stop, parameterId, parameterGroupIds, ascending);
+        SingleParameterDataRetrieval spdr = new SingleParameterDataRetrieval(parchive, spvr);
+        SingleValueConsumer svc = new SingleValueConsumer();
+        spdr.retrieve(svc);
+        return svc.list;
+    }
+
+    @Test
+    public void testMultipleParameters() throws Exception{
+
+        ParameterValue pv1_0 = getParameterValue(p1, 100, "pv1_0");
+        ParameterValue pv2_0 = getParameterValue(p2, 100, "pv2_0");
+        ParameterValue pv1_1 = getParameterValue(p1, 200, "pv1_1");
+        ParameterValue pv1_2 = getParameterValue(p1, 300, "pv1_2");
+
+
+
+        int p1id = parchive.getParameterIdMap().get(p1.getQualifiedName(), pv1_0.getEngValue().getType());
+        int p2id = parchive.getParameterIdMap().get(p2.getQualifiedName(), pv2_0.getEngValue().getType());
+
+        int pg1id = parchive.getParameterGroupIdMap().get(new int[]{p1id, p2id});
+        int pg2id = parchive.getParameterGroupIdMap().get(new int[]{p1id});
+
+        //ascending on empty db
+        List<ParameterIdValueList> l0a = retrieveMultipleParameters(0, TimeEncoding.MAX_INSTANT, new int[]{p1id, p2id}, new int[]{pg1id, pg1id}, true);
+        assertEquals(0, l0a.size());
+
+        //descending on empty db
+        List<ParameterIdValueList> l0d = retrieveMultipleParameters(0, TimeEncoding.MAX_INSTANT, new int[]{p1id, p2id}, new int[]{pg1id, pg1id}, false);
+        assertEquals(0, l0d.size());
+
+
+        PGSegment pgSegment1 = new PGSegment(pg1id, 0, new SortedIntArray(new int[] {p1id, p2id}));
+        pgSegment1.addRecord(100, Arrays.asList(pv1_0, pv2_0));
+        pgSegment1.consolidate();
+
+        PGSegment pgSegment2 = new PGSegment(pg2id, 0, new SortedIntArray(new int[] {p1id}));
+        pgSegment2.addRecord(200, Arrays.asList(pv1_1));
+        pgSegment2.addRecord(300, Arrays.asList(pv1_2));
+        pgSegment2.consolidate();
+
+        parchive.writeToArchive(Arrays.asList(pgSegment1, pgSegment2));
+
+        //ascending, retrieving one parameter from he group of two
+        List<ParameterIdValueList> l1a = retrieveMultipleParameters(0, TimeEncoding.MAX_INSTANT, new int[]{p1id}, new int[]{pg1id}, true);
+        assertEquals(1, l1a.size());
+        checkEquals(l1a.get(0), 100, pv1_0);
+
+        //descending, retrieving one parameter from the group of two
+        List<ParameterIdValueList> l1d = retrieveMultipleParameters(0, TimeEncoding.MAX_INSTANT, new int[]{p1id}, new int[]{pg1id}, false);
+        assertEquals(1, l1d.size());
+        checkEquals(l1d.get(0), 100, pv1_0);
+
+        //ascending, retrieving one para from the group of one
+        List<ParameterIdValueList> l2a = retrieveMultipleParameters(0, TimeEncoding.MAX_INSTANT, new int[]{p1id}, new int[]{pg2id}, true);
+        assertEquals(2, l2a.size());
+        checkEquals(l2a.get(0), 200, pv1_1);
+        checkEquals(l2a.get(1), 300, pv1_2);
+
+        //descending, retrieving one para from the group of one
+        List<ParameterIdValueList> l2d = retrieveMultipleParameters(0, TimeEncoding.MAX_INSTANT, new int[]{p1id}, new int[]{pg2id}, false);
+        assertEquals(2, l2d.size());
+        checkEquals(l2d.get(0), 300, pv1_2);
+        checkEquals(l2d.get(1), 200, pv1_1);
+
+
+
+        //ascending retrieving two para
+        List<ParameterIdValueList> l3a = retrieveMultipleParameters(0, TimeEncoding.MAX_INSTANT, new int[]{p1id, p2id}, new int[]{pg1id, pg1id}, true);
+        assertEquals(1, l3a.size());
+        checkEquals(l3a.get(0), 100, pv1_0, pv2_0);
+
+        //descending retrieving two para
+        List<ParameterIdValueList> l3d = retrieveMultipleParameters(0, TimeEncoding.MAX_INSTANT, new int[]{p2id, p1id}, new int[]{pg1id, pg1id}, false);
+        assertEquals(1, l3d.size());
+        checkEquals(l3d.get(0), 100, pv1_0, pv2_0);
+
+        //new value in a different segment but same partition
+        long t2 = SortedTimeSegment.getSegmentEnd(0)+100;
+        PGSegment pgSegment3 = new PGSegment(pg1id, SortedTimeSegment.getSegmentStart(t2), new SortedIntArray(new int[] {p1id, p2id}));
+        ParameterValue pv1_3 = getParameterValue(p1, t2, "pv1_3");
+        ParameterValue pv2_1 = getParameterValue(p1, t2, "pv2_1");
+        pgSegment3.addRecord(t2, Arrays.asList(pv1_3, pv2_1));
+        pgSegment3.consolidate();
+        parchive.writeToArchive(Arrays.asList(pgSegment3));
+
+        //new value in a different partition
+        long t3 = ParameterArchive.Partition.getPartitionEnd(0)+100;
+        PGSegment pgSegment4 = new PGSegment(pg1id, SortedTimeSegment.getSegmentStart(t3), new SortedIntArray(new int[] {p1id, p2id}));
+        ParameterValue pv1_4 = getParameterValue(p1, t3, "pv1_4");
+        ParameterValue pv2_2 = getParameterValue(p1, t3, "pv2_2");
+        pgSegment4.addRecord(t3, Arrays.asList(pv1_4, pv2_2));
+        pgSegment4.consolidate();
+        parchive.writeToArchive(Arrays.asList(pgSegment4));
+
+        //ascending retrieving two para
+        List<ParameterIdValueList> l4a = retrieveMultipleParameters(0, TimeEncoding.MAX_INSTANT, new int[]{p1id, p2id}, new int[]{pg1id, pg1id}, true);
+        assertEquals(3, l4a.size());
+        checkEquals(l4a.get(0), 100, pv1_0, pv2_0);
+        checkEquals(l4a.get(1), t2, pv1_3, pv2_1);
+        checkEquals(l4a.get(2), t3, pv1_4, pv2_2);
+
+        //descending retrieving two para
+        List<ParameterIdValueList> l4d = retrieveMultipleParameters(0, TimeEncoding.MAX_INSTANT, new int[]{p2id, p1id}, new int[]{pg1id, pg1id}, false);
+        assertEquals(3, l4d.size());
+        checkEquals(l4d.get(0), t3, pv1_4, pv2_2);
+        checkEquals(l4d.get(1), t2, pv1_3, pv2_1);
+        checkEquals(l4d.get(2), 100, pv1_0, pv2_0);
+
+
+
+        //ascending with empty request inside existing segment
+        List<ParameterIdValueList> l5a = retrieveMultipleParameters(101, 102, new int[]{p1id, p2id}, new int[]{pg1id, pg1id}, true);
+        assertEquals(0, l5a.size());
+
+        //descending with empty request inside existing segment
+        List<ParameterIdValueList> l5d = retrieveMultipleParameters(101, 102, new int[]{p2id, p1id}, new int[]{pg1id, pg1id}, false);
+        assertEquals(0, l5d.size());
+
+        // ascending retrieving two para limited time interval
+        List<ParameterIdValueList> l6a = retrieveMultipleParameters(t2, t2+1, new int[]{p1id, p2id}, new int[]{pg1id, pg1id}, true);
+        assertEquals(1, l6a.size());
+        checkEquals(l6a.get(0), t2, pv1_3, pv2_1);
+
+        //descending retrieving two para limited time interval
+        List<ParameterIdValueList> l6d = retrieveMultipleParameters(t2-1, t2, new int[]{p2id, p1id}, new int[]{pg1id, pg1id}, false);
+        assertEquals(1, l6d.size());
+        checkEquals(l6d.get(0), t2, pv1_3, pv2_1);
+
+        parchive.close();
+    }
+
+
+    List<ParameterIdValueList> retrieveMultipleParameters(long start, long stop, int[] parameterIds, int[] parameterGroupIds,  boolean ascending) throws Exception {
+        MultipleParameterValueRequest mpvr = new MultipleParameterValueRequest(start, stop, parameterIds, parameterGroupIds, ascending);
+        MultiParameterDataRetrieval mpdr = new MultiParameterDataRetrieval(parchive, mpvr);
+        MultiValueConsumer c = new MultiValueConsumer();
+        mpdr.retrieve(c);
+        return c.list;
+    }
+
+    @Test
+    public void testarrays() throws Exception {
+        String[] sa = new String[]{"A", "b", "c"};
+        
+        int [] la = new int[3];
+        Object o = la;
+        Object o1 = Array.newInstance(o.getClass().getComponentType(), 3);
+        
+        
+        System.out.println("o1.class: "+o1.getClass()+" o.class: "+o.getClass()+" la class: "+la.getClass());
+    }
+
+
+    class SingleValueConsumer implements Consumer<ParameterValueArray> {
+        List<ParameterValueArray> list = new ArrayList<>();
+        @Override
+        public void accept(ParameterValueArray x) {
+            list.add(x);
+        }
+
+    }
 
     class MultiValueConsumer implements Consumer<ParameterIdValueList> {
         List<ParameterIdValueList> list = new ArrayList<>();

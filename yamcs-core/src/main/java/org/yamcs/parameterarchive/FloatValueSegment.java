@@ -45,6 +45,21 @@ public class FloatValueSegment extends ValueSegment {
         return 4+4*floats.length;
     }
     
+    @Override
+    public float[] getRange(int posStart, int posStop, boolean ascending) {
+        float[] r = new float[posStop-posStart];
+        if(ascending) {
+            for(int i = posStart; i<posStop; i++) {
+                r[i-posStart] = floats[i];
+            }
+        } else {
+            for(int i = posStop; i>posStart; i--) {
+                r[posStop-i] = floats[i];
+            }
+        }
+        
+        return r;
+    }
     static FloatValueSegment consolidate(List<Value> values) {
         FloatValueSegment fvs = new FloatValueSegment();
         int n = values.size();

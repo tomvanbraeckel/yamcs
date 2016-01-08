@@ -54,4 +54,19 @@ public class UInt32ValueSegment extends ValueSegment {
         return ValueUtility.getUint32Value(values[index]);
     }
     
+    @Override
+    public int[] getRange(int posStart, int posStop, boolean ascending) {
+        int[] r = new int[posStop-posStart];
+        if(ascending) {
+            for(int i = posStart; i<posStop; i++) {
+                r[i-posStart] = values[i];
+            }
+        } else {
+            for(int i = posStop; i>posStart; i--) {
+                r[posStop-i] = values[i];  
+            }
+        }
+        
+        return r;
+    }
 }

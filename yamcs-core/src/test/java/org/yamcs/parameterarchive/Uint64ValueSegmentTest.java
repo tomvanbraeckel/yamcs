@@ -1,6 +1,6 @@
 package org.yamcs.parameterarchive;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -25,5 +25,8 @@ public class Uint64ValueSegmentTest {
         assertEquals(ValueUtility.getUint64Value(1), fvs1.get(0));
         assertEquals(ValueUtility.getUint64Value(2), fvs1.get(1));
         assertEquals(ValueUtility.getUint64Value(3), fvs1.get(2));
+        
+        assertArrayEquals(new long[]{1, 2,3}, fvs1.getRange(0, 3, true));
+        assertArrayEquals(new long[]{3, 2}, fvs1.getRange(0, 2, false));
     }
 }

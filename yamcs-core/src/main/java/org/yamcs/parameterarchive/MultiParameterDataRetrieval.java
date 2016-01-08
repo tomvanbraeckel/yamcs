@@ -13,20 +13,23 @@ import org.slf4j.LoggerFactory;
 import org.yamcs.parameterarchive.ParameterArchive.Partition;
 
 
-public class DataRetrieval {
+public class MultiParameterDataRetrieval {
     final ParameterArchive parchive;
     final MultipleParameterValueRequest mpvr;
 
     ValueSegmentEncoderDecoder vsEncoder = new ValueSegmentEncoderDecoder();
-    private final Logger log = LoggerFactory.getLogger(DataRetrieval.class);
+    private final Logger log = LoggerFactory.getLogger(MultiParameterDataRetrieval.class);
 
-    public DataRetrieval(ParameterArchive parchive, MultipleParameterValueRequest mpvr) {
+    public MultiParameterDataRetrieval(ParameterArchive parchive, MultipleParameterValueRequest mpvr) {
         this.parchive = parchive;
         this.mpvr = mpvr;
     }
 
     public void retrieve(Consumer<ParameterIdValueList> consumer) throws RocksDBException, DecodingException {
-        NavigableMap<Long, Partition> parts = parchive.getPartitions(mpvr.start, mpvr.stop);
+        long startPartitionId = Partition.getPartitionId(mpvr.start);
+        long stopPartitionId = Partition.getPartitionId(mpvr.stop);
+        
+        NavigableMap<Long, Partition> parts = parchive.getPartitions(startPartitionId, stopPartitionId);
         if(!mpvr.ascending) {
             parts = parts.descendingMap();
         }

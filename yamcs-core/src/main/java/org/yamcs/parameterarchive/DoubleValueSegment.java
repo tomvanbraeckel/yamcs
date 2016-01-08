@@ -55,4 +55,20 @@ public class DoubleValueSegment extends ValueSegment {
         }
         return fvs;
     }
+    
+    @Override
+    public double[] getRange(int posStart, int posStop, boolean ascending) {
+        double[] r = new double[posStop-posStart];
+        if(ascending) {
+            for(int i = posStart; i<posStop; i++) {
+                r[i-posStart] = doubles[i];
+            }
+        } else {
+            for(int i = posStop; i>posStart; i--) {
+                r[posStop-i] = doubles[i];
+            }
+        }
+        
+        return r;
+    }
 }

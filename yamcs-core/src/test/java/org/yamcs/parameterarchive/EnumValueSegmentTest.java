@@ -15,11 +15,9 @@ public class EnumValueSegmentTest {
     public void test1() throws DecodingException {
         EnumValueSegment evs = new EnumValueSegment(Arrays.asList("on", "on", "on", "off", "off", "on", "off"));
         int s = evs.getMaxSerializedSize();
-        System.out.println("max size: "+s);
         ByteBuffer bb = ByteBuffer.allocate(s);
         evs.writeTo(bb);
         int length = bb.position();
-        System.out.println("encoded size: "+length);
         
         EnumValueSegment evs1 = new EnumValueSegment();
         bb.rewind();
@@ -28,6 +26,8 @@ public class EnumValueSegmentTest {
         
         assertEquals(evs.values, evs1.values);
         
+        assertArrayEquals(new String[]{"on", "on", "on", "off"}, evs.getRange(0, 4, true));
+        assertArrayEquals(new String[]{"on", "off"}, evs1.getRange(3, 5, false));
     }
     
     

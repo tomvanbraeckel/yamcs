@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
-import java.util.function.Consumer;
 
 import org.rocksdb.ColumnFamilyDescriptor;
 import org.rocksdb.ColumnFamilyHandle;
@@ -227,59 +226,27 @@ public class ParameterArchive {
     }
 
 
-    public void retrieveValues(SingleParameterValueRequest pvr, Consumer<TimedValue> consumer) throws RocksDBException, DecodingException {
-        long startPartition = Partition.getPartitionId(pvr.start);
-        long stopPartition = Partition.getPartitionId(pvr.stop);
-
-        NavigableMap<Long,Partition> parts = getPartitions(startPartition, stopPartition);
-        if(!pvr.ascending) {
-            parts = parts.descendingMap();
-        }
-        for(Partition p:parts.values()) {
-            retrieveValuesFromPartition(p, pvr, consumer);
-        }
-    }
-
-
-
-    private void retrieveValuesFromPartition(Partition p, SingleParameterValueRequest pvr, Consumer<TimedValue> consumer) throws DecodingException, RocksDBException {
-        RocksIterator it = rdb.newIterator(p.dataCfh);
-        try {
-            PartitionIterator pit = new PartitionIterator(it, pvr.parameterId, pvr.parameterGroupId, pvr.start, pvr.stop, pvr.ascending);
-
-            while(pit.isValid()) {
-                SegmentKey key = pit.key();
-
-                
-                SortedTimeSegment timeSegment = getTimeSegment(p, key.segmentStart, pvr.parameterGroupId);
-                if(timeSegment==null) {
-                    String msg = "Cannot find a time segment for parameterGroupId="+pvr.parameterGroupId+" segmentStart = "+key.segmentStart+" despite having a value segment for parameterId: "+pvr.parameterId;
-                    log.error(msg);
-                    throw new RuntimeException(msg);
-                }
-                ValueSegment valueSegment = pit.value();
-                new SegmentIterator(timeSegment, valueSegment, pvr.start, pvr.stop, pvr.ascending).forEachRemaining(consumer);
-                pit.next();
-            }
-        } finally {
-            it.dispose();
-        }
-    }
-    
     /** 
      * a copy of the partitions from start to stop inclusive
      * @param startPartition
      * @param stopPartition
      * @return
      */
-    public NavigableMap<Long, Partition> getPartitions(long startPartition, long stopPartition) {
+    public NavigableMap<Long, Partition> getPartitions(long startPartitionId, long stopPartitionId) {
+        if((startPartitionId& Partition.TIMESTAMP_MASK) != 0) {
+            throw new IllegalArgumentException(startPartitionId+" is not a valid partition id");
+        }
+        if((stopPartitionId& Partition.TIMESTAMP_MASK) != 0) {
+            throw new IllegalArgumentException(stopPartitionId+" is not a valid partition id");
+        }
+        
         synchronized(partitions) {
             TreeMap<Long, Partition> r = new TreeMap<Long, ParameterArchive.Partition>();
-            r.putAll(partitions.subMap(startPartition, true, stopPartition, true));
+            r.putAll(partitions.subMap(startPartitionId, true, stopPartitionId, true));
             return r;
         }
     }
-    
+
     static class Partition {
         public static final int NUMBITS_MASK=31; //2^31 millisecons =~ 24 days per partition    
         public static final long TIMESTAMP_MASK = (0xFFFFFFFF>>>(32-NUMBITS_MASK));

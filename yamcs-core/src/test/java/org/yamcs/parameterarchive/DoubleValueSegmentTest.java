@@ -1,5 +1,6 @@
 package org.yamcs.parameterarchive;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
@@ -25,5 +26,8 @@ public class DoubleValueSegmentTest {
         assertEquals(ValueUtility.getDoubleValue(1.2), fvs1.get(0));
         assertEquals(ValueUtility.getDoubleValue(2.3), fvs1.get(1));
         assertEquals(ValueUtility.getDoubleValue(3), fvs1.get(2));
+
+        assertArrayEquals(new double[]{1.2, 2.3,3}, fvs1.getRange(0, 3, true), 1e-10);
+        assertArrayEquals(new double[]{3, 2.3}, fvs1.getRange(0, 2, false), 1e-10);
     }
 }

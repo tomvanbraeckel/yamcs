@@ -72,52 +72,7 @@ public class SegmentIterator {
             consumer.accept(new TimedValue(t, v));
         }
     }
-    /*
-    public void extractAscending(SortedTimeSegment timeSegment, ValueSegment valueSegment, long start, long stop, ValueConsumer consumer) {
-         int pos;
-         
-         if(start<timeSegment.getSegmentStart()) {
-             pos = 0;
-         } else {                          
-             pos = timeSegment.search(start);
-             if(pos<0) pos = -pos-1;
-         }
-         if(pos>=timeSegment.size()) return;
-                 
-         while(pos<timeSegment.size()) {
-             long t = timeSegment.getTime(pos);
-             if(t>=stop) break;
-             
-             Value v = valueSegment.get(pos);
-             pos++;
-         }
-     }
-    
-    
-     public void extractDescending(SortedTimeSegment timeSegment, ValueSegment valueSegment, long start, long stop, ValueConsumer consumer) {
-         int pos;
-         
-         if(stop >= timeSegment.getSegmentEnd()) {
-             pos = timeSegment.size()-1;
-         } else {
-             pos = timeSegment.search(stop);
-             if(pos<0) {
-                 pos = -pos-2;
-             }
-         }
-         if(pos<0) return;
-                 
-         while(pos>=0) {
-             long t = timeSegment.getTime(pos);
-             if(t <= start) break;
-             Value v = valueSegment.get(pos);
-             consumer.accept(parameterId, parameterGroupId, t, v);
-             pos--;
-         }
-         
-     }
-     */
-    
+        
     public interface SimpleValueConsumer {
         public void accept(long t, Value v);
     }

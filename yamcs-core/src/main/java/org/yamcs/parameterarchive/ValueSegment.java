@@ -52,7 +52,18 @@ public abstract class ValueSegment {
      * returns Value at position index
      */
     public abstract Value get(int index);
-
+    
+    /**
+     * returns an array containing the values in the range [posStart, posStop) if ascending or [posStop, posStart) if descending
+     * 
+     * 
+     * @param posStart
+     * @param posStop
+     * @param ascending
+     * @return
+     */
+    public abstract Object getRange(int posStart, int posStop, boolean ascending) ;
+    
     public byte getFormatId() {
         return formatId;
     }
@@ -83,4 +94,6 @@ public abstract class ValueSegment {
           throw new DecodingException("Invalid value format id "+formatId); 
         }
     }
+
+
 }
