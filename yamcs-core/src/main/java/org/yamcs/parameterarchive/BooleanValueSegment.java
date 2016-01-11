@@ -16,6 +16,14 @@ public class BooleanValueSegment extends ValueSegment {
     BooleanValueSegment() {
         super(FORMAT_ID_BooleanValueSegment);
     }
+    
+    
+    /**
+     * Add the parameter value on position pos
+     * @param pos
+     * @param parameterValue
+     */
+   
 
     @Override
     public void writeTo(ByteBuffer bb) {

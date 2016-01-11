@@ -61,8 +61,8 @@ message ParameterValue {
 }
 
 
-// used in the ParameterArchive to store the flags associated to one parameter value
-message ParameterValueFlag {
+// used in the ParameterArchive to store the status flags associated to one parameter value
+message ParameterStatus {
   optional AcquisitionStatus acquisitionStatus = 1;
   optional MonitoringResult monitoringResult = 2;
   // context-dependent ranges

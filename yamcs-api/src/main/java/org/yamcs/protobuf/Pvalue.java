@@ -2808,32 +2808,32 @@ public final class Pvalue {
     // @@protoc_insertion_point(class_scope:pvalue.ParameterValue)
   }
 
-  public interface ParameterValueFlagOrBuilder
+  public interface ParameterStatusOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
 
-    // optional .pvalue.AcquisitionStatus acquisitionStatus = 6;
+    // optional .pvalue.AcquisitionStatus acquisitionStatus = 1;
     /**
-     * <code>optional .pvalue.AcquisitionStatus acquisitionStatus = 6;</code>
+     * <code>optional .pvalue.AcquisitionStatus acquisitionStatus = 1;</code>
      */
     boolean hasAcquisitionStatus();
     /**
-     * <code>optional .pvalue.AcquisitionStatus acquisitionStatus = 6;</code>
+     * <code>optional .pvalue.AcquisitionStatus acquisitionStatus = 1;</code>
      */
     org.yamcs.protobuf.Pvalue.AcquisitionStatus getAcquisitionStatus();
 
-    // optional .pvalue.MonitoringResult monitoringResult = 8;
+    // optional .pvalue.MonitoringResult monitoringResult = 2;
     /**
-     * <code>optional .pvalue.MonitoringResult monitoringResult = 8;</code>
+     * <code>optional .pvalue.MonitoringResult monitoringResult = 2;</code>
      */
     boolean hasMonitoringResult();
     /**
-     * <code>optional .pvalue.MonitoringResult monitoringResult = 8;</code>
+     * <code>optional .pvalue.MonitoringResult monitoringResult = 2;</code>
      */
     org.yamcs.protobuf.Pvalue.MonitoringResult getMonitoringResult();
 
-    // repeated .mdb.AlarmRange alarmRange = 25;
+    // repeated .mdb.AlarmRange alarmRange = 3;
     /**
-     * <code>repeated .mdb.AlarmRange alarmRange = 25;</code>
+     * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
      *
      * <pre>
      * context-dependent ranges
@@ -2842,7 +2842,7 @@ public final class Pvalue {
     java.util.List<org.yamcs.protobuf.Mdb.AlarmRange> 
         getAlarmRangeList();
     /**
-     * <code>repeated .mdb.AlarmRange alarmRange = 25;</code>
+     * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
      *
      * <pre>
      * context-dependent ranges
@@ -2850,7 +2850,7 @@ public final class Pvalue {
      */
     org.yamcs.protobuf.Mdb.AlarmRange getAlarmRange(int index);
     /**
-     * <code>repeated .mdb.AlarmRange alarmRange = 25;</code>
+     * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
      *
      * <pre>
      * context-dependent ranges
@@ -2858,7 +2858,7 @@ public final class Pvalue {
      */
     int getAlarmRangeCount();
     /**
-     * <code>repeated .mdb.AlarmRange alarmRange = 25;</code>
+     * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
      *
      * <pre>
      * context-dependent ranges
@@ -2867,7 +2867,7 @@ public final class Pvalue {
     java.util.List<? extends org.yamcs.protobuf.Mdb.AlarmRangeOrBuilder> 
         getAlarmRangeOrBuilderList();
     /**
-     * <code>repeated .mdb.AlarmRange alarmRange = 25;</code>
+     * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
      *
      * <pre>
      * context-dependent ranges
@@ -2877,28 +2877,28 @@ public final class Pvalue {
         int index);
   }
   /**
-   * Protobuf type {@code pvalue.ParameterValueFlag}
+   * Protobuf type {@code pvalue.ParameterStatus}
    *
    * <pre>
-   * used in the ParameterArchive to store the flags associated to one parameter value
+   * used in the ParameterArchive to store the status flags associated to one parameter value
    * </pre>
    */
-  public static final class ParameterValueFlag extends
+  public static final class ParameterStatus extends
       com.google.protobuf.GeneratedMessage
-      implements ParameterValueFlagOrBuilder {
-    // Use ParameterValueFlag.newBuilder() to construct.
-    private ParameterValueFlag(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      implements ParameterStatusOrBuilder {
+    // Use ParameterStatus.newBuilder() to construct.
+    private ParameterStatus(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
       this.unknownFields = builder.getUnknownFields();
     }
-    private ParameterValueFlag(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+    private ParameterStatus(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
-    private static final ParameterValueFlag defaultInstance;
-    public static ParameterValueFlag getDefaultInstance() {
+    private static final ParameterStatus defaultInstance;
+    public static ParameterStatus getDefaultInstance() {
       return defaultInstance;
     }
 
-    public ParameterValueFlag getDefaultInstanceForType() {
+    public ParameterStatus getDefaultInstanceForType() {
       return defaultInstance;
     }
 
@@ -2908,7 +2908,7 @@ public final class Pvalue {
         getUnknownFields() {
       return this.unknownFields;
     }
-    private ParameterValueFlag(
+    private ParameterStatus(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -2931,29 +2931,29 @@ public final class Pvalue {
               }
               break;
             }
-            case 48: {
+            case 8: {
               int rawValue = input.readEnum();
               org.yamcs.protobuf.Pvalue.AcquisitionStatus value = org.yamcs.protobuf.Pvalue.AcquisitionStatus.valueOf(rawValue);
               if (value == null) {
-                unknownFields.mergeVarintField(6, rawValue);
+                unknownFields.mergeVarintField(1, rawValue);
               } else {
                 bitField0_ |= 0x00000001;
                 acquisitionStatus_ = value;
               }
               break;
             }
-            case 64: {
+            case 16: {
               int rawValue = input.readEnum();
               org.yamcs.protobuf.Pvalue.MonitoringResult value = org.yamcs.protobuf.Pvalue.MonitoringResult.valueOf(rawValue);
               if (value == null) {
-                unknownFields.mergeVarintField(8, rawValue);
+                unknownFields.mergeVarintField(2, rawValue);
               } else {
                 bitField0_ |= 0x00000002;
                 monitoringResult_ = value;
               }
               break;
             }
-            case 202: {
+            case 26: {
               if (!((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
                 alarmRange_ = new java.util.ArrayList<org.yamcs.protobuf.Mdb.AlarmRange>();
                 mutable_bitField0_ |= 0x00000004;
@@ -2978,69 +2978,69 @@ public final class Pvalue {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return org.yamcs.protobuf.Pvalue.internal_static_pvalue_ParameterValueFlag_descriptor;
+      return org.yamcs.protobuf.Pvalue.internal_static_pvalue_ParameterStatus_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return org.yamcs.protobuf.Pvalue.internal_static_pvalue_ParameterValueFlag_fieldAccessorTable
+      return org.yamcs.protobuf.Pvalue.internal_static_pvalue_ParameterStatus_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              org.yamcs.protobuf.Pvalue.ParameterValueFlag.class, org.yamcs.protobuf.Pvalue.ParameterValueFlag.Builder.class);
+              org.yamcs.protobuf.Pvalue.ParameterStatus.class, org.yamcs.protobuf.Pvalue.ParameterStatus.Builder.class);
     }
 
-    public static com.google.protobuf.Parser<ParameterValueFlag> PARSER =
-        new com.google.protobuf.AbstractParser<ParameterValueFlag>() {
-      public ParameterValueFlag parsePartialFrom(
+    public static com.google.protobuf.Parser<ParameterStatus> PARSER =
+        new com.google.protobuf.AbstractParser<ParameterStatus>() {
+      public ParameterStatus parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new ParameterValueFlag(input, extensionRegistry);
+        return new ParameterStatus(input, extensionRegistry);
       }
     };
 
     @java.lang.Override
-    public com.google.protobuf.Parser<ParameterValueFlag> getParserForType() {
+    public com.google.protobuf.Parser<ParameterStatus> getParserForType() {
       return PARSER;
     }
 
     private int bitField0_;
-    // optional .pvalue.AcquisitionStatus acquisitionStatus = 6;
-    public static final int ACQUISITIONSTATUS_FIELD_NUMBER = 6;
+    // optional .pvalue.AcquisitionStatus acquisitionStatus = 1;
+    public static final int ACQUISITIONSTATUS_FIELD_NUMBER = 1;
     private org.yamcs.protobuf.Pvalue.AcquisitionStatus acquisitionStatus_;
     /**
-     * <code>optional .pvalue.AcquisitionStatus acquisitionStatus = 6;</code>
+     * <code>optional .pvalue.AcquisitionStatus acquisitionStatus = 1;</code>
      */
     public boolean hasAcquisitionStatus() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     /**
-     * <code>optional .pvalue.AcquisitionStatus acquisitionStatus = 6;</code>
+     * <code>optional .pvalue.AcquisitionStatus acquisitionStatus = 1;</code>
      */
     public org.yamcs.protobuf.Pvalue.AcquisitionStatus getAcquisitionStatus() {
       return acquisitionStatus_;
     }
 
-    // optional .pvalue.MonitoringResult monitoringResult = 8;
-    public static final int MONITORINGRESULT_FIELD_NUMBER = 8;
+    // optional .pvalue.MonitoringResult monitoringResult = 2;
+    public static final int MONITORINGRESULT_FIELD_NUMBER = 2;
     private org.yamcs.protobuf.Pvalue.MonitoringResult monitoringResult_;
     /**
-     * <code>optional .pvalue.MonitoringResult monitoringResult = 8;</code>
+     * <code>optional .pvalue.MonitoringResult monitoringResult = 2;</code>
      */
     public boolean hasMonitoringResult() {
       return ((bitField0_ & 0x00000002) == 0x00000002);
     }
     /**
-     * <code>optional .pvalue.MonitoringResult monitoringResult = 8;</code>
+     * <code>optional .pvalue.MonitoringResult monitoringResult = 2;</code>
      */
     public org.yamcs.protobuf.Pvalue.MonitoringResult getMonitoringResult() {
       return monitoringResult_;
     }
 
-    // repeated .mdb.AlarmRange alarmRange = 25;
-    public static final int ALARMRANGE_FIELD_NUMBER = 25;
+    // repeated .mdb.AlarmRange alarmRange = 3;
+    public static final int ALARMRANGE_FIELD_NUMBER = 3;
     private java.util.List<org.yamcs.protobuf.Mdb.AlarmRange> alarmRange_;
     /**
-     * <code>repeated .mdb.AlarmRange alarmRange = 25;</code>
+     * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
      *
      * <pre>
      * context-dependent ranges
@@ -3050,7 +3050,7 @@ public final class Pvalue {
       return alarmRange_;
     }
     /**
-     * <code>repeated .mdb.AlarmRange alarmRange = 25;</code>
+     * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
      *
      * <pre>
      * context-dependent ranges
@@ -3061,7 +3061,7 @@ public final class Pvalue {
       return alarmRange_;
     }
     /**
-     * <code>repeated .mdb.AlarmRange alarmRange = 25;</code>
+     * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
      *
      * <pre>
      * context-dependent ranges
@@ -3071,7 +3071,7 @@ public final class Pvalue {
       return alarmRange_.size();
     }
     /**
-     * <code>repeated .mdb.AlarmRange alarmRange = 25;</code>
+     * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
      *
      * <pre>
      * context-dependent ranges
@@ -3081,7 +3081,7 @@ public final class Pvalue {
       return alarmRange_.get(index);
     }
     /**
-     * <code>repeated .mdb.AlarmRange alarmRange = 25;</code>
+     * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
      *
      * <pre>
      * context-dependent ranges
@@ -3110,13 +3110,13 @@ public final class Pvalue {
                         throws java.io.IOException {
       getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeEnum(6, acquisitionStatus_.getNumber());
+        output.writeEnum(1, acquisitionStatus_.getNumber());
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeEnum(8, monitoringResult_.getNumber());
+        output.writeEnum(2, monitoringResult_.getNumber());
       }
       for (int i = 0; i < alarmRange_.size(); i++) {
-        output.writeMessage(25, alarmRange_.get(i));
+        output.writeMessage(3, alarmRange_.get(i));
       }
       getUnknownFields().writeTo(output);
     }
@@ -3129,15 +3129,15 @@ public final class Pvalue {
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeEnumSize(6, acquisitionStatus_.getNumber());
+          .computeEnumSize(1, acquisitionStatus_.getNumber());
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeEnumSize(8, monitoringResult_.getNumber());
+          .computeEnumSize(2, monitoringResult_.getNumber());
       }
       for (int i = 0; i < alarmRange_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(25, alarmRange_.get(i));
+          .computeMessageSize(3, alarmRange_.get(i));
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -3151,53 +3151,53 @@ public final class Pvalue {
       return super.writeReplace();
     }
 
-    public static org.yamcs.protobuf.Pvalue.ParameterValueFlag parseFrom(
+    public static org.yamcs.protobuf.Pvalue.ParameterStatus parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static org.yamcs.protobuf.Pvalue.ParameterValueFlag parseFrom(
+    public static org.yamcs.protobuf.Pvalue.ParameterStatus parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static org.yamcs.protobuf.Pvalue.ParameterValueFlag parseFrom(byte[] data)
+    public static org.yamcs.protobuf.Pvalue.ParameterStatus parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static org.yamcs.protobuf.Pvalue.ParameterValueFlag parseFrom(
+    public static org.yamcs.protobuf.Pvalue.ParameterStatus parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static org.yamcs.protobuf.Pvalue.ParameterValueFlag parseFrom(java.io.InputStream input)
+    public static org.yamcs.protobuf.Pvalue.ParameterStatus parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return PARSER.parseFrom(input);
     }
-    public static org.yamcs.protobuf.Pvalue.ParameterValueFlag parseFrom(
+    public static org.yamcs.protobuf.Pvalue.ParameterStatus parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseFrom(input, extensionRegistry);
     }
-    public static org.yamcs.protobuf.Pvalue.ParameterValueFlag parseDelimitedFrom(java.io.InputStream input)
+    public static org.yamcs.protobuf.Pvalue.ParameterStatus parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return PARSER.parseDelimitedFrom(input);
     }
-    public static org.yamcs.protobuf.Pvalue.ParameterValueFlag parseDelimitedFrom(
+    public static org.yamcs.protobuf.Pvalue.ParameterStatus parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseDelimitedFrom(input, extensionRegistry);
     }
-    public static org.yamcs.protobuf.Pvalue.ParameterValueFlag parseFrom(
+    public static org.yamcs.protobuf.Pvalue.ParameterStatus parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return PARSER.parseFrom(input);
     }
-    public static org.yamcs.protobuf.Pvalue.ParameterValueFlag parseFrom(
+    public static org.yamcs.protobuf.Pvalue.ParameterStatus parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -3206,7 +3206,7 @@ public final class Pvalue {
 
     public static Builder newBuilder() { return Builder.create(); }
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(org.yamcs.protobuf.Pvalue.ParameterValueFlag prototype) {
+    public static Builder newBuilder(org.yamcs.protobuf.Pvalue.ParameterStatus prototype) {
       return newBuilder().mergeFrom(prototype);
     }
     public Builder toBuilder() { return newBuilder(this); }
@@ -3218,28 +3218,28 @@ public final class Pvalue {
       return builder;
     }
     /**
-     * Protobuf type {@code pvalue.ParameterValueFlag}
+     * Protobuf type {@code pvalue.ParameterStatus}
      *
      * <pre>
-     * used in the ParameterArchive to store the flags associated to one parameter value
+     * used in the ParameterArchive to store the status flags associated to one parameter value
      * </pre>
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements org.yamcs.protobuf.Pvalue.ParameterValueFlagOrBuilder {
+       implements org.yamcs.protobuf.Pvalue.ParameterStatusOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return org.yamcs.protobuf.Pvalue.internal_static_pvalue_ParameterValueFlag_descriptor;
+        return org.yamcs.protobuf.Pvalue.internal_static_pvalue_ParameterStatus_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return org.yamcs.protobuf.Pvalue.internal_static_pvalue_ParameterValueFlag_fieldAccessorTable
+        return org.yamcs.protobuf.Pvalue.internal_static_pvalue_ParameterStatus_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                org.yamcs.protobuf.Pvalue.ParameterValueFlag.class, org.yamcs.protobuf.Pvalue.ParameterValueFlag.Builder.class);
+                org.yamcs.protobuf.Pvalue.ParameterStatus.class, org.yamcs.protobuf.Pvalue.ParameterStatus.Builder.class);
       }
 
-      // Construct using org.yamcs.protobuf.Pvalue.ParameterValueFlag.newBuilder()
+      // Construct using org.yamcs.protobuf.Pvalue.ParameterStatus.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -3279,23 +3279,23 @@ public final class Pvalue {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return org.yamcs.protobuf.Pvalue.internal_static_pvalue_ParameterValueFlag_descriptor;
+        return org.yamcs.protobuf.Pvalue.internal_static_pvalue_ParameterStatus_descriptor;
       }
 
-      public org.yamcs.protobuf.Pvalue.ParameterValueFlag getDefaultInstanceForType() {
-        return org.yamcs.protobuf.Pvalue.ParameterValueFlag.getDefaultInstance();
+      public org.yamcs.protobuf.Pvalue.ParameterStatus getDefaultInstanceForType() {
+        return org.yamcs.protobuf.Pvalue.ParameterStatus.getDefaultInstance();
       }
 
-      public org.yamcs.protobuf.Pvalue.ParameterValueFlag build() {
-        org.yamcs.protobuf.Pvalue.ParameterValueFlag result = buildPartial();
+      public org.yamcs.protobuf.Pvalue.ParameterStatus build() {
+        org.yamcs.protobuf.Pvalue.ParameterStatus result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
         return result;
       }
 
-      public org.yamcs.protobuf.Pvalue.ParameterValueFlag buildPartial() {
-        org.yamcs.protobuf.Pvalue.ParameterValueFlag result = new org.yamcs.protobuf.Pvalue.ParameterValueFlag(this);
+      public org.yamcs.protobuf.Pvalue.ParameterStatus buildPartial() {
+        org.yamcs.protobuf.Pvalue.ParameterStatus result = new org.yamcs.protobuf.Pvalue.ParameterStatus(this);
         int from_bitField0_ = bitField0_;
         int to_bitField0_ = 0;
         if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
@@ -3321,16 +3321,16 @@ public final class Pvalue {
       }
 
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof org.yamcs.protobuf.Pvalue.ParameterValueFlag) {
-          return mergeFrom((org.yamcs.protobuf.Pvalue.ParameterValueFlag)other);
+        if (other instanceof org.yamcs.protobuf.Pvalue.ParameterStatus) {
+          return mergeFrom((org.yamcs.protobuf.Pvalue.ParameterStatus)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
 
-      public Builder mergeFrom(org.yamcs.protobuf.Pvalue.ParameterValueFlag other) {
-        if (other == org.yamcs.protobuf.Pvalue.ParameterValueFlag.getDefaultInstance()) return this;
+      public Builder mergeFrom(org.yamcs.protobuf.Pvalue.ParameterStatus other) {
+        if (other == org.yamcs.protobuf.Pvalue.ParameterStatus.getDefaultInstance()) return this;
         if (other.hasAcquisitionStatus()) {
           setAcquisitionStatus(other.getAcquisitionStatus());
         }
@@ -3375,11 +3375,11 @@ public final class Pvalue {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
-        org.yamcs.protobuf.Pvalue.ParameterValueFlag parsedMessage = null;
+        org.yamcs.protobuf.Pvalue.ParameterStatus parsedMessage = null;
         try {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (org.yamcs.protobuf.Pvalue.ParameterValueFlag) e.getUnfinishedMessage();
+          parsedMessage = (org.yamcs.protobuf.Pvalue.ParameterStatus) e.getUnfinishedMessage();
           throw e;
         } finally {
           if (parsedMessage != null) {
@@ -3390,22 +3390,22 @@ public final class Pvalue {
       }
       private int bitField0_;
 
-      // optional .pvalue.AcquisitionStatus acquisitionStatus = 6;
+      // optional .pvalue.AcquisitionStatus acquisitionStatus = 1;
       private org.yamcs.protobuf.Pvalue.AcquisitionStatus acquisitionStatus_ = org.yamcs.protobuf.Pvalue.AcquisitionStatus.ACQUIRED;
       /**
-       * <code>optional .pvalue.AcquisitionStatus acquisitionStatus = 6;</code>
+       * <code>optional .pvalue.AcquisitionStatus acquisitionStatus = 1;</code>
        */
       public boolean hasAcquisitionStatus() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
-       * <code>optional .pvalue.AcquisitionStatus acquisitionStatus = 6;</code>
+       * <code>optional .pvalue.AcquisitionStatus acquisitionStatus = 1;</code>
        */
       public org.yamcs.protobuf.Pvalue.AcquisitionStatus getAcquisitionStatus() {
         return acquisitionStatus_;
       }
       /**
-       * <code>optional .pvalue.AcquisitionStatus acquisitionStatus = 6;</code>
+       * <code>optional .pvalue.AcquisitionStatus acquisitionStatus = 1;</code>
        */
       public Builder setAcquisitionStatus(org.yamcs.protobuf.Pvalue.AcquisitionStatus value) {
         if (value == null) {
@@ -3417,7 +3417,7 @@ public final class Pvalue {
         return this;
       }
       /**
-       * <code>optional .pvalue.AcquisitionStatus acquisitionStatus = 6;</code>
+       * <code>optional .pvalue.AcquisitionStatus acquisitionStatus = 1;</code>
        */
       public Builder clearAcquisitionStatus() {
         bitField0_ = (bitField0_ & ~0x00000001);
@@ -3426,22 +3426,22 @@ public final class Pvalue {
         return this;
       }
 
-      // optional .pvalue.MonitoringResult monitoringResult = 8;
+      // optional .pvalue.MonitoringResult monitoringResult = 2;
       private org.yamcs.protobuf.Pvalue.MonitoringResult monitoringResult_ = org.yamcs.protobuf.Pvalue.MonitoringResult.DISABLED;
       /**
-       * <code>optional .pvalue.MonitoringResult monitoringResult = 8;</code>
+       * <code>optional .pvalue.MonitoringResult monitoringResult = 2;</code>
        */
       public boolean hasMonitoringResult() {
         return ((bitField0_ & 0x00000002) == 0x00000002);
       }
       /**
-       * <code>optional .pvalue.MonitoringResult monitoringResult = 8;</code>
+       * <code>optional .pvalue.MonitoringResult monitoringResult = 2;</code>
        */
       public org.yamcs.protobuf.Pvalue.MonitoringResult getMonitoringResult() {
         return monitoringResult_;
       }
       /**
-       * <code>optional .pvalue.MonitoringResult monitoringResult = 8;</code>
+       * <code>optional .pvalue.MonitoringResult monitoringResult = 2;</code>
        */
       public Builder setMonitoringResult(org.yamcs.protobuf.Pvalue.MonitoringResult value) {
         if (value == null) {
@@ -3453,7 +3453,7 @@ public final class Pvalue {
         return this;
       }
       /**
-       * <code>optional .pvalue.MonitoringResult monitoringResult = 8;</code>
+       * <code>optional .pvalue.MonitoringResult monitoringResult = 2;</code>
        */
       public Builder clearMonitoringResult() {
         bitField0_ = (bitField0_ & ~0x00000002);
@@ -3462,7 +3462,7 @@ public final class Pvalue {
         return this;
       }
 
-      // repeated .mdb.AlarmRange alarmRange = 25;
+      // repeated .mdb.AlarmRange alarmRange = 3;
       private java.util.List<org.yamcs.protobuf.Mdb.AlarmRange> alarmRange_ =
         java.util.Collections.emptyList();
       private void ensureAlarmRangeIsMutable() {
@@ -3476,7 +3476,7 @@ public final class Pvalue {
           org.yamcs.protobuf.Mdb.AlarmRange, org.yamcs.protobuf.Mdb.AlarmRange.Builder, org.yamcs.protobuf.Mdb.AlarmRangeOrBuilder> alarmRangeBuilder_;
 
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 25;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3490,7 +3490,7 @@ public final class Pvalue {
         }
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 25;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3504,7 +3504,7 @@ public final class Pvalue {
         }
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 25;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3518,7 +3518,7 @@ public final class Pvalue {
         }
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 25;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3539,7 +3539,7 @@ public final class Pvalue {
         return this;
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 25;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3557,7 +3557,7 @@ public final class Pvalue {
         return this;
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 25;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3577,7 +3577,7 @@ public final class Pvalue {
         return this;
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 25;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3598,7 +3598,7 @@ public final class Pvalue {
         return this;
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 25;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3616,7 +3616,7 @@ public final class Pvalue {
         return this;
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 25;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3634,7 +3634,7 @@ public final class Pvalue {
         return this;
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 25;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3652,7 +3652,7 @@ public final class Pvalue {
         return this;
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 25;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3669,7 +3669,7 @@ public final class Pvalue {
         return this;
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 25;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3686,7 +3686,7 @@ public final class Pvalue {
         return this;
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 25;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3697,7 +3697,7 @@ public final class Pvalue {
         return getAlarmRangeFieldBuilder().getBuilder(index);
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 25;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3711,7 +3711,7 @@ public final class Pvalue {
         }
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 25;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3726,7 +3726,7 @@ public final class Pvalue {
         }
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 25;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3737,7 +3737,7 @@ public final class Pvalue {
             org.yamcs.protobuf.Mdb.AlarmRange.getDefaultInstance());
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 25;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3749,7 +3749,7 @@ public final class Pvalue {
             index, org.yamcs.protobuf.Mdb.AlarmRange.getDefaultInstance());
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 25;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3774,15 +3774,15 @@ public final class Pvalue {
         return alarmRangeBuilder_;
       }
 
-      // @@protoc_insertion_point(builder_scope:pvalue.ParameterValueFlag)
+      // @@protoc_insertion_point(builder_scope:pvalue.ParameterStatus)
     }
 
     static {
-      defaultInstance = new ParameterValueFlag(true);
+      defaultInstance = new ParameterStatus(true);
       defaultInstance.initFields();
     }
 
-    // @@protoc_insertion_point(class_scope:pvalue.ParameterValueFlag)
+    // @@protoc_insertion_point(class_scope:pvalue.ParameterStatus)
   }
 
   public interface ParameterDataOrBuilder
@@ -6339,10 +6339,10 @@ public final class Pvalue {
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_pvalue_ParameterValue_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_pvalue_ParameterValueFlag_descriptor;
+    internal_static_pvalue_ParameterStatus_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_pvalue_ParameterValueFlag_fieldAccessorTable;
+      internal_static_pvalue_ParameterStatus_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
     internal_static_pvalue_ParameterData_descriptor;
   private static
@@ -6379,27 +6379,27 @@ public final class Pvalue {
       "imeUTC\030\013 \001(\t\022\031\n\021generationTimeUTC\030\014 \001(\t\022",
       "\026\n\016expirationTime\030\027 \001(\003\022\031\n\021expirationTim" +
       "eUTC\030\030 \001(\t\022#\n\nalarmRange\030\031 \003(\0132\017.mdb.Ala" +
-      "rmRange\"\243\001\n\022ParameterValueFlag\0224\n\021acquis" +
-      "itionStatus\030\006 \001(\0162\031.pvalue.AcquisitionSt" +
-      "atus\0222\n\020monitoringResult\030\010 \001(\0162\030.pvalue." +
-      "MonitoringResult\022#\n\nalarmRange\030\031 \003(\0132\017.m" +
-      "db.AlarmRange\"q\n\rParameterData\022)\n\tparame" +
-      "ter\030\001 \003(\0132\026.pvalue.ParameterValue\022\r\n\005gro" +
-      "up\030\002 \001(\t\022\026\n\016generationTime\030\003 \001(\003\022\016\n\006seqN" +
-      "um\030\004 \001(\005\"\201\001\n\nTimeSeries\022)\n\006sample\030\001 \003(\0132",
-      "\031.pvalue.TimeSeries.Sample\032H\n\006Sample\022\014\n\004" +
-      "time\030\001 \001(\t\022\013\n\003avg\030\002 \001(\001\022\013\n\003min\030\003 \001(\001\022\013\n\003" +
-      "max\030\004 \001(\001\022\t\n\001n\030\005 \001(\005*M\n\021AcquisitionStatu" +
-      "s\022\014\n\010ACQUIRED\020\000\022\020\n\014NOT_RECEIVED\020\001\022\013\n\007INV" +
-      "ALID\020\002\022\013\n\007EXPIRED\020\003*\234\002\n\020MonitoringResult" +
-      "\022\014\n\010DISABLED\020\000\022\r\n\tIN_LIMITS\020\001\022\t\n\005WATCH\020\007" +
-      "\022\r\n\tWATCH_LOW\020\010\022\016\n\nWATCH_HIGH\020\t\022\013\n\007WARNI" +
-      "NG\020\n\022\017\n\013WARNING_LOW\020\013\022\020\n\014WARNING_HIGH\020\014\022" +
-      "\014\n\010DISTRESS\020\r\022\020\n\014DISTRESS_LOW\020\016\022\021\n\rDISTR" +
-      "ESS_HIGH\020\017\022\014\n\010CRITICAL\020\020\022\020\n\014CRITICAL_LOW",
-      "\020\021\022\021\n\rCRITICAL_HIGH\020\022\022\n\n\006SEVERE\020\023\022\016\n\nSEV" +
-      "ERE_LOW\020\024\022\017\n\013SEVERE_HIGH\020\025B\024\n\022org.yamcs." +
-      "protobuf"
+      "rmRange\"\240\001\n\017ParameterStatus\0224\n\021acquisiti" +
+      "onStatus\030\001 \001(\0162\031.pvalue.AcquisitionStatu" +
+      "s\0222\n\020monitoringResult\030\002 \001(\0162\030.pvalue.Mon" +
+      "itoringResult\022#\n\nalarmRange\030\003 \003(\0132\017.mdb." +
+      "AlarmRange\"q\n\rParameterData\022)\n\tparameter" +
+      "\030\001 \003(\0132\026.pvalue.ParameterValue\022\r\n\005group\030" +
+      "\002 \001(\t\022\026\n\016generationTime\030\003 \001(\003\022\016\n\006seqNum\030" +
+      "\004 \001(\005\"\201\001\n\nTimeSeries\022)\n\006sample\030\001 \003(\0132\031.p",
+      "value.TimeSeries.Sample\032H\n\006Sample\022\014\n\004tim" +
+      "e\030\001 \001(\t\022\013\n\003avg\030\002 \001(\001\022\013\n\003min\030\003 \001(\001\022\013\n\003max" +
+      "\030\004 \001(\001\022\t\n\001n\030\005 \001(\005*M\n\021AcquisitionStatus\022\014" +
+      "\n\010ACQUIRED\020\000\022\020\n\014NOT_RECEIVED\020\001\022\013\n\007INVALI" +
+      "D\020\002\022\013\n\007EXPIRED\020\003*\234\002\n\020MonitoringResult\022\014\n" +
+      "\010DISABLED\020\000\022\r\n\tIN_LIMITS\020\001\022\t\n\005WATCH\020\007\022\r\n" +
+      "\tWATCH_LOW\020\010\022\016\n\nWATCH_HIGH\020\t\022\013\n\007WARNING\020" +
+      "\n\022\017\n\013WARNING_LOW\020\013\022\020\n\014WARNING_HIGH\020\014\022\014\n\010" +
+      "DISTRESS\020\r\022\020\n\014DISTRESS_LOW\020\016\022\021\n\rDISTRESS" +
+      "_HIGH\020\017\022\014\n\010CRITICAL\020\020\022\020\n\014CRITICAL_LOW\020\021\022",
+      "\021\n\rCRITICAL_HIGH\020\022\022\n\n\006SEVERE\020\023\022\016\n\nSEVERE" +
+      "_LOW\020\024\022\017\n\013SEVERE_HIGH\020\025B\024\n\022org.yamcs.pro" +
+      "tobuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -6412,11 +6412,11 @@ public final class Pvalue {
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_pvalue_ParameterValue_descriptor,
               new java.lang.String[] { "Id", "RawValue", "EngValue", "AcquisitionTime", "GenerationTime", "AcquisitionStatus", "ProcessingStatus", "MonitoringResult", "AcquisitionTimeUTC", "GenerationTimeUTC", "ExpirationTime", "ExpirationTimeUTC", "AlarmRange", });
-          internal_static_pvalue_ParameterValueFlag_descriptor =
+          internal_static_pvalue_ParameterStatus_descriptor =
             getDescriptor().getMessageTypes().get(1);
-          internal_static_pvalue_ParameterValueFlag_fieldAccessorTable = new
+          internal_static_pvalue_ParameterStatus_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_pvalue_ParameterValueFlag_descriptor,
+              internal_static_pvalue_ParameterStatus_descriptor,
               new java.lang.String[] { "AcquisitionStatus", "MonitoringResult", "AlarmRange", });
           internal_static_pvalue_ParameterData_descriptor =
             getDescriptor().getMessageTypes().get(2);

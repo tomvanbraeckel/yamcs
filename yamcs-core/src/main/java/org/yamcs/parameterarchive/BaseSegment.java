@@ -2,7 +2,6 @@ package org.yamcs.parameterarchive;
 
 import java.nio.ByteBuffer;
 
-import org.yamcs.protobuf.Yamcs.Value;
 import org.yamcs.utils.DecodingException;
 
 /**
@@ -34,14 +33,7 @@ public abstract class BaseSegment {
         this.formatId = formatId;
     }
     
-    /**
-     * Add the parameter value on position pos
-     * @param pos
-     * @param parameterValue
-     */
-    public void add(int pos, Value value) {
-    	throw new UnsupportedOperationException();
-    }
+  
 
     public abstract void writeTo(ByteBuffer buf);
     
@@ -72,7 +64,7 @@ public abstract class BaseSegment {
     public static BaseSegment newValueSegment(byte formatId, long segmentStart) throws DecodingException {
         switch(formatId) {
         case FORMAT_ID_FlagSegment:
-            return new FlagSegment();
+            return new ParameterStatusSegment();
         case FORMAT_ID_SortedTimeValueSegment:
             return new SortedTimeSegment(segmentStart);
         case FORMAT_ID_GenericValueSegment:
