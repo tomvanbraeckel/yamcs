@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yamcs.parameterarchive.MultiParameterDataRetrieval.PartitionIteratorComparator;
 import org.yamcs.parameterarchive.ParameterArchive.Partition;
+import org.yamcs.protobuf.Pvalue.ParameterStatus;
 import org.yamcs.utils.DecodingException;
 
 public class SingleParameterDataRetrieval {
@@ -50,19 +51,19 @@ public class SingleParameterDataRetrieval {
         int parameterGroupId = spvr.parameterGroupIds[0];
         RocksIterator it = parchive.getIterator(p);
         try {
-            PartitionIterator pit = new PartitionIterator(it, spvr.parameterId, parameterGroupId, spvr.start, spvr.stop, spvr.ascending);
+            PartitionIterator pit = new PartitionIterator(it, spvr.parameterId, parameterGroupId, spvr.start, spvr.stop, spvr.ascending,
+                    spvr.retrieveEngineeringValues, spvr.retrieveRawValues, spvr.retrieveParameterStatus);
 
             while(pit.isValid()) {
                 SegmentKey key = pit.key();
-
                 SortedTimeSegment timeSegment = parchive.getTimeSegment(p, key.segmentStart, parameterGroupId );
                 if(timeSegment==null) {
                     String msg = "Cannot find a time segment for parameterGroupId="+parameterGroupId+" segmentStart = "+key.segmentStart+" despite having a value segment for parameterId: "+spvr.parameterId;
                     log.error(msg);
                     throw new RuntimeException(msg);
                 }
-                BaseSegment valueSegment = pit.value();
-                retriveValuesFromSegment(timeSegment, valueSegment, spvr, consumer);
+                
+                retriveValuesFromSegment(timeSegment, pit, spvr, consumer);
                 pit.next();
             }
         } finally {
@@ -77,12 +78,14 @@ public class SingleParameterDataRetrieval {
 
         for(int i =0 ; i<spvr.parameterGroupIds.length; i++) {
             its[i] = parchive.getIterator(p);
-            PartitionIterator pi = new PartitionIterator(its[i], spvr.parameterId,  spvr.parameterGroupIds[i], spvr.start, spvr.stop, spvr.ascending);
+            PartitionIterator pi = new PartitionIterator(its[i], spvr.parameterId,  spvr.parameterGroupIds[i], spvr.start, spvr.stop, spvr.ascending,
+                    spvr.retrieveEngineeringValues, spvr.retrieveRawValues, spvr.retrieveParameterStatus);
+            
             if(pi.isValid()) {
                 queue.add(pi);
             }
         }
-        SegmentMerger merger = new SegmentMerger(spvr.ascending, consumer);
+        SegmentMerger merger = new SegmentMerger(spvr, consumer);
         while(!queue.isEmpty()) {
             PartitionIterator pit = queue.poll();
             SegmentKey key = pit.key();
@@ -92,8 +95,7 @@ public class SingleParameterDataRetrieval {
                 log.error(msg);
                 throw new RuntimeException(msg);
             }
-            BaseSegment valueSegment = pit.value();
-            retriveValuesFromSegment(timeSegment, valueSegment, spvr, merger);
+            retriveValuesFromSegment(timeSegment, pit, spvr, merger);
             pit.next();
             if(pit.isValid()) {
                 queue.add(pit);
@@ -109,8 +111,22 @@ public class SingleParameterDataRetrieval {
 
 
 
-    private void retriveValuesFromSegment(SortedTimeSegment timeSegment, BaseSegment valueSegment, SingleParameterValueRequest pvr,
-            Consumer<ParameterValueArray> consumer) {
+    private void retriveValuesFromSegment(SortedTimeSegment timeSegment, PartitionIterator pit, SingleParameterValueRequest pvr,   Consumer<ParameterValueArray> consumer) throws DecodingException {
+        
+        ValueSegment engValueSegment = pit.engValue();
+        ValueSegment rawValueSegment = pit.rawValue();
+        AbstractParameterStatusSegment parameterStatusSegment = pit.parameterStatus();
+        
+        //retrieveRawValues will be set only when the rawValues do exist-> if it is null means they are equal with the engValues
+        if((rawValueSegment == null) && (spvr.retrieveRawValues)) {
+            rawValueSegment = engValueSegment;
+        }
+        
+        if((engValueSegment==null) && (rawValueSegment==null) && (parameterStatusSegment==null)) {
+          return;
+        }
+        
+        
         int posStart, posStop;
         if(pvr.ascending) {
             if(pvr.start < timeSegment.getSegmentStart()) {
@@ -145,8 +161,20 @@ public class SingleParameterDataRetrieval {
         if(posStart>=posStop) return;
         
         long[] timestamps = timeSegment.getRange(posStart, posStop, pvr.ascending);
-        Object values = valueSegment.getRange(posStart, posStop, pvr.ascending);
-        ParameterValueArray pva = new ParameterValueArray(pvr.parameterId, timestamps, values);
+        Object engValues = null;
+        if(pvr.retrieveEngineeringValues) {
+            engValues = engValueSegment.getRange(posStart, posStop, pvr.ascending);
+        }
+        Object rawValues = null;
+        if(pvr.retrieveRawValues) {
+            rawValues = rawValueSegment.getRange(posStart, posStop, pvr.ascending);
+        }
+        
+        ParameterStatus[] paramStatus = null;
+        if(pvr.retrieveParameterStatus) {
+            paramStatus = parameterStatusSegment.getRange(posStart, posStop, pvr.ascending);
+        }
+        ParameterValueArray pva = new ParameterValueArray(pvr.parameterId, timestamps, engValues, rawValues, paramStatus);
         consumer.accept(pva);
     }
 
@@ -157,12 +185,12 @@ public class SingleParameterDataRetrieval {
      */
     static class SegmentMerger implements Consumer<ParameterValueArray>{
         final Consumer<ParameterValueArray> finalConsumer;
-        final boolean ascending;
+        final SingleParameterValueRequest spvr;
         ParameterValueArray mergedPva;
 
-        public SegmentMerger(final boolean ascending, Consumer<ParameterValueArray> finalConsumer) {
+        public SegmentMerger(SingleParameterValueRequest spvr, Consumer<ParameterValueArray> finalConsumer) {
             this.finalConsumer = finalConsumer;
-            this.ascending = ascending;
+            this.spvr = spvr;
         }
 
         @Override
@@ -182,9 +210,20 @@ public class SingleParameterDataRetrieval {
         private void merge(ParameterValueArray pva) {
 
             long[] timestamps = new long[pva.timestamps.length+mergedPva.timestamps.length];
-            Object values = merge(mergedPva.timestamps, pva.timestamps, mergedPva.values, pva.values, timestamps);
-
-            mergedPva = new ParameterValueArray(mergedPva.parameterId, timestamps, values);
+            Object engValues = null;
+            if(spvr.retrieveEngineeringValues) {
+                engValues = merge(mergedPva.timestamps, pva.timestamps, mergedPva.engValues, pva.engValues, timestamps);
+            }
+            Object rawValues = null;
+            if(spvr.retrieveRawValues) {
+                rawValues = merge(mergedPva.timestamps, pva.timestamps, mergedPva.rawValues, pva.rawValues, timestamps);
+            }
+            ParameterStatus[] paramStatus = null;
+            if(spvr.retrieveParameterStatus) {
+                paramStatus = (ParameterStatus[]) merge(mergedPva.timestamps, pva.timestamps, mergedPva.paramStatus, pva.paramStatus, timestamps);
+            }
+            
+            mergedPva = new ParameterValueArray(mergedPva.parameterId, timestamps, engValues, rawValues, paramStatus);
         }
 
 
@@ -214,7 +253,7 @@ public class SingleParameterDataRetrieval {
                     System.arraycopy(values1, i, mergedValues, k, n);
                     break;
                 }
-                if((ascending && t1<=t2) || (!ascending && t1>=t2)) {
+                if((spvr.ascending && t1<=t2) || (!spvr.ascending && t1>=t2)) {
                     mergedTimestamps[k] = t1;
                     //this is about 6 times slower than a direct assignment but I don't know other trick to avoid duplicating the merge method for each primitive type
                     System.arraycopy(values1, i, mergedValues, k, 1);

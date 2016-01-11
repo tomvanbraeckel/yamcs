@@ -17,109 +17,149 @@ public class PartitionIterator {
     private final int parameterId, parameterGroupId;
     private final long start, stop;
     private final boolean ascending;
-    SegmentEncoderDecoder vsEncoder = new SegmentEncoderDecoder();
-    
-    public PartitionIterator(RocksIterator iterator, int parameterId, int parameterGroupId, long start, long stop, boolean ascending) {
+    SegmentEncoderDecoder segmentEncoder = new SegmentEncoderDecoder();
+    private byte[] currentEngValueSegment;
+    private byte[] currentRawValueSegment;
+    private byte[] currentStatusSegment;
+    final boolean retrieveEngValue;
+    final boolean retrieveRawValue;
+    final boolean retrieveParameterStatus;
+
+
+    public PartitionIterator(RocksIterator iterator, int parameterId, int parameterGroupId, long start, long stop, boolean ascending, boolean retrieveEngValue, boolean retrieveRawValue, boolean retrieveParameterStatus) {
         this.parameterId = parameterId;
         this.parameterGroupId = parameterGroupId;
         this.start = start;
         this.stop = stop;
         this.ascending = ascending;
-        
+        this.retrieveEngValue = retrieveEngValue;
+        this.retrieveRawValue = retrieveRawValue;
+        this.retrieveParameterStatus = retrieveParameterStatus;
+
         this.iterator = iterator;
         if(ascending) {
             goToFirstAscending();
         } else {
             goToFirstDescending();
         }
+
     }
 
 
 
     private void goToFirstDescending() {
-        iterator.seek(new SegmentKey(parameterId, parameterGroupId, SortedTimeSegment.getSegmentStart(stop)).encode());
+        iterator.seek(new SegmentKey(parameterId, parameterGroupId, SortedTimeSegment.getSegmentStart(stop), Byte.MAX_VALUE).encode());
         if(!iterator.isValid()) {
             iterator.seekToLast();
         } else {
             currentKey = SegmentKey.decode(iterator.key());
-            if((currentKey.parameterGroupId == parameterGroupId) && (currentKey.parameterId==parameterId) && (currentKey.segmentStart<=stop)) {
-                valid = true;
-                return;
-            }  else {
+            if((currentKey.parameterGroupId != parameterGroupId) || (currentKey.parameterId!=parameterId) || currentKey.segmentStart>SortedTimeSegment.getSegmentStart(stop)) {
                 iterator.prev();
             }
         }
 
         if(!iterator.isValid()) {
             valid = false;
-            return;
-        } 
-        currentKey = SegmentKey.decode(iterator.key());
-        if((currentKey.parameterGroupId == parameterGroupId) && (currentKey.parameterId==parameterId)) {
-            valid = true;
         } else {
-            valid = false;
+            nextDescending();
         }
     }
 
     private void goToFirstAscending() {
-        iterator.seek(new SegmentKey(parameterId, parameterGroupId, SortedTimeSegment.getSegmentStart(start)).encode());
+        iterator.seek(new SegmentKey(parameterId, parameterGroupId, SortedTimeSegment.getSegmentStart(start), (byte)0).encode());
+        if(!iterator.isValid()) {
+            valid = false;
+        } else {
+            nextAscending();
+        }
+    }
+
+    public void next() {
         if(!iterator.isValid()) {
             valid = false;
             return;
         }
-        currentKey = SegmentKey.decode(iterator.key());
-        if((currentKey.parameterGroupId==parameterGroupId) && (currentKey.parameterId==parameterId) && (currentKey.segmentStart<=stop)) {
-            valid = true;
+        if(ascending) {
+            nextAscending();
         } else {
-            valid = false;
+            nextDescending();
         }
     }
 
-    void next() {
-        if(ascending) {
+    void nextAscending() {
+        currentKey = SegmentKey.decode(iterator.key());
+        if((currentKey.parameterGroupId != parameterGroupId) || (currentKey.parameterId != parameterId) || (currentKey.segmentStart>stop)) {
+            valid = false;
+            return;
+        } 
+        valid = true;
+
+        SegmentKey key = currentKey;
+        while((key.segmentStart == currentKey.segmentStart) && (key.parameterGroupId==parameterGroupId) && (key.parameterId==parameterId)) {
+            loadSegment(key.type);
             iterator.next();
-        } else {
-            iterator.prev();
-        }
-
-        if(!iterator.isValid()) {
-            valid = false;
-            return;
-        }
-        currentKey = SegmentKey.decode(iterator.key());
-
-        if((currentKey.parameterGroupId != parameterGroupId) || (currentKey.parameterId!=parameterId)) {
-            valid = false;
-            return;
-        }
-
-        if(ascending) {
-            if(currentKey.segmentStart>stop) {
-                valid = false;
-                return;
-            }
-        } else {
-            if(currentKey.segmentStart < SortedTimeSegment.getSegmentStart(start)) {
-                valid = false;
-                return;
+            if(iterator.isValid()) {
+                key = SegmentKey.decode(iterator.key());
+            } else {
+                break;
             }
         }
     }
-    
+
+    void nextDescending() {
+        currentKey = SegmentKey.decode(iterator.key());
+        if((currentKey.parameterGroupId!=parameterGroupId) || (currentKey.parameterId!=parameterId) || (currentKey.segmentStart < SortedTimeSegment.getSegmentStart(start))) {
+            valid = false;
+            return;
+        }
+        valid = true;
+        SegmentKey key = currentKey;
+
+        while((key.segmentStart == currentKey.segmentStart) && (key.parameterGroupId==parameterGroupId) && (key.parameterId==parameterId)) {
+            loadSegment(key.type);
+            iterator.prev();
+            if(iterator.isValid()) {
+                key = SegmentKey.decode(iterator.key());
+            } else {
+                break;
+            }
+        }
+    }
+
+    private void loadSegment(byte type) {
+        if((type==SegmentKey.TYPE_ENG_VALUE) && retrieveEngValue) {
+            currentEngValueSegment = iterator.value();
+        }
+        if((type==SegmentKey.TYPE_RAW_VALUE) && retrieveRawValue) {
+            currentRawValueSegment = iterator.value();
+        }
+        if((type==SegmentKey.TYPE_PARAMETER_STATUS) && retrieveParameterStatus) {
+            currentStatusSegment = iterator.value();
+        }
+    }
+
     SegmentKey key() {
         return currentKey;
     }
-    
-    ValueSegment value() throws DecodingException {
-        return (ValueSegment) vsEncoder.decode(iterator.value(), currentKey.segmentStart);
+
+    ValueSegment engValue() throws DecodingException {
+        if(currentEngValueSegment ==null) return null;
+        return (ValueSegment) segmentEncoder.decode(currentEngValueSegment, currentKey.segmentStart);
     } 
-    
+
+    ValueSegment rawValue() throws DecodingException {
+        if(currentRawValueSegment ==null) return null;
+        return (ValueSegment) segmentEncoder.decode(currentRawValueSegment, currentKey.segmentStart);
+    }
+
+    AbstractParameterStatusSegment parameterStatus() throws DecodingException {
+        if(currentStatusSegment==null) return null;
+        return (AbstractParameterStatusSegment) segmentEncoder.decode(currentStatusSegment, currentKey.segmentStart);
+    }
+
     boolean isValid() {
         return valid;
     }
-
-
 
     public int getParameterGroupId() {
         return parameterGroupId;

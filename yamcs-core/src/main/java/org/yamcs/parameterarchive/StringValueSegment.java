@@ -100,5 +100,10 @@ public class StringValueSegment extends ValueSegment {
         if(evsMaxSize<svsMaxSize) return evs;
         else return svs;
     }
+    
+    @Override
+    public String toString() {
+        return values.toString();
+    }
 
 }

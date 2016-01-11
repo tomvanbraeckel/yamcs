@@ -5,31 +5,27 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.yamcs.ParameterValue;
-import org.yamcs.protobuf.Mdb.AlarmLevelType;
-import org.yamcs.protobuf.Mdb.AlarmRange;
-import org.yamcs.protobuf.Pvalue.AcquisitionStatus;
-import org.yamcs.protobuf.Pvalue.MonitoringResult;
 import org.yamcs.protobuf.Pvalue.ParameterStatus;
 import org.yamcs.utils.DecodingException;
 import org.yamcs.utils.IntArray;
 import org.yamcs.utils.VarIntUtil;
-import org.yamcs.xtce.FloatRange;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 
 /**
- * Stores parameter status (validity, monitoring status, limits, etc) runlength encoded
+ * Stores parameter status runlength encoded
+ * 
  * @author nm
  *
  */
-public class ParameterStatusSegment extends BaseSegment {
+public class RLEParameterStatusSegment extends AbstractParameterStatusSegment {
     //count for each status in the status list - the sum of all counts is equal with size
     IntArray counts;
     List<ParameterStatus> statusList;
     int size = 0;
 
-    ParameterStatusSegment() {
-        super(FORMAT_ID_FlagSegment);
+    RLEParameterStatusSegment() {
+        super(FORMAT_ID_RLEParameterStatusSegment);
         statusList = new ArrayList<>();
         counts = new IntArray();
     }
@@ -37,8 +33,8 @@ public class ParameterStatusSegment extends BaseSegment {
 
     public void addParameterValue(ParameterValue pv) {
         addParameterStatus(getStatus(pv));
-
     }
+    
     void addParameterStatus(ParameterStatus ps) {
         boolean added = false;
 
@@ -70,18 +66,21 @@ public class ParameterStatusSegment extends BaseSegment {
 
         //then write the flags
         VarIntUtil.writeVarInt32(bb, statusList.size());
+        System.out.println("writing statusList.size: "+statusList.size());
+        
         for(int i=0; i<statusList.size(); i++) {
             ParameterStatus ps = statusList.get(i);
             byte[] b= ps.toByteArray();
             VarIntUtil.writeVarInt32(bb, b.length);
             bb.put(b);
-
         }
     }
 
     @Override
     public void parseFrom(ByteBuffer bb) throws DecodingException {
+        
         int countNum = VarIntUtil.readVarInt32(bb);
+        System.out.println("countNum: "+countNum);
         counts = new IntArray(countNum);
         size = 0;
 
@@ -91,8 +90,10 @@ public class ParameterStatusSegment extends BaseSegment {
             size+=c;
 
         }
-
+        System.out.println("size: "+size);
+        
         int flagNum = VarIntUtil.readVarInt32(bb);
+        System.out.println("flagNum: "+flagNum);
         statusList = new ArrayList<>(flagNum);
         try {
             for(int i=0; i<flagNum; i++) {
@@ -109,7 +110,7 @@ public class ParameterStatusSegment extends BaseSegment {
 
     @Override
     public int getMaxSerializedSize() {
-        int size = 4* counts.size();
+        int size = 4*counts.size();
         for(ParameterStatus pvf: statusList) {
             size+=pvf.getSerializedSize();
         }
@@ -190,39 +191,6 @@ public class ParameterStatusSegment extends BaseSegment {
         return statusList.get(i-1);
     }
 
-
-    private ParameterStatus getStatus(ParameterValue pv) {
-        ParameterStatus.Builder pvfb =  ParameterStatus.newBuilder();
-        AcquisitionStatus acq = pv.getAcquisitionStatus();
-        if(acq!=null) {
-            pvfb.setAcquisitionStatus(acq);
-        }
-        MonitoringResult mr = pv.getMonitoringResult();
-        if(mr!=null) {
-            pvfb.setMonitoringResult(mr);
-        }
-        addAlarmRange(pvfb, AlarmLevelType.WATCH, pv.getWatchRange());
-        addAlarmRange(pvfb, AlarmLevelType.WARNING, pv.getWarningRange());
-        addAlarmRange(pvfb, AlarmLevelType.DISTRESS, pv.getDistressRange());
-        addAlarmRange(pvfb, AlarmLevelType.CRITICAL, pv.getCriticalRange());
-        addAlarmRange(pvfb, AlarmLevelType.SEVERE, pv.getSevereRange());
-
-        return pvfb.build();
-
-    }
-
-
-    private void addAlarmRange(ParameterStatus.Builder pvfb, AlarmLevelType level, FloatRange range) {
-        if(range==null) return;
-
-        AlarmRange.Builder rangeb = AlarmRange.newBuilder();
-        rangeb.setLevel(level);
-        if (Double.isFinite(range.getMinInclusive()))
-            rangeb.setMinInclusive(range.getMinInclusive());
-        if (Double.isFinite(range.getMaxInclusive()))
-            rangeb.setMaxInclusive(range.getMaxInclusive());
-        pvfb.addAlarmRange(rangeb.build());
-    }
 
     /**
      * the number of elements in this segment (not taking into account any compression due to run-length encoding)

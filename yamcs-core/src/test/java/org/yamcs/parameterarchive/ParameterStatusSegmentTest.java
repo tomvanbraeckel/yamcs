@@ -21,7 +21,7 @@ public class ParameterStatusSegmentTest {
     
     @Test
     public void test() throws DecodingException {
-        ParameterStatusSegment pss = new ParameterStatusSegment();
+        RLEParameterStatusSegment pss = new RLEParameterStatusSegment();
         ParameterValue pv = TestUtils.getParameterValue(p1, 0, 120);
         pv.setMonitoringResult(MonitoringResult.CRITICAL);
         pv.setCriticalRange(new FloatRange(0, 100));
@@ -141,7 +141,7 @@ public class ParameterStatusSegmentTest {
         pss.writeTo(bb);
         assertEquals(80, bb.position());
         
-        ParameterStatusSegment pss1 = new ParameterStatusSegment();
+        RLEParameterStatusSegment pss1 = new RLEParameterStatusSegment();
         bb.rewind();
         pss1.parseFrom(bb);
         
@@ -162,7 +162,7 @@ public class ParameterStatusSegmentTest {
         ParameterStatus ps3 = ParameterStatus.newBuilder().addAlarmRange(AlarmRange.newBuilder().setMinInclusive(3).build()).build();
         
         
-        ParameterStatusSegment pss = new ParameterStatusSegment();
+        RLEParameterStatusSegment pss = new RLEParameterStatusSegment();
         pss.addParameterStatus(ps1);
         pss.addParameterStatus(ps1);
         
@@ -220,7 +220,7 @@ public class ParameterStatusSegmentTest {
         ParameterStatus ps3 = ParameterStatus.newBuilder().addAlarmRange(AlarmRange.newBuilder().setMinInclusive(3).build()).build();
         
         
-        ParameterStatusSegment pss = new ParameterStatusSegment();
+        RLEParameterStatusSegment pss = new RLEParameterStatusSegment();
         pss.addParameterStatus(ps1);
         pss.addParameterStatus(ps1);
         

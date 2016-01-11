@@ -17,7 +17,7 @@ import org.yamcs.utils.VarIntUtil;
  *
  */
 public class SortedTimeSegment extends ValueSegment {
-    public static final int NUMBITS_MASK=22; //2^22 millisecons =~ 70 minutes per segment    
+    public static final int NUMBITS_MASK = 22; //2^22 millisecons =~ 70 minutes per segment    
     public static final int TIMESTAMP_MASK = (0xFFFFFFFF>>>(32-NUMBITS_MASK));
     public static final long SEGMENT_MASK = ~TIMESTAMP_MASK;
     

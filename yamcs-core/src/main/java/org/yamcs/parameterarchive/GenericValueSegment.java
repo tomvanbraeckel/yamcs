@@ -24,7 +24,7 @@ public class GenericValueSegment extends ValueSegment {
     public GenericValueSegment() {
         super(FORMAT_ID_GenericValueSegment);
     }
-    
+
 
     @Override
     public void add(int pos, Value v) {
@@ -88,7 +88,7 @@ public class GenericValueSegment extends ValueSegment {
         case BINARY:
         case TIMESTAMP:
         case SINT64:
-        
+
         default:
             return this;
         }
@@ -107,7 +107,7 @@ public class GenericValueSegment extends ValueSegment {
     public Value get(int index) {
         return values.get(index);
     }
-    
+
     @Override
     public Value[] getRange(int posStart, int posStop, boolean ascending) {
         Value[] r = new Value[posStop-posStart];
@@ -120,7 +120,7 @@ public class GenericValueSegment extends ValueSegment {
                 r[posStop-i] = values.get(i);
             }
         }
-        
+
         return r;
     }
 
@@ -144,7 +144,7 @@ public class GenericValueSegment extends ValueSegment {
         return true;
     }
 
-    int size() {
+    public int size() {
         return values.size();
     }
 }

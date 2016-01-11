@@ -41,6 +41,8 @@ public class ParameterArchive {
     final String yamcsInstance;
     private TreeMap<Long, Partition> partitions = new TreeMap<Long, ParameterArchive.Partition>();
     SegmentEncoderDecoder vsEncoder = new SegmentEncoderDecoder();
+    public final static boolean STORE_RAW_VALUES = true; 
+    
 
     public ParameterArchive(String instance) throws RocksDBException {
         this.yamcsInstance = instance;
@@ -189,18 +191,37 @@ public class ParameterArchive {
 
         //write the time segment
         SortedTimeSegment timeSegment = pgs.getTimeSegment();
-        byte[] key = new SegmentKey(ParameterIdDb.TIMESTAMP_PARA_ID, pgs.getParameterGroupId(), pgs.getSegmentStart()).encode();
-        byte[] value = vsEncoder.encode(timeSegment);
-        writeBatch.put(p.dataCfh, key, value);
+        byte[] timeKey = new SegmentKey(ParameterIdDb.TIMESTAMP_PARA_ID, pgs.getParameterGroupId(), pgs.getSegmentStart(), SegmentKey.TYPE_ENG_VALUE).encode();
+        byte[] timeValue = vsEncoder.encode(timeSegment);
+        writeBatch.put(p.dataCfh, timeKey, timeValue);
 
         //and then the consolidated value segments
         List<ValueSegment> consolidated = pgs.getConsolidatedValueSegments();
+        List<ValueSegment> consolidatedRawValues = pgs.getConsolidatedRawValueSegments();
+        List<AbstractParameterStatusSegment> satusSegments = pgs.getConsolidatedParameterStatusSegments();
+        
         for(int i=0; i<consolidated.size(); i++) {
             BaseSegment vs= consolidated.get(i);
             int parameterId = pgs.getParameterId(i);
-            key = new SegmentKey(parameterId, pgs.getParameterGroupId(), pgs.getSegmentStart()).encode();
-            value = vsEncoder.encode(vs);
-            writeBatch.put(p.dataCfh, key, value);
+            byte[] engKey = new SegmentKey(parameterId, pgs.getParameterGroupId(), pgs.getSegmentStart(), SegmentKey.TYPE_ENG_VALUE).encode();
+            byte[] engValue = vsEncoder.encode(vs);
+            writeBatch.put(p.dataCfh, engKey, engValue);
+            System.out.println("writeToBatch consolidatedRawValues: "+consolidatedRawValues);
+            
+            if(STORE_RAW_VALUES && consolidatedRawValues!=null) {
+                ValueSegment rvs = consolidatedRawValues.get(i);
+                System.out.println("writeToBatch consolidatedRawValues rvs: "+rvs);
+                if(rvs!=null) {
+                    byte[] rawKey = new SegmentKey(parameterId, pgs.getParameterGroupId(), pgs.getSegmentStart(), SegmentKey.TYPE_RAW_VALUE).encode();
+                    byte[] rawValue = vsEncoder.encode(rvs);
+                    writeBatch.put(p.dataCfh, rawKey, rawValue);
+                            
+                }
+            }
+            AbstractParameterStatusSegment pss = satusSegments.get(i);
+            byte[] pssKey = new SegmentKey(parameterId, pgs.getParameterGroupId(), pgs.getSegmentStart(), SegmentKey.TYPE_PARAMETER_STATUS).encode();
+            byte[] pssValue = vsEncoder.encode(pss);
+            writeBatch.put(p.dataCfh, pssKey, pssValue);
         }
     }
 
@@ -279,7 +300,7 @@ public class ParameterArchive {
     }
 
     public SortedTimeSegment getTimeSegment(Partition p, long segmentStart,  int parameterGroupId) throws RocksDBException, DecodingException {
-        byte[] timeKey = new SegmentKey(ParameterIdDb.TIMESTAMP_PARA_ID, parameterGroupId, segmentStart).encode();
+        byte[] timeKey = new SegmentKey(ParameterIdDb.TIMESTAMP_PARA_ID, parameterGroupId, segmentStart, SegmentKey.TYPE_ENG_VALUE).encode();
         byte[] tv = rdb.get(p.dataCfh, timeKey);
         if(tv==null) {
             return null;

@@ -14,7 +14,8 @@ public abstract class BaseSegment {
     
     public static final byte FORMAT_ID_SortedTimeValueSegment = 1;
     
-    public static final byte FORMAT_ID_FlagSegment = 2;
+    public static final byte FORMAT_ID_RLEParameterStatusSegment = 2;
+    public static final byte FORMAT_ID_BasicParameterStatusSegment = 3;  
     
     public static final byte FORMAT_ID_GenericValueSegment = 10;
     public static final byte FORMAT_ID_SInt32ValueSegment = 11;
@@ -63,8 +64,10 @@ public abstract class BaseSegment {
 
     public static BaseSegment newValueSegment(byte formatId, long segmentStart) throws DecodingException {
         switch(formatId) {
-        case FORMAT_ID_FlagSegment:
-            return new ParameterStatusSegment();
+        case FORMAT_ID_RLEParameterStatusSegment:
+            return new RLEParameterStatusSegment();
+        case FORMAT_ID_BasicParameterStatusSegment:
+            return new BasicParameterStatusSegment();
         case FORMAT_ID_SortedTimeValueSegment:
             return new SortedTimeSegment(segmentStart);
         case FORMAT_ID_GenericValueSegment:

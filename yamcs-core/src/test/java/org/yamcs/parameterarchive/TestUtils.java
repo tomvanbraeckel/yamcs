@@ -3,6 +3,7 @@ package org.yamcs.parameterarchive;
 import static org.junit.Assert.*;
 
 import org.yamcs.ParameterValue;
+import org.yamcs.protobuf.Pvalue.ParameterStatus;
 import org.yamcs.protobuf.Yamcs.Value;
 import org.yamcs.protobuf.Yamcs.Value.Type;
 import org.yamcs.utils.ValueUtility;
@@ -31,9 +32,11 @@ public class TestUtils {
             ParameterValue pv = pvs[i];
             assertEquals(pv.getAcquisitionTime(), pva.timestamps[i]);
         }
+
         Value v = pvs[0].getEngValue();
         if(v.getType()==Type.STRING) {
-            String[] s = (String[]) pva.values;
+            assertTrue(pva.engValues instanceof String[]);
+            String[] s = (String[]) pva.engValues;
             for(int i=0; i<pvs.length; i++) {
                 v = pvs[i].getEngValue();
                 assertEquals(v.getStringValue(), s[i]);
@@ -41,10 +44,35 @@ public class TestUtils {
         } else {
             fail("check for "+v.getType()+" not implemented");
         }
-                 
-            //assertEquals(pv.getEngValue(), pva.values[i]);
+
+
+        Value rv = pvs[0].getRawValue();
+        if(rv!=null) {
+            if(rv.getType()==Type.UINT32) {
+                assertTrue(pva.rawValues instanceof int[]);
+                int[] s = (int[]) pva.rawValues;
+                for(int i=0; i<pvs.length; i++) {
+                    rv = pvs[i].getRawValue();
+                    assertEquals(rv.getUint32Value(), s[i]);
+                }            
+            } else {
+                fail("check for "+rv.getType()+" not implemented");
+            }
+        }
+        assertNotNull(pva.paramStatus);
+        System.out.println("pva.paramStatus: "+pva.paramStatus);
+        if(pva.paramStatus!=null) {
+            assertEquals(pvs.length, pva.paramStatus.length);
+            for(int i=0; i<pvs.length; i++) {
+                checkEquals(pvs[i], pva.paramStatus[i]);
+            }
+        }
     }
 
+
+    private static void checkEquals(ParameterValue parameterValue,    ParameterStatus parameterStatus) {
+        assertEquals(RLEParameterStatusSegment.getStatus(parameterValue), parameterStatus);
+    }
 
     static void checkEquals(ParameterIdValueList plist, long expectedTime, ParameterValue... expectedPv) {
         assertEquals(expectedTime, plist.instant);

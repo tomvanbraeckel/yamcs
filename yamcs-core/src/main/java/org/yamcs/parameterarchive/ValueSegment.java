@@ -21,4 +21,5 @@ public abstract class ValueSegment extends BaseSegment {
      * returns Value at position index
      */
     public abstract Value get(int index);
+
 }

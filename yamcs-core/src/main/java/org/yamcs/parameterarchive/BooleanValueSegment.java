@@ -81,5 +81,4 @@ public class BooleanValueSegment extends ValueSegment {
         
         return r;
     }
-    
 }

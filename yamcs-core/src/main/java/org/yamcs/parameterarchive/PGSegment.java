@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import org.yamcs.ParameterValue;
+import org.yamcs.protobuf.Yamcs.Value;
 import org.yamcs.utils.SortedIntArray;
 
 /**
@@ -24,20 +25,28 @@ public class PGSegment {
     private SortedTimeSegment timeSegment;
     private List<GenericValueSegment> valueSegments;
     private List<GenericValueSegment> rawValueSegments;
+    private List<BasicParameterStatusSegment> parameterStatusSegments;
     
     private List<ValueSegment> consolidatedValueSegments;
     private List<ValueSegment> consolidatedRawValueSegments;
+    private List<AbstractParameterStatusSegment> consolidatedParameterStatusSegments;
     
     private boolean consolidated = false;
-    private final boolean storeRawValues = true;
+    private final boolean storeRawValues = ParameterArchive.STORE_RAW_VALUES;
     
     public PGSegment(int parameterGroupId, long segmentStart, SortedIntArray parameterIds) {
         this.parameterGroupId = parameterGroupId;
         this.parameterIds = parameterIds;
         timeSegment = new SortedTimeSegment(segmentStart);
         valueSegments = new ArrayList<>(parameterIds.size());
+        parameterStatusSegments = new ArrayList<>(parameterIds.size());
+        if(storeRawValues) {
+            rawValueSegments = new ArrayList<>(parameterIds.size());
+        }
+        
         for(int i=0; i<parameterIds.size(); i++) {
             valueSegments.add(new GenericValueSegment());
+            parameterStatusSegments.add(new BasicParameterStatusSegment());
             if(storeRawValues) {
                 rawValueSegments.add(new GenericValueSegment());
             }
@@ -64,13 +73,14 @@ public class PGSegment {
         }
         
         int pos = timeSegment.add(instant);
-        for(int i = 0;i<valueSegments.size(); i++) {
+        for(int i = 0; i<valueSegments.size(); i++) {
             ParameterValue pv = sortedPvList.get(i);
             valueSegments.get(i).add(pos, pv.getEngValue());
-            
-            if(storeRawValues && pv.getRawValue()!=null) {
-                rawValueSegments.get(i).add(pos, pv.getRawValue());
+            Value rawValue = pv.getRawValue();
+            if(storeRawValues && (rawValue!=null)) {
+                rawValueSegments.get(i).add(pos, rawValue);
             }
+            parameterStatusSegments.get(i).addParameterValue(pos, pv);
         }
     }
 
@@ -105,6 +115,11 @@ public class PGSegment {
                 }
             }
         }
+        
+        consolidatedParameterStatusSegments =  new ArrayList<>(parameterStatusSegments.size());
+        for(int i=0;i<valueSegments.size(); i++) {
+            consolidatedParameterStatusSegments.add(parameterStatusSegments.get(i).consolidate());
+        }
     }
 
     public long getSegmentStart() {
@@ -125,5 +140,13 @@ public class PGSegment {
 
     public List<ValueSegment> getConsolidatedValueSegments() {
         return consolidatedValueSegments;
+    }
+
+    public List<ValueSegment> getConsolidatedRawValueSegments() {
+        return consolidatedRawValueSegments;
+    }
+
+    public List<AbstractParameterStatusSegment> getConsolidatedParameterStatusSegments() {
+        return consolidatedParameterStatusSegments;
     }
 }

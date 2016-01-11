@@ -91,16 +91,16 @@ public class ParameterArchiveTest {
     @Test
     public void testSingleParameter() throws Exception{
 
-        ParameterValue pv1_0 = getParameterValue(p1, 100, "blala100");
+        ParameterValue pv1_0 = getParameterValue(p1, 100, "blala100", 100);
 
 
-        int p1id = parchive.getParameterIdMap().get(p1.getQualifiedName(), pv1_0.getEngValue().getType());
+        int p1id = parchive.getParameterIdMap().get(p1.getQualifiedName(), pv1_0.getEngValue().getType(), pv1_0.getRawValue().getType());
 
         int pg1id = parchive.getParameterGroupIdMap().get(new int[]{p1id});
         PGSegment pgSegment1 = new PGSegment(pg1id, 0, new SortedIntArray(new int[] {p1id}));
 
         pgSegment1.addRecord(100, Arrays.asList(pv1_0));
-        ParameterValue pv1_1 = getParameterValue(p1, 200, "blala200");
+        ParameterValue pv1_1 = getParameterValue(p1, 200, "blala200", 200);
         pgSegment1.addRecord(200, Arrays.asList(pv1_1));
 
 
@@ -143,7 +143,7 @@ public class ParameterArchiveTest {
         //new value in a different segment but same partition
         long t2 = SortedTimeSegment.getSegmentEnd(0)+100;
         PGSegment pgSegment2 = new PGSegment(pg1id, SortedTimeSegment.getSegmentStart(t2), new SortedIntArray(new int[] {p1id}));
-        ParameterValue pv1_2 = getParameterValue(p1, t2, "blala_ns0");        
+        ParameterValue pv1_2 = getParameterValue(p1, t2, "pv1_2");        
         pgSegment2.addRecord(t2, Arrays.asList(pv1_2));
         pgSegment2.consolidate();
         parchive.writeToArchive(Arrays.asList(pgSegment2));
@@ -151,12 +151,13 @@ public class ParameterArchiveTest {
         //new value in a different partition
         long t3 = ParameterArchive.Partition.getPartitionEnd(0)+100;
         PGSegment pgSegment3 = new PGSegment(pg1id, SortedTimeSegment.getSegmentStart(t3), new SortedIntArray(new int[] {p1id}));
-        ParameterValue pv1_3 = getParameterValue(p1, t3, "blala200");
+        ParameterValue pv1_3 = getParameterValue(p1, t3, "pv1_3");
         pgSegment3.addRecord(t3, Arrays.asList(pv1_3));
         pgSegment3.consolidate();
         parchive.writeToArchive(Arrays.asList(pgSegment3));
 
 
+        System.out.println("---------------");
         //ascending request on four values
         List<ParameterValueArray> l7a = retrieveSingleParamSingleGroup(0, t3+1, p1id, pg1id, true);
         checkEquals(l7a.get(0), pv1_0, pv1_1);
@@ -186,6 +187,8 @@ public class ParameterArchiveTest {
         //ascending request on empty data
         SingleValueConsumer c = new SingleValueConsumer();
         SingleParameterValueRequest spvr = new SingleParameterValueRequest(start, stop, parameterId, parameterGroupId, ascending);
+        spvr.setRetrieveRawValues(true);
+        spvr.setRetrieveParameterStatus(true);
         SingleParameterDataRetrieval spdr = new SingleParameterDataRetrieval(parchive, spvr);
         spdr.retrieve(c);
         return c.list;
@@ -199,6 +202,14 @@ public class ParameterArchiveTest {
         return pv;
     }
 
+    ParameterValue getParameterValue(Parameter p, long instant, String sv, int rv) {
+        ParameterValue pv = new ParameterValue(p);
+        pv.setAcquisitionTime(instant);
+        Value v = ValueUtility.getStringValue(sv);
+        pv.setEngineeringValue(v);
+        pv.setRawValue(ValueUtility.getUint32Value(rv));
+        return pv;
+    }
 
 
 
@@ -309,6 +320,7 @@ public class ParameterArchiveTest {
 
     private List<ParameterValueArray> retrieveSingleValueMultigroup(long start, long stop, int parameterId, int[] parameterGroupIds, boolean ascending) throws RocksDBException, DecodingException {
         SingleParameterValueRequest spvr = new SingleParameterValueRequest(start, stop, parameterId, parameterGroupIds, ascending);
+        spvr.setRetrieveParameterStatus(true);
         SingleParameterDataRetrieval spdr = new SingleParameterDataRetrieval(parchive, spvr);
         SingleValueConsumer svc = new SingleValueConsumer();
         spdr.retrieve(svc);
@@ -454,6 +466,7 @@ public class ParameterArchiveTest {
         List<ParameterValueArray> list = new ArrayList<>();
         @Override
         public void accept(ParameterValueArray x) {
+            System.out.println("received: engValues: "+x.engValues+" rawValues: "+x.rawValues+" paramStatus: "+x.paramStatus);
             list.add(x);
         }
 

@@ -48,7 +48,7 @@ public class MultiParameterDataRetrieval {
         
         for(int i =0 ; i<mpvr.parameterIds.length; i++) {
             its[i] = parchive.getIterator(p);
-            PartitionIterator pi = new PartitionIterator(its[i], mpvr.parameterIds[i],  mpvr.parameterGroupIds[i], mpvr.start, mpvr.stop, mpvr.ascending);
+            PartitionIterator pi = new PartitionIterator(its[i], mpvr.parameterIds[i],  mpvr.parameterGroupIds[i], mpvr.start, mpvr.stop, mpvr.ascending, true, false, false);
             if(pi.isValid()) {
                 queue.add(pi);
             }
@@ -71,7 +71,7 @@ public class MultiParameterDataRetrieval {
                 log.error(msg);
                 throw new RuntimeException(msg);
             }
-            ValueSegment valueSegment = pit.value();
+            ValueSegment valueSegment = pit.engValue();
             merger.currentParameterGroupId = pit.getParameterGroupId();
             merger.currentParameterId = pit.getParameterId();
             
