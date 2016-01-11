@@ -66,7 +66,6 @@ public class RLEParameterStatusSegment extends AbstractParameterStatusSegment {
 
         //then write the flags
         VarIntUtil.writeVarInt32(bb, statusList.size());
-        System.out.println("writing statusList.size: "+statusList.size());
         
         for(int i=0; i<statusList.size(); i++) {
             ParameterStatus ps = statusList.get(i);
@@ -80,7 +79,6 @@ public class RLEParameterStatusSegment extends AbstractParameterStatusSegment {
     public void parseFrom(ByteBuffer bb) throws DecodingException {
         
         int countNum = VarIntUtil.readVarInt32(bb);
-        System.out.println("countNum: "+countNum);
         counts = new IntArray(countNum);
         size = 0;
 
@@ -90,13 +88,11 @@ public class RLEParameterStatusSegment extends AbstractParameterStatusSegment {
             size+=c;
 
         }
-        System.out.println("size: "+size);
         
-        int flagNum = VarIntUtil.readVarInt32(bb);
-        System.out.println("flagNum: "+flagNum);
-        statusList = new ArrayList<>(flagNum);
+        int statusNum = VarIntUtil.readVarInt32(bb);
+        statusList = new ArrayList<>(statusNum);
         try {
-            for(int i=0; i<flagNum; i++) {
+            for(int i=0; i<statusNum; i++) {
                 int size = VarIntUtil.readVarInt32(bb);
                 byte[] b = new byte[size];
                 bb.get(b);

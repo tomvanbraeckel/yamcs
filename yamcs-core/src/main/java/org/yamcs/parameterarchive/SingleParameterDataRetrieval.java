@@ -29,7 +29,7 @@ public class SingleParameterDataRetrieval {
     public void retrieve(Consumer<ParameterValueArray> consumer) throws RocksDBException, DecodingException {
         long startPartition = Partition.getPartitionId(spvr.start);
         long stopPartition = Partition.getPartitionId(spvr.stop);
-
+        
         NavigableMap<Long,Partition> parts = parchive.getPartitions(startPartition, stopPartition);
         if(!spvr.ascending) {
             parts = parts.descendingMap();
@@ -50,9 +50,10 @@ public class SingleParameterDataRetrieval {
     private void retrieveValuesFromPartitionSingleGroup(Partition p, Consumer<ParameterValueArray> consumer) throws DecodingException, RocksDBException {
         int parameterGroupId = spvr.parameterGroupIds[0];
         RocksIterator it = parchive.getIterator(p);
+        boolean retrieveEng = spvr.retrieveRawValues |  spvr.retrieveEngineeringValues;
         try {
             PartitionIterator pit = new PartitionIterator(it, spvr.parameterId, parameterGroupId, spvr.start, spvr.stop, spvr.ascending,
-                    spvr.retrieveEngineeringValues, spvr.retrieveRawValues, spvr.retrieveParameterStatus);
+                    retrieveEng, spvr.retrieveRawValues, spvr.retrieveParameterStatus);
 
             while(pit.isValid()) {
                 SegmentKey key = pit.key();
@@ -75,11 +76,12 @@ public class SingleParameterDataRetrieval {
     private void retrieveValuesFromPartitionMultiGroup(Partition p, Consumer<ParameterValueArray> consumer) throws DecodingException, RocksDBException {
         RocksIterator[] its = new RocksIterator[spvr.parameterGroupIds.length];
         PriorityQueue<PartitionIterator> queue = new PriorityQueue<PartitionIterator>(new PartitionIteratorComparator(spvr.ascending));
-
+        boolean retrieveEng = spvr.retrieveRawValues |  spvr.retrieveEngineeringValues;
+        
         for(int i =0 ; i<spvr.parameterGroupIds.length; i++) {
             its[i] = parchive.getIterator(p);
             PartitionIterator pi = new PartitionIterator(its[i], spvr.parameterId,  spvr.parameterGroupIds[i], spvr.start, spvr.stop, spvr.ascending,
-                    spvr.retrieveEngineeringValues, spvr.retrieveRawValues, spvr.retrieveParameterStatus);
+                    retrieveEng, spvr.retrieveRawValues, spvr.retrieveParameterStatus);
             
             if(pi.isValid()) {
                 queue.add(pi);

@@ -33,7 +33,7 @@ public class ParameterArchive {
     private final Logger log = LoggerFactory.getLogger(ParameterArchive.class);
     private ParameterIdDb parameterIdMap;
     private ParameterGroupIdDb parameterGroupIdMap;
-    private RocksDB rdb;
+    RocksDB rdb;
 
     ColumnFamilyHandle p2pid_cfh;
     ColumnFamilyHandle pgid2pg_cfh;
@@ -206,11 +206,9 @@ public class ParameterArchive {
             byte[] engKey = new SegmentKey(parameterId, pgs.getParameterGroupId(), pgs.getSegmentStart(), SegmentKey.TYPE_ENG_VALUE).encode();
             byte[] engValue = vsEncoder.encode(vs);
             writeBatch.put(p.dataCfh, engKey, engValue);
-            System.out.println("writeToBatch consolidatedRawValues: "+consolidatedRawValues);
             
             if(STORE_RAW_VALUES && consolidatedRawValues!=null) {
                 ValueSegment rvs = consolidatedRawValues.get(i);
-                System.out.println("writeToBatch consolidatedRawValues rvs: "+rvs);
                 if(rvs!=null) {
                     byte[] rawKey = new SegmentKey(parameterId, pgs.getParameterGroupId(), pgs.getSegmentStart(), SegmentKey.TYPE_RAW_VALUE).encode();
                     byte[] rawValue = vsEncoder.encode(rvs);
@@ -306,5 +304,11 @@ public class ParameterArchive {
             return null;
         }
         return (SortedTimeSegment) vsEncoder.decode(tv, segmentStart);
+    }
+
+    Partition getPartitions(long partitionId) {
+        synchronized(partitions) {
+            return partitions.get(partitionId);
+        }
     }
 }

@@ -35,7 +35,7 @@ public class PartitionIterator {
         this.retrieveEngValue = retrieveEngValue;
         this.retrieveRawValue = retrieveRawValue;
         this.retrieveParameterStatus = retrieveParameterStatus;
-
+        
         this.iterator = iterator;
         if(ascending) {
             goToFirstAscending();

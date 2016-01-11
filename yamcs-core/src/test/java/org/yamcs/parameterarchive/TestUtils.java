@@ -25,49 +25,66 @@ public class TestUtils {
         pv.setEngineeringValue(v);
         return pv;
     }
-
-    static void checkEquals(ParameterValueArray pva, ParameterValue...pvs) {
+    static void checkEquals( ParameterValueArray pva, ParameterValue...pvs) {
+        checkEquals(true, true, true, pva, pvs);
+    }
+    static void checkEquals(boolean shouldHaveEngValues, boolean shouldHaveRawValues, boolean shouldHaveParameterStatus, ParameterValueArray pva, ParameterValue...pvs) {
         assertEquals(pvs.length, pva.timestamps.length);
         for(int i=0; i<pvs.length; i++) {
             ParameterValue pv = pvs[i];
             assertEquals(pv.getAcquisitionTime(), pva.timestamps[i]);
         }
-
-        Value v = pvs[0].getEngValue();
-        if(v.getType()==Type.STRING) {
-            assertTrue(pva.engValues instanceof String[]);
-            String[] s = (String[]) pva.engValues;
-            for(int i=0; i<pvs.length; i++) {
-                v = pvs[i].getEngValue();
-                assertEquals(v.getStringValue(), s[i]);
-            }            
-        } else {
-            fail("check for "+v.getType()+" not implemented");
-        }
-
-
-        Value rv = pvs[0].getRawValue();
-        if(rv!=null) {
-            if(rv.getType()==Type.UINT32) {
-                assertTrue(pva.rawValues instanceof int[]);
-                int[] s = (int[]) pva.rawValues;
+        if(shouldHaveEngValues) {
+            Value v = pvs[0].getEngValue();
+            if(v.getType()==Type.STRING) {
+                assertTrue(pva.engValues instanceof String[]);
+                String[] s = (String[]) pva.engValues;
                 for(int i=0; i<pvs.length; i++) {
-                    rv = pvs[i].getRawValue();
-                    assertEquals(rv.getUint32Value(), s[i]);
+                    v = pvs[i].getEngValue();
+                    assertEquals(v.getStringValue(), s[i]);
                 }            
             } else {
-                fail("check for "+rv.getType()+" not implemented");
+                fail("check for "+v.getType()+" not implemented");
             }
+        } else {
+            assertNull(pva.engValues);
         }
-        assertNotNull(pva.paramStatus);
-        System.out.println("pva.paramStatus: "+pva.paramStatus);
-        if(pva.paramStatus!=null) {
+        if(shouldHaveRawValues) {
+            Value rv = pvs[0].getRawValue();
+            if(rv!=null) {
+                if(rv.getType()==Type.UINT32) {
+                    assertTrue(pva.rawValues instanceof int[]);
+                    int[] s = (int[]) pva.rawValues;
+                    for(int i=0; i<pvs.length; i++) {
+                        rv = pvs[i].getRawValue();
+                        assertEquals(rv.getUint32Value(), s[i]);
+                    }            
+                } else if(rv.getType()==Type.STRING) {
+                    assertTrue(pva.rawValues instanceof String[]);
+                    String[] s = (String[]) pva.rawValues;
+                    for(int i=0; i<pvs.length; i++) {
+                        Value v = pvs[i].getRawValue();
+                        assertEquals(v.getStringValue(), s[i]);
+                    }                
+                }else {
+                    fail("check for "+rv.getType()+" not implemented");
+                }
+            }
+        } else {
+            assertNull(pva.rawValues);
+        }
+        if(shouldHaveParameterStatus) {
+            assertNotNull(pva.paramStatus);
             assertEquals(pvs.length, pva.paramStatus.length);
             for(int i=0; i<pvs.length; i++) {
                 checkEquals(pvs[i], pva.paramStatus[i]);
             }
+        } else {
+            assertNull(pva.paramStatus);
         }
     }
+
+
 
 
     private static void checkEquals(ParameterValue parameterValue,    ParameterStatus parameterStatus) {

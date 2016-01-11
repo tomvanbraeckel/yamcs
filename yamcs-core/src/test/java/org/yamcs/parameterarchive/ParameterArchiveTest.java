@@ -15,6 +15,8 @@ import org.junit.Test;
 import org.rocksdb.RocksDBException;
 import org.yamcs.ParameterValue;
 import org.yamcs.YamcsServer;
+import org.yamcs.parameterarchive.ParameterArchive.Partition;
+import org.yamcs.protobuf.Pvalue.AcquisitionStatus;
 import org.yamcs.protobuf.Yamcs.Value;
 import org.yamcs.protobuf.Yamcs.Value.Type;
 import org.yamcs.utils.DecodingException;
@@ -89,10 +91,9 @@ public class ParameterArchiveTest {
 
 
     @Test
-    public void testSingleParameter() throws Exception{
+    public void testSingleParameter() throws Exception {
 
         ParameterValue pv1_0 = getParameterValue(p1, 100, "blala100", 100);
-
 
         int p1id = parchive.getParameterIdMap().get(p1.getQualifiedName(), pv1_0.getEngValue().getType(), pv1_0.getRawValue().getType());
 
@@ -143,7 +144,9 @@ public class ParameterArchiveTest {
         //new value in a different segment but same partition
         long t2 = SortedTimeSegment.getSegmentEnd(0)+100;
         PGSegment pgSegment2 = new PGSegment(pg1id, SortedTimeSegment.getSegmentStart(t2), new SortedIntArray(new int[] {p1id}));
-        ParameterValue pv1_2 = getParameterValue(p1, t2, "pv1_2");        
+        ParameterValue pv1_2 = getParameterValue(p1, t2, "pv1_2");
+        pv1_2.setAcquisitionStatus(AcquisitionStatus.EXPIRED);
+        
         pgSegment2.addRecord(t2, Arrays.asList(pv1_2));
         pgSegment2.consolidate();
         parchive.writeToArchive(Arrays.asList(pgSegment2));
@@ -157,7 +160,6 @@ public class ParameterArchiveTest {
         parchive.writeToArchive(Arrays.asList(pgSegment3));
 
 
-        System.out.println("---------------");
         //ascending request on four values
         List<ParameterValueArray> l7a = retrieveSingleParamSingleGroup(0, t3+1, p1id, pg1id, true);
         checkEquals(l7a.get(0), pv1_0, pv1_1);
@@ -179,19 +181,66 @@ public class ParameterArchiveTest {
         List<ParameterValueArray> l8d = retrieveSingleParamSingleGroup(t2, t3, p1id, pg1id, false);
         checkEquals(l8d.get(0), pv1_3);
 
-        parchive.close();
+        
+        //retrieve only statuses
+        List<ParameterValueArray> l9a = retrieveSingleParamSingleGroup(0, t3+1, p1id, pg1id, false, false, false, true);
+        assertNull(l9a.get(0).engValues);
+        assertNull(l9a.get(1).rawValues); 
+        assertNull(l9a.get(2).engValues);
+        assertNotNull(l9a.get(0).paramStatus);
+        assertNotNull(l9a.get(1).paramStatus);
+        assertNotNull(l9a.get(2).paramStatus);
+        assertEquals(AcquisitionStatus.EXPIRED, l9a.get(1).paramStatus[0].getAcquisitionStatus());
+        assertEquals(AcquisitionStatus.ACQUIRED, l9a.get(2).paramStatus[0].getAcquisitionStatus());
 
     }
 
-    List<ParameterValueArray> retrieveSingleParamSingleGroup(long start, long stop, int parameterId, int parameterGroupId, boolean ascending) throws Exception {
+    
+    /**
+     * If raw values are identical with engineering values, the Parameter Archive stores only the engineering values. 
+     */
+    @Test
+    public void testRawEqualsEngParameter() throws Exception {
+        ParameterValue pv1_0 = getParameterValue(p1, 100, "blala100", "blala100");
+        int p1id = parchive.getParameterIdMap().get(p1.getQualifiedName(), pv1_0.getEngValue().getType(), pv1_0.getRawValue().getType());
+
+        int pg1id = parchive.getParameterGroupIdMap().get(new int[]{p1id});
+        PGSegment pgSegment1 = new PGSegment(pg1id, 0, new SortedIntArray(new int[] {p1id}));
+
+        pgSegment1.addRecord(100, Arrays.asList(pv1_0));
+        ParameterValue pv1_1 = getParameterValue(p1, 200, "blala200", "blala200");
+        pgSegment1.addRecord(200, Arrays.asList(pv1_1));
+        
+        pgSegment1.consolidate();
+        
+        parchive.writeToArchive(Arrays.asList(pgSegment1));
+        long segmentStart = SortedTimeSegment.getSegmentStart(100); 
+        Partition p = parchive.getPartitions(Partition.getPartitionId(100));
+        assertNotNull(parchive.rdb.get(p.dataCfh, new SegmentKey(p1id, pg1id, segmentStart, SegmentKey.TYPE_ENG_VALUE).encode()));
+        assertNull(parchive.rdb.get(p.dataCfh, new SegmentKey(p1id, pg1id, segmentStart, SegmentKey.TYPE_RAW_VALUE).encode()));
+        
+        List<ParameterValueArray> l1a = retrieveSingleParamSingleGroup(0, TimeEncoding.MAX_INSTANT, p1id, pg1id , true, false, true, false);
+        checkEquals(false, true, false, l1a.get(0), pv1_0, pv1_1);
+        
+        List<ParameterValueArray> l1d = retrieveSingleParamSingleGroup(0, TimeEncoding.MAX_INSTANT, p1id, pg1id , false, false, true, true);
+        checkEquals(false, true, true, l1d.get(0), pv1_1, pv1_0);
+    }
+    
+    
+    List<ParameterValueArray> retrieveSingleParamSingleGroup(long start, long stop, int parameterId, int parameterGroupId, boolean ascending, boolean retrieveEngValues, boolean retrieveRawValues, boolean retriveParamStatus) throws Exception {
         //ascending request on empty data
         SingleValueConsumer c = new SingleValueConsumer();
         SingleParameterValueRequest spvr = new SingleParameterValueRequest(start, stop, parameterId, parameterGroupId, ascending);
-        spvr.setRetrieveRawValues(true);
-        spvr.setRetrieveParameterStatus(true);
+        spvr.setRetrieveEngineeringValues(retrieveEngValues);
+        spvr.setRetrieveRawValues(retrieveRawValues);
+        spvr.setRetrieveParameterStatus(retriveParamStatus);
         SingleParameterDataRetrieval spdr = new SingleParameterDataRetrieval(parchive, spvr);
         spdr.retrieve(c);
         return c.list;
+    }
+
+    List<ParameterValueArray> retrieveSingleParamSingleGroup(long start, long stop, int parameterId, int parameterGroupId, boolean ascending) throws Exception {
+        return retrieveSingleParamSingleGroup(start, stop, parameterId, parameterGroupId, ascending, true, true, true);
     }
 
     ParameterValue getParameterValue(Parameter p, long instant, String sv) {
@@ -210,6 +259,15 @@ public class ParameterArchiveTest {
         pv.setRawValue(ValueUtility.getUint32Value(rv));
         return pv;
     }
+    
+    ParameterValue getParameterValue(Parameter p, long instant, String sv, String rv) {
+        ParameterValue pv = new ParameterValue(p);
+        pv.setAcquisitionTime(instant);
+        Value v = ValueUtility.getStringValue(sv);
+        pv.setEngineeringValue(v);
+        pv.setRawValue(ValueUtility.getStringValue(rv));
+        return pv;
+    }
 
 
 
@@ -220,6 +278,7 @@ public class ParameterArchiveTest {
         ParameterValue pv2_0 = getParameterValue(p2, 100, "pv2_0");
         ParameterValue pv1_1 = getParameterValue(p1, 200, "pv1_1");
         ParameterValue pv1_2 = getParameterValue(p1, 300, "pv1_2");
+        pv1_2.setAcquisitionStatus(AcquisitionStatus.INVALID);
 
 
         int p1id = parchive.getParameterIdMap().get(p1.getQualifiedName(), pv1_0.getEngValue().getType());
@@ -315,16 +374,36 @@ public class ParameterArchiveTest {
         //descending with empty request inside existing segment
         List<ParameterValueArray> l4d = retrieveSingleValueMultigroup(101, 102, p1id, new int[]{pg1id, pg2id}, false); 
         assertEquals(0, l4d.size());
+        
+        System.out.println("-----------------");
+        //retrieve only statuses
+        List<ParameterValueArray> l5a = retrieveSingleValueMultigroup(0, TimeEncoding.MAX_INSTANT, p1id, new int[]{pg1id, pg2id}, true, false, false, true);
+        assertNull(l5a.get(0).engValues);
+        assertNull(l5a.get(1).rawValues); 
+        assertNull(l5a.get(2).engValues);
+        assertNotNull(l5a.get(0).paramStatus);
+        assertNotNull(l5a.get(1).paramStatus);
+        assertNotNull(l5a.get(2).paramStatus);
+        
+        assertEquals(AcquisitionStatus.INVALID, l5a.get(0).paramStatus[2].getAcquisitionStatus());
+        assertEquals(AcquisitionStatus.ACQUIRED, l5a.get(2).paramStatus[0].getAcquisitionStatus());
+        
     }
 
-
-    private List<ParameterValueArray> retrieveSingleValueMultigroup(long start, long stop, int parameterId, int[] parameterGroupIds, boolean ascending) throws RocksDBException, DecodingException {
+    private List<ParameterValueArray> retrieveSingleValueMultigroup(long start, long stop, int parameterId, int[] parameterGroupIds, boolean ascending, boolean retrieveEng, boolean retrieveRaw, boolean retrieveStatus) throws RocksDBException, DecodingException {
         SingleParameterValueRequest spvr = new SingleParameterValueRequest(start, stop, parameterId, parameterGroupIds, ascending);
-        spvr.setRetrieveParameterStatus(true);
+        spvr.setRetrieveParameterStatus(retrieveStatus);
+        spvr.setRetrieveEngineeringValues(retrieveEng);
+        spvr.setRetrieveRawValues(retrieveRaw);
+        
         SingleParameterDataRetrieval spdr = new SingleParameterDataRetrieval(parchive, spvr);
         SingleValueConsumer svc = new SingleValueConsumer();
         spdr.retrieve(svc);
         return svc.list;
+    }
+
+    private List<ParameterValueArray> retrieveSingleValueMultigroup(long start, long stop, int parameterId, int[] parameterGroupIds, boolean ascending) throws RocksDBException, DecodingException {
+        return retrieveSingleValueMultigroup(start, stop, parameterId, parameterGroupIds, ascending, true, true, true);
     }
 
     @Test
@@ -466,7 +545,7 @@ public class ParameterArchiveTest {
         List<ParameterValueArray> list = new ArrayList<>();
         @Override
         public void accept(ParameterValueArray x) {
-            System.out.println("received: engValues: "+x.engValues+" rawValues: "+x.rawValues+" paramStatus: "+x.paramStatus);
+    //       System.out.println("received: engValues: "+x.engValues+" rawValues: "+x.rawValues+" paramStatus: "+Arrays.toString(x.paramStatus));
             list.add(x);
         }
 

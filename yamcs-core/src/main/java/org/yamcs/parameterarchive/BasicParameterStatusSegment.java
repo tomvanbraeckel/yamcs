@@ -84,7 +84,6 @@ public class BasicParameterStatusSegment extends AbstractParameterStatusSegment{
         int basicMaxSize = getMaxSerializedSize();
         int rleMaxSize = rle.getMaxSerializedSize();
 
-        System.out.println("----------------- basicMaxSize: "+basicMaxSize+" rleMaxSize: "+rleMaxSize);
         if(basicMaxSize<=rleMaxSize) return this;
         else return rle;
     }
