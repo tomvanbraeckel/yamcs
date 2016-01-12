@@ -6,9 +6,13 @@ import static org.junit.Assert.assertNotNull;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.junit.Test;
 import org.yamcs.parameterarchive.ParameterArchive;
+import org.yamcs.parameterarchive.ParameterGroupIdDb;
+import org.yamcs.parameterarchive.ParameterIdDb;
 import org.yamcs.utils.TimeEncoding;
 
 public class IntegratedParameterArchiveTest extends AbstractIntegrationTest {
@@ -25,13 +29,17 @@ public class IntegratedParameterArchiveTest extends AbstractIntegrationTest {
     
     @Test
     public void testReplayFillup() throws Exception {
-        generateData("2015-01-02T10:00:00", 3600);
+        Logger.getLogger("org.yamcs").setLevel(Level.INFO);
+        generateData("2015-01-02T10:00:00", 12*3600);
         ParameterArchive parameterArchive = YamcsServer.getService(yamcsInstance, ParameterArchive.class);
-        Future<?> f = parameterArchive.scheduleFilling(TimeEncoding.parse("2015-01-02T10:00:00"), TimeEncoding.parse("2015-01-02T11:00:00"));
-        f.get(10, TimeUnit.SECONDS);
+        Future<?> f = parameterArchive.scheduleFilling(TimeEncoding.parse("2015-01-02T10:00:00"), TimeEncoding.parse("2015-01-03T11:00:00"));
+        f.get();
+        ParameterIdDb pdb = parameterArchive.getParameterIdMap();
+        ParameterGroupIdDb pgdb = parameterArchive.getParameterGroupIdMap();
+        pdb.print(System.out);
+        pgdb.print(System.out);
         
-        
-        
+        parameterArchive.printKeys(System.out);
     }
 
 }

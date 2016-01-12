@@ -7,9 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.rocksdb.RocksDBException;
 import org.slf4j.Logger;
@@ -28,7 +25,7 @@ import com.google.common.util.concurrent.AbstractService;
  * @author nm
  *
  */
-public abstract class AbstractParameterFiller extends AbstractService implements ParameterConsumer {
+public abstract class AbstractParameterFiller extends AbstractService {
     protected final ParameterArchive parameterArchive;
     private final Logger log = LoggerFactory.getLogger(AbstractParameterFiller.class);
 
@@ -38,10 +35,6 @@ public abstract class AbstractParameterFiller extends AbstractService implements
     protected final ParameterGroupIdDb parameterGroupIdMap;
 
 
-    static public final long CONSOLIDATE_OLDER_THAN = 3600*1000L; 
-    ReadWriteLock lock = new ReentrantReadWriteLock();
-    Lock writeLock = lock.writeLock();
-    Lock readLock = lock.readLock();
     ScheduledThreadPoolExecutor executor ;
 
 
@@ -54,10 +47,6 @@ public abstract class AbstractParameterFiller extends AbstractService implements
     }
 
 
-    @Override
-    public void updateItems(int subscriptionId, List<ParameterValue> items) {
-        executor.execute(() -> {doUpdateItems(subscriptionId, items);});
-    }
 
     protected void doUpdateItems(int subscriptionId, List<ParameterValue> items) {
         Map<Long, SortedParameterList> m = new HashMap<>();
@@ -81,6 +70,7 @@ public abstract class AbstractParameterFiller extends AbstractService implements
 
 
     protected void consolidateAllAndClear() {
+        log.info("Starting a consolidation process, number of intervals: "+pgSegments.size());
         for(Map<Integer, PGSegment> m: pgSegments.values()) {
             consolidateAndWriteToArchive(m.values());
         }

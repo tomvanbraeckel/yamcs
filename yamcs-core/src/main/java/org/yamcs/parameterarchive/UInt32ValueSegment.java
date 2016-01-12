@@ -46,7 +46,7 @@ public class UInt32ValueSegment extends ValueSegment {
 
     @Override
     public int getMaxSerializedSize() {
-        return 4+4*values.length; //4 for the size plus 4 for each element
+        return 4+5*values.length; //4 for the size plus 5 for each element
     }
 
 

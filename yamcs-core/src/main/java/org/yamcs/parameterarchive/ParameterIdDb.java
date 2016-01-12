@@ -1,5 +1,6 @@
 package org.yamcs.parameterarchive;
 
+import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -30,6 +31,7 @@ public class ParameterIdDb {
     final ColumnFamilyHandle p2pid_cfh;
     final static int TIMESTAMP_PARA_ID=0;
     
+    //parameter fqn -> parameter type -> parameter id
     Map<String, Map<Integer, Integer>> p2pidCache = new HashMap<>();
     int highestParaId = TIMESTAMP_PARA_ID;
 
@@ -82,7 +84,7 @@ public class ParameterIdDb {
     //compose a numeric type from engType and rawType (we assume that no more than 2^15 types will ever exist)
     private int numericType(Value.Type engType, Value.Type rawType) {
         int et = (engType==null)? 0xFFFF:engType.getNumber();
-        int rt = (rawType==null)? 0xFFFF:engType.getNumber();
+        int rt = (rawType==null)? 0xFFFF:rawType.getNumber();
         return et<<16|rt;
     }
 
@@ -126,6 +128,30 @@ public class ParameterIdDb {
         }
     }
 
+    Value.Type getType(int x) {
+        if(x==0xFFFF) return null;
+        else return Value.Type.valueOf(x);
+    }
 
+    public void print(PrintStream out) {
+        for(String pname: p2pidCache.keySet()) {
+            out.println(pname+": ");
+            Map<Integer, Integer> m = p2pidCache.get(pname);
+            for(Map.Entry<Integer, Integer> e: m.entrySet()) {
+                int parameterId = e.getValue();
+                int et = e.getKey()>>16;
+                int rt = e.getKey()&0xFFFF;
+                out.println("\t("+getType(et)+", "+getType(rt)+") -> "+parameterId);
+            }
+        }
+    }
+
+
+    /*
+     * return the number of unique parameters 
+     */
+    public int getSize() {
+        return p2pidCache.size();
+    }
 
 }

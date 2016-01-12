@@ -1,5 +1,6 @@
 package org.yamcs.parameterarchive;
 
+import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
@@ -75,5 +76,11 @@ public class ParameterGroupIdDb {
     
     public String toString() {
         return pg2pgidCache.toString();
+    }
+
+    public void print(PrintStream out) {
+        for(Map.Entry<SortedIntArray, Integer> e: pg2pgidCache.entrySet()) {
+            out.println(e.getValue()+": "+e.getKey());
+        }
     }
 }

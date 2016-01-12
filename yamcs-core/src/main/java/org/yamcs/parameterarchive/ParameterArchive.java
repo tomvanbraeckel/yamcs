@@ -1,6 +1,7 @@
 package org.yamcs.parameterarchive;
 
 import java.io.File;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,6 +25,7 @@ import org.rocksdb.WriteOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yamcs.utils.DecodingException;
+import org.yamcs.utils.TimeEncoding;
 import org.yamcs.yarch.YarchDatabase;
 
 import com.google.common.util.concurrent.AbstractService;
@@ -339,5 +341,26 @@ public class ParameterArchive  extends AbstractService {
 
     public Future<?> scheduleFilling(long start, long stop) {
         return replayFiller.scheduleRequest(start, stop);
+    }
+
+    public void printKeys(PrintStream out) {
+        out.println("pid\t pgid\t type\t SegmentStart\t size \t stype");
+        SegmentEncoderDecoder decoder = new SegmentEncoderDecoder();
+        for(Partition p:partitions.values()) {
+            RocksIterator it = getIterator(p);
+            it.seekToFirst();
+            while(it.isValid()) {
+                SegmentKey key = SegmentKey.decode(it.key());
+                byte[] v = it.value();
+                BaseSegment s;
+                try {
+                    s = decoder.decode(it.value(), key.segmentStart);
+                } catch (DecodingException e) {
+                  throw new RuntimeException(e);
+                }
+                out.println(key.parameterId+"\t "+key.parameterGroupId+"\t "+key.type+"\t "+TimeEncoding.toString(key.segmentStart)+"\t "+v.length+"\t "+s.getClass().getSimpleName());
+                it.next();
+            }
+        }
     }
 }

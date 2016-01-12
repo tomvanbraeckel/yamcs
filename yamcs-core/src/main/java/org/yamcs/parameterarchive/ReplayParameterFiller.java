@@ -104,7 +104,7 @@ public class ReplayParameterFiller extends AbstractParameterFiller  {
 
         @Override
         public void updateItems(int subscriptionId, List<ParameterValue> items) {
-            ReplayParameterFiller.this.updateItems(0, items);
+            ReplayParameterFiller.this.doUpdateItems(0, items);
         }
     }
    

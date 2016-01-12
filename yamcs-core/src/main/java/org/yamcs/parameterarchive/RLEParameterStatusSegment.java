@@ -106,7 +106,7 @@ public class RLEParameterStatusSegment extends AbstractParameterStatusSegment {
 
     @Override
     public int getMaxSerializedSize() {
-        int size = 4*counts.size();
+        int size = 4*counts.size()+4*statusList.size();
         for(ParameterStatus pvf: statusList) {
             size+=pvf.getSerializedSize();
         }
