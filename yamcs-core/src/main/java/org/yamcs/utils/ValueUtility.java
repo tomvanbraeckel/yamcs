@@ -16,6 +16,14 @@ public class ValueUtility {
         return Value.newBuilder().setType(Value.Type.SINT32).setSint32Value(x).build(); 
     }
 
+    public static Value getUint64Value(long x) {
+        return Value.newBuilder().setType(Value.Type.UINT64).setUint64Value(x).build(); 
+    }
+
+    public static Value getSint64Value(long x) {
+        return Value.newBuilder().setType(Value.Type.SINT64).setSint64Value(x).build(); 
+    }
+
     public static Value getStringValue(String x) {
         return Value.newBuilder().setType(Value.Type.STRING).setStringValue(x).build(); 
     }
@@ -40,9 +48,6 @@ public class ValueUtility {
     
     public static Value getDoubleValue(double d) {
         return Value.newBuilder().setType(Value.Type.DOUBLE).setDoubleValue(d).build();
-    }
-    public static Value getUint64Value(long l) {
-        return Value.newBuilder().setType(Value.Type.UINT64).setUint64Value(l).build(); 
     }
     
     public static Value getColumnValue(ColumnDefinition cd, Object v) {
@@ -176,9 +181,4 @@ public class ValueUtility {
             throw new IllegalStateException("Unexpected type " + a.getType());
         }
     }
-
-   
-
-  
-
 }
