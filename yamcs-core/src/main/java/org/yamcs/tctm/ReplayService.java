@@ -126,7 +126,6 @@ public class ReplayService extends AbstractService implements ReplayListener, Ar
                     params.add(pv);
                     replayTime = pv.getGenerationTime();
                 }
-                
             }
             parameterRequestManager.update(params);
             break;
@@ -159,6 +158,7 @@ public class ReplayService extends AbstractService implements ReplayListener, Ar
 
     @Override
     public void doStart() {
+        System.out.println("-----------In ReplayService.doStart");
         yarchReplay.start();
         notifyStarted();
     }

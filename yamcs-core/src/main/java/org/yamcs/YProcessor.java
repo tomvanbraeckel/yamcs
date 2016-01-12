@@ -98,7 +98,7 @@ public class YProcessor extends AbstractService {
     final private ScheduledThreadPoolExecutor timer = new ScheduledThreadPoolExecutor(1);
 
     TimeService timeService;
-    
+
     @GuardedBy("this")
     HashSet<YProcessorClient> connectedClients= new HashSet<YProcessorClient>();
 
@@ -151,11 +151,11 @@ public class YProcessor extends AbstractService {
 
             synchronous = tctms.isSynchronous();
 
-            
+
             // Shared between prm and crm
             tmProcessor = new XtceTmProcessor(this);
             if(tmPacketProvider!=null) {
-            	tmPacketProvider.init(this, tmProcessor);
+                tmPacketProvider.init(this, tmProcessor);
             }
             containerRequestManager=new ContainerRequestManager(this, tmProcessor);
             parameterRequestManager=new ParameterRequestManagerImpl(this, tmProcessor);
@@ -170,7 +170,7 @@ public class YProcessor extends AbstractService {
             if((tmPacketProvider!=null) && (tmPacketProvider instanceof ParameterProvider) ) {
                 parameterRequestManager.addParameterProvider((ParameterProvider)tmPacketProvider);
             }
-            
+
             if(commandReleaser!=null) {
                 try {
                     this.commandHistoryPublisher=new YarchCommandHistoryAdapter(yamcsInstance);
@@ -261,10 +261,12 @@ public class YProcessor extends AbstractService {
      */
     @Override
     public void doStart() {
-    	if(tmPacketProvider!=null) {
-    		tmPacketProvider.startAsync();
-    	}
-    	
+        if(tmPacketProvider!=null) {
+            tmPacketProvider.startAsync();
+        }
+        if(tmProcessor!=null) {
+            tmProcessor.startAsync();
+        }
         if(commandReleaser!=null) {
             commandReleaser.startAsync();
             commandReleaser.awaitRunning();
@@ -280,14 +282,18 @@ public class YProcessor extends AbstractService {
         }
 
         parameterRequestManager.start();
-        
+
         if(tmPacketProvider!=null) {
-        	tmPacketProvider.awaitRunning();
+            tmPacketProvider.awaitRunning();
         }
+        if(tmProcessor!=null) {
+            tmProcessor.awaitRunning();
+        }
+        
         notifyStarted();
         propagateProcessorStateChange();
     }
-    
+
 
     public void pause() {
         ((ArchiveTmPacketProvider)tmPacketProvider).pause();
@@ -299,16 +305,16 @@ public class YProcessor extends AbstractService {
         propagateProcessorStateChange();
     }
 
-     private void propagateProcessorStateChange() {
+    private void propagateProcessorStateChange() {
         listeners.forEach(l -> l.processorStateChanged(this));
     }
-    
+
     public void seek(long instant) {
         getTmProcessor().resetStatistics();
         ((ArchiveTmPacketProvider)tmPacketProvider).seek(instant);
         propagateProcessorStateChange();
     }
-    
+
     public void changeSpeed(ReplaySpeed speed) {        
         ((ArchiveTmPacketProvider)tmPacketProvider).changeSpeed(speed);
         propagateProcessorStateChange();
@@ -399,7 +405,7 @@ public class YProcessor extends AbstractService {
     public static Collection<YProcessor> getChannels() {
         return instances.values();
     }
-    
+
     public static Collection<YProcessor> getChannels(String instance) {
         List<YProcessor> processors = new ArrayList<>();
         for (YProcessor processor : instances.values()) {
@@ -470,7 +476,7 @@ public class YProcessor extends AbstractService {
 
     public boolean isReplay() {
         if(tmPacketProvider==null) return false;
-        
+
         return tmPacketProvider.isArchiveReplay();
     }
 
@@ -557,15 +563,15 @@ public class YProcessor extends AbstractService {
     }
 
     public void quit() {
-       stopAsync();
-       awaitTerminated();
+        stopAsync();
+        awaitTerminated();
     }
 
 
 
     public void start() {
-      startAsync();
-      awaitRunning();
+        startAsync();
+        awaitRunning();
     }
 
 

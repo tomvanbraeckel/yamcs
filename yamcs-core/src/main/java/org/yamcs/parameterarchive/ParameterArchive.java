@@ -4,11 +4,13 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
+import java.util.concurrent.Future;
 
 import org.rocksdb.ColumnFamilyDescriptor;
 import org.rocksdb.ColumnFamilyHandle;
@@ -24,7 +26,9 @@ import org.slf4j.LoggerFactory;
 import org.yamcs.utils.DecodingException;
 import org.yamcs.yarch.YarchDatabase;
 
-public class ParameterArchive {
+import com.google.common.util.concurrent.AbstractService;
+
+public class ParameterArchive  extends AbstractService {
     static Map<String, ParameterArchive> instances = new HashMap<String, ParameterArchive>();
     static final byte[] CF_NAME_meta_p2pid = "meta_p2pid".getBytes(StandardCharsets.US_ASCII);
     static final byte[] CF_NAME_meta_pgid2pg = "meta_pgid2pg".getBytes(StandardCharsets.US_ASCII); 
@@ -38,11 +42,12 @@ public class ParameterArchive {
     ColumnFamilyHandle p2pid_cfh;
     ColumnFamilyHandle pgid2pg_cfh;
 
-    final String yamcsInstance;
+    final private String yamcsInstance;
     private TreeMap<Long, Partition> partitions = new TreeMap<Long, ParameterArchive.Partition>();
     SegmentEncoderDecoder vsEncoder = new SegmentEncoderDecoder();
     public final static boolean STORE_RAW_VALUES = true; 
-    
+    RealtimeParameterFiller realtimeFiller;
+    ReplayParameterFiller replayFiller;
 
     public ParameterArchive(String instance) throws RocksDBException {
         this.yamcsInstance = instance;
@@ -55,6 +60,8 @@ public class ParameterArchive {
         }
         parameterIdMap = new ParameterIdDb(rdb, p2pid_cfh);
         parameterGroupIdMap = new ParameterGroupIdDb(rdb, pgid2pg_cfh);
+        realtimeFiller = new RealtimeParameterFiller(this);
+        replayFiller = new ReplayParameterFiller(this);
     }
 
     private void createDb(String dbpath) throws RocksDBException {
@@ -174,7 +181,7 @@ public class ParameterArchive {
         return yamcsInstance;
     }
 
-    public void writeToArchive(List<PGSegment> pgList) throws RocksDBException {
+    public void writeToArchive(Collection<PGSegment> pgList) throws RocksDBException {
         WriteBatch writeBatch = new WriteBatch();
         for(PGSegment pgs: pgList) {
             writeToBatch(writeBatch, pgs);
@@ -199,21 +206,21 @@ public class ParameterArchive {
         List<ValueSegment> consolidated = pgs.getConsolidatedValueSegments();
         List<ValueSegment> consolidatedRawValues = pgs.getConsolidatedRawValueSegments();
         List<AbstractParameterStatusSegment> satusSegments = pgs.getConsolidatedParameterStatusSegments();
-        
+
         for(int i=0; i<consolidated.size(); i++) {
             BaseSegment vs= consolidated.get(i);
             int parameterId = pgs.getParameterId(i);
             byte[] engKey = new SegmentKey(parameterId, pgs.getParameterGroupId(), pgs.getSegmentStart(), SegmentKey.TYPE_ENG_VALUE).encode();
             byte[] engValue = vsEncoder.encode(vs);
             writeBatch.put(p.dataCfh, engKey, engValue);
-            
+
             if(STORE_RAW_VALUES && consolidatedRawValues!=null) {
                 ValueSegment rvs = consolidatedRawValues.get(i);
                 if(rvs!=null) {
                     byte[] rawKey = new SegmentKey(parameterId, pgs.getParameterGroupId(), pgs.getSegmentStart(), SegmentKey.TYPE_RAW_VALUE).encode();
                     byte[] rawValue = vsEncoder.encode(rvs);
                     writeBatch.put(p.dataCfh, rawKey, rawValue);
-                            
+
                 }
             }
             AbstractParameterStatusSegment pss = satusSegments.get(i);
@@ -259,7 +266,7 @@ public class ParameterArchive {
         if((stopPartitionId& Partition.TIMESTAMP_MASK) != 0) {
             throw new IllegalArgumentException(stopPartitionId+" is not a valid partition id");
         }
-        
+
         synchronized(partitions) {
             TreeMap<Long, Partition> r = new TreeMap<Long, ParameterArchive.Partition>();
             r.putAll(partitions.subMap(startPartitionId, true, stopPartitionId, true));
@@ -310,5 +317,27 @@ public class ParameterArchive {
         synchronized(partitions) {
             return partitions.get(partitionId);
         }
+    }
+
+    @Override
+    protected void doStart() {
+        realtimeFiller.startAsync();
+        replayFiller.startAsync();
+        realtimeFiller.awaitRunning();
+        replayFiller.awaitRunning();
+        notifyStarted();
+    }
+
+    @Override
+    protected void doStop() {
+        realtimeFiller.stopAsync();
+        replayFiller.stopAsync();
+        realtimeFiller.awaitTerminated();
+        replayFiller.awaitTerminated();
+        notifyStopped();
+    }
+
+    public Future<?> scheduleFilling(long start, long stop) {
+        return replayFiller.scheduleRequest(start, stop);
     }
 }

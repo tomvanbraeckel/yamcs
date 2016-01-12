@@ -1,6 +1,7 @@
 package org.yamcs.parameterarchive;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,13 +30,13 @@ import com.google.common.util.concurrent.AbstractService;
  */
 public abstract class AbstractParameterFiller extends AbstractService implements ParameterConsumer {
     protected final ParameterArchive parameterArchive;
-    protected final Logger log = LoggerFactory.getLogger(AbstractParameterFiller.class);
-    
+    private final Logger log = LoggerFactory.getLogger(AbstractParameterFiller.class);
+
     //segment id -> ParameterGroup_id -> PGSegment
     protected TreeMap<Long, Map<Integer, PGSegment>> pgSegments = new TreeMap<>();
     protected final ParameterIdDb parameterIdMap;
     protected final ParameterGroupIdDb parameterGroupIdMap;
-    
+
 
     static public final long CONSOLIDATE_OLDER_THAN = 3600*1000L; 
     ReadWriteLock lock = new ReentrantReadWriteLock();
@@ -55,25 +56,48 @@ public abstract class AbstractParameterFiller extends AbstractService implements
 
     @Override
     public void updateItems(int subscriptionId, List<ParameterValue> items) {
-        executor.execute(() -> {updateItems(subscriptionId, items);});
+        executor.execute(() -> {doUpdateItems(subscriptionId, items);});
     }
 
-    abstract protected void  doUpdateItems(int subscriptionId, List<ParameterValue> items);
+    protected void doUpdateItems(int subscriptionId, List<ParameterValue> items) {
+        Map<Long, SortedParameterList> m = new HashMap<>();
+        for(ParameterValue pv: items) {
+            long t = pv.getAcquisitionTime();
 
-   
+            SortedParameterList l = m.get(t);
+            if(l==null) {
+                l = new SortedParameterList();
+                m.put(t, l);
+            }
+            l.add(pv);
+        }
 
+        for(Map.Entry<Long,SortedParameterList> entry: m.entrySet()) {
+            long t = entry.getKey();
+            SortedParameterList pvList = entry.getValue();
+            processUpdate(t, pvList);
+        }
+    }
+
+
+    protected void consolidateAllAndClear() {
+        for(Map<Integer, PGSegment> m: pgSegments.values()) {
+            consolidateAndWriteToArchive(m.values());
+        }
+        pgSegments.clear();
+    }
     /**
      * writes data into the archive
      * @param pgs
      */
-    protected void consolidateAndWriteToArchive(List<PGSegment> pgList) {
+    protected void consolidateAndWriteToArchive(Collection<PGSegment> pgList) {
         for(PGSegment pgs: pgList) {
             pgs.consolidate();
         }
         try {
             parameterArchive.writeToArchive(pgList);
         } catch (RocksDBException e) {
-           log.error("failed to write data to the archive", e);
+            log.error("failed to write data to the archive", e);
         }
     }
 
@@ -111,7 +135,7 @@ public abstract class AbstractParameterFiller extends AbstractService implements
             Value.Type engType = pv.getEngValue().getType();
             Value.Type rawType = (pv.getRawValue()==null)? null: pv.getRawValue().getType();
             int parameterId = parameterIdMap.get(fqn, engType, rawType);
-            
+
             int pos = parameterIdArray.insert(parameterId);
             sortedPvList.add(pos, pv);
         }
