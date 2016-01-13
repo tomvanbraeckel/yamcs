@@ -84,9 +84,10 @@ public class IntArray {
         return a.length==0;
     }
 
-    public int[] getArray() {
-        return a;
+    public int[] asArray() {
+        return Arrays.copyOf(a, length);
     }
+    
     public int size() {
         return length;
     }

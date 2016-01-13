@@ -12,8 +12,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.yamcs.ParameterValue;
 import org.yamcs.YamcsServer;
 import org.yamcs.time.TimeService;
@@ -34,7 +32,6 @@ import org.yamcs.utils.TimeEncoding;
  */
 public class RealtimeParameterFiller extends AbstractParameterFiller {
     final TimeService timeService;
-    private final Logger log = LoggerFactory.getLogger(RealtimeParameterFiller.class);
     
     static public final long CONSOLIDATE_OLDER_THAN = 3600*1000L; 
     ReadWriteLock lock = new ReentrantReadWriteLock();
@@ -42,9 +39,6 @@ public class RealtimeParameterFiller extends AbstractParameterFiller {
     Lock readLock = lock.readLock();
     ScheduledThreadPoolExecutor executor ;
 
-
-    //we accept and serve parameters that fit into the time window starting with this
-    volatile long timeWindowStart;
 
 
     public RealtimeParameterFiller(ParameterArchive parameterArchive) {
@@ -56,7 +50,7 @@ public class RealtimeParameterFiller extends AbstractParameterFiller {
 
     @Override
     protected void doStart() {
-        timeWindowStart = SortedTimeSegment.getSegmentStart(timeService.getMissionTime() - CONSOLIDATE_OLDER_THAN);
+        collectionSegmentStart = SortedTimeSegment.getSegmentStart(timeService.getMissionTime() - CONSOLIDATE_OLDER_THAN);
         executor = new ScheduledThreadPoolExecutor(1);
         executor.scheduleAtFixedRate(this::doHouseKeeping, 60, 60, TimeUnit.SECONDS);
 
@@ -66,6 +60,7 @@ public class RealtimeParameterFiller extends AbstractParameterFiller {
     @Override
     protected void doStop() {
         executor.shutdown();
+        flush();
         notifyStopped();
     }
     /**
@@ -74,18 +69,14 @@ public class RealtimeParameterFiller extends AbstractParameterFiller {
      * 
      */
     public long getTimeWindowStart() {
-        return timeWindowStart;
+        return collectionSegmentStart;
     }
 
 
-
-
-
-    @Override
-    protected void doUpdateItems(int subscriptionId, List<ParameterValue> items) {
+    protected void updateItems(int subscriptionId, List<ParameterValue> items) {
         writeLock.lock();
         try {
-            super.doUpdateItems(subscriptionId, items);
+            processParameters(items);
         } finally {
             writeLock.unlock();
         }
@@ -114,7 +105,7 @@ public class RealtimeParameterFiller extends AbstractParameterFiller {
             for(Long segmentId: m.keySet()) {
                 pgSegments.remove(segmentId);
             }
-            timeWindowStart = consolidateOlderThan;
+            collectionSegmentStart = consolidateOlderThan;
         } finally {
             writeLock.unlock();
         }
@@ -123,7 +114,7 @@ public class RealtimeParameterFiller extends AbstractParameterFiller {
     public void retrieveValues(SingleParameterValueRequest pvr, Consumer<TimedValue> consumer) {
         readLock.lock();
         try {
-            if(pvr.stop!=TimeEncoding.INVALID_INSTANT && pvr.stop < timeWindowStart) {
+            if(pvr.stop!=TimeEncoding.INVALID_INSTANT && pvr.stop < collectionSegmentStart) {
                 return ; //no data in this interval
             }
             doProcessRequest(pvr, consumer);

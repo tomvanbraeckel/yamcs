@@ -129,8 +129,12 @@ public class SortedTimeSegment extends ValueSegment {
      * @param segmentId
      * @return
      */
-    public static long getSegmentEnd(long segmentId) {
-        return segmentId  | TIMESTAMP_MASK;
+    public static long getSegmentEnd(long instant) {
+        return instant  | TIMESTAMP_MASK;
+    }
+    
+    public static long getNextSegmentStart(long instant) {
+        return (instant  | TIMESTAMP_MASK) +1;
     }
     
     /**

@@ -52,9 +52,9 @@ public class RealtimeParameterFillerTest {
         ParameterValue pv1_0 = getParameterValue(p1, 100, "blala0");
 
 
-        int p1id = parchive.getParameterIdMap().get(p1.getQualifiedName(), pv1_0.getEngValue().getType());
+        int p1id = parchive.getParameterIdDb().createAndGet(p1.getQualifiedName(), pv1_0.getEngValue().getType());
 
-        int pg1id = parchive.getParameterGroupIdMap().get(new int[]{p1id});
+        int pg1id = parchive.getParameterGroupIdDb().createAndGet(new int[]{p1id});
 
 
         //ascending request on empty data
@@ -71,7 +71,7 @@ public class RealtimeParameterFillerTest {
 
 
         //add one value
-        filler.doUpdateItems(0, Arrays.asList(pv1_0));
+        filler.processParameters(Arrays.asList(pv1_0));
         
         //ascending request on one value
         MyValueConsummer c1a = new MyValueConsummer();       
@@ -112,7 +112,7 @@ public class RealtimeParameterFillerTest {
         
         //one more value
         ParameterValue pv1_1 = getParameterValue(p1, 200, "blala200");
-        filler.doUpdateItems(0, Arrays.asList(pv1_1));
+        filler.processParameters(Arrays.asList(pv1_1));
 
         //ascending request on two value
         MyValueConsummer c4a = new MyValueConsummer();       
@@ -169,11 +169,11 @@ public class RealtimeParameterFillerTest {
 
 
         List<ParameterValue> pvList = Arrays.asList(pv1_0, pv2_0);
-        int p1id = parchive.getParameterIdMap().get(p1.getQualifiedName(), pv1_0.getEngValue().getType());
-        int p2id = parchive.getParameterIdMap().get(p2.getQualifiedName(), pv2_0.getEngValue().getType());
+        int p1id = parchive.getParameterIdDb().createAndGet(p1.getQualifiedName(), pv1_0.getEngValue().getType());
+        int p2id = parchive.getParameterIdDb().createAndGet(p2.getQualifiedName(), pv2_0.getEngValue().getType());
 
         MyValueConsummer c0 = new MyValueConsummer();
-        int pg12id = parchive.getParameterGroupIdMap().get(new int[]{p1id, p2id});
+        int pg12id = parchive.getParameterGroupIdDb().createAndGet(new int[]{p1id, p2id});
         SingleParameterValueRequest pvr0 = new SingleParameterValueRequest(0, 1000, pg12id, p1id, true);
         filler.retrieveValues(pvr0, c0);
 
@@ -181,7 +181,7 @@ public class RealtimeParameterFillerTest {
         assertEquals(0, c0.times.size());
 
 
-        filler.doUpdateItems(0, pvList);
+        filler.processParameters(pvList);
         MyValueConsummer c1 = new MyValueConsummer();       
         SingleParameterValueRequest pvr1 = new SingleParameterValueRequest(0, 1000, pg12id, p1id, true);
         filler.retrieveValues(pvr1, c1);
@@ -202,17 +202,17 @@ public class RealtimeParameterFillerTest {
         //add two values with different timestamps
         ParameterValue pv1_1 = getParameterValue(p1, 100, "blala1");
         ParameterValue pv2_1 =  getParameterValue(p2, 200, 12);
-        filler.doUpdateItems(0, Arrays.asList(pv2_1, pv1_1));
+        filler.processParameters(Arrays.asList(pv2_1, pv1_1));
 
         MyValueConsummer c3 = new MyValueConsummer();
-        int pg1id = parchive.getParameterGroupIdMap().get(new int[]{p1id});
+        int pg1id = parchive.getParameterGroupIdDb().createAndGet(new int[]{p1id});
         SingleParameterValueRequest pvr3 = new SingleParameterValueRequest(0, 1000, pg1id, p1id, true);
         filler.retrieveValues(pvr3, c3);
         checkEquals(c3, pv1_1);
 
 
         MyValueConsummer c4 = new MyValueConsummer();
-        int pg2id = parchive.getParameterGroupIdMap().get(new int[]{p2id});
+        int pg2id = parchive.getParameterGroupIdDb().createAndGet(new int[]{p2id});
         SingleParameterValueRequest pvr4 = new SingleParameterValueRequest(0, 1000, pg2id, p2id, true);
         filler.retrieveValues(pvr4, c4);
         checkEquals(c4, pv2_1);
@@ -226,7 +226,7 @@ public class RealtimeParameterFillerTest {
         //two more parameters with the same timestamp
         ParameterValue pv1_2 = getParameterValue(p1, 100, "blala2");
         ParameterValue pv2_2 =  getParameterValue(p2, 100, 14);
-        filler.doUpdateItems(0, Arrays.asList(pv2_2, pv1_2));
+        filler.processParameters(Arrays.asList(pv2_2, pv1_2));
 
         MyValueConsummer c6 = new MyValueConsummer();
         SingleParameterValueRequest pvr6 = new SingleParameterValueRequest(0, 1000, pg12id, p2id, true);

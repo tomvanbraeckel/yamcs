@@ -33,6 +33,7 @@ import org.yamcs.web.rest.archive.ArchiveDownloadRestHandler;
 import org.yamcs.web.rest.archive.ArchiveEventRestHandler;
 import org.yamcs.web.rest.archive.ArchiveIndexRestHandler;
 import org.yamcs.web.rest.archive.ArchivePacketRestHandler;
+import org.yamcs.web.rest.archive.ArchiveParameter2RestHandler;
 import org.yamcs.web.rest.archive.ArchiveParameterRestHandler;
 import org.yamcs.web.rest.archive.ArchiveStreamRestHandler;
 import org.yamcs.web.rest.archive.ArchiveTableRestHandler;
@@ -92,6 +93,7 @@ public class Router {
         registerRouteHandler(null, new ArchiveIndexRestHandler());
         registerRouteHandler(null, new ArchivePacketRestHandler());
         registerRouteHandler(null, new ArchiveParameterRestHandler());
+        registerRouteHandler(null, new ArchiveParameter2RestHandler());
         registerRouteHandler(null, new ArchiveStreamRestHandler());
         registerRouteHandler(null, new ArchiveTableRestHandler());
         registerRouteHandler(null, new ArchiveTagRestHandler());

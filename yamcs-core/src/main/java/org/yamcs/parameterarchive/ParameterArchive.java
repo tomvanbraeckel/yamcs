@@ -26,6 +26,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yamcs.utils.DecodingException;
 import org.yamcs.utils.TimeEncoding;
+import org.yamcs.web.HttpServer;
+import org.yamcs.web.rest.archive.ArchiveParameter2RestHandler;
 import org.yamcs.yarch.YarchDatabase;
 
 import com.google.common.util.concurrent.AbstractService;
@@ -64,9 +66,12 @@ public class ParameterArchive  extends AbstractService {
         parameterGroupIdMap = new ParameterGroupIdDb(rdb, pgid2pg_cfh);
         realtimeFiller = new RealtimeParameterFiller(this);
         replayFiller = new ReplayParameterFiller(this);
+        
+       // HttpServer.getInstance().registerRouteHandler(yamcsInstance, new ArchiveParameter2RestHandler());
     }
 
     private void createDb(String dbpath) throws RocksDBException {
+        log.info("Creating new ParameterArchive RocksDb at {}", dbpath);
         ColumnFamilyDescriptor cfd_p2pid = new ColumnFamilyDescriptor(CF_NAME_meta_p2pid);
         ColumnFamilyDescriptor cfd_pgid2pg = new ColumnFamilyDescriptor(CF_NAME_meta_pgid2pg);
         ColumnFamilyDescriptor cfd_default = new ColumnFamilyDescriptor(RocksDB.DEFAULT_COLUMN_FAMILY);
@@ -83,6 +88,7 @@ public class ParameterArchive  extends AbstractService {
     }
 
     private void openExistingDb(String dbpath) throws RocksDBException {
+        log.info("Opening existing ParameterArchive RocksDb at {}", dbpath);
         List<byte[]> cfList = RocksDB.listColumnFamilies(new Options(), dbpath);
         List<ColumnFamilyDescriptor> cfdList = new ArrayList<ColumnFamilyDescriptor>(cfList.size());
         for(byte[] cf:cfList) {
@@ -124,17 +130,19 @@ public class ParameterArchive  extends AbstractService {
         }      
     }
 
-    private static long decodePartitionId(byte[] prefix, byte[] cf) {
+    static long decodePartitionId(byte[] prefix, byte[] cf) {
         int l = prefix.length;
         try {
-            return Long.decode("0x"+new String(cf, l, cf.length-l, StandardCharsets.US_ASCII));
+            return Long.parseLong(new String(cf, l, cf.length-l, StandardCharsets.US_ASCII), 16);
         } catch (NumberFormatException e) {
-            throw new ParameterArchiveException("Cannot decode partition id from column family: "+Arrays.toString(cf));
+            byte[] b = new byte[cf.length-l];
+            System.arraycopy(cf, l, b, 0, b.length);
+            throw new ParameterArchiveException("Cannot decode partition id from column family: "+Arrays.toString(b)+" string: "+new String(b, StandardCharsets.US_ASCII));
         }
     }
 
-    private static byte[] encodePartitionId(byte[] prefix, long partitionId) {
-        byte[] pb = ("0x"+Long.toHexString(partitionId)).getBytes(StandardCharsets.US_ASCII);
+    static byte[] encodePartitionId(byte[] prefix, long partitionId) {
+        byte[] pb = Long.toHexString(partitionId).getBytes(StandardCharsets.US_ASCII);
         byte[] cf = Arrays.copyOf(prefix, prefix.length+pb.length);
         System.arraycopy(pb, 0, cf, prefix.length, pb.length);
         return cf;
@@ -150,11 +158,11 @@ public class ParameterArchive  extends AbstractService {
         return pdb;
     }
 
-    public ParameterIdDb getParameterIdMap() {
+    public ParameterIdDb getParameterIdDb() {
         return parameterIdMap;
     }
 
-    public ParameterGroupIdDb getParameterGroupIdMap() {
+    public ParameterGroupIdDb getParameterGroupIdDb() {
         return parameterGroupIdMap;
     }
 
@@ -336,6 +344,7 @@ public class ParameterArchive  extends AbstractService {
         replayFiller.stopAsync();
         realtimeFiller.awaitTerminated();
         replayFiller.awaitTerminated();
+        rdb.close();
         notifyStopped();
     }
 
@@ -343,6 +352,16 @@ public class ParameterArchive  extends AbstractService {
         return replayFiller.scheduleRequest(start, stop);
     }
 
+    public void printStats(PrintStream out)  {
+        try {
+            for(Partition p:partitions.values()) {
+                out.println("---------- Partition starting at "+TimeEncoding.toString(p.partitionId)+" -------------");
+                out.println(rdb.getProperty(p.dataCfh, "rocksdb.stats"));
+            }
+        } catch (RocksDBException e) {
+            throw new RuntimeException(e);
+        }
+    }
     public void printKeys(PrintStream out) {
         out.println("pid\t pgid\t type\t SegmentStart\t size \t stype");
         SegmentEncoderDecoder decoder = new SegmentEncoderDecoder();
@@ -356,7 +375,7 @@ public class ParameterArchive  extends AbstractService {
                 try {
                     s = decoder.decode(it.value(), key.segmentStart);
                 } catch (DecodingException e) {
-                  throw new RuntimeException(e);
+                    throw new RuntimeException(e);
                 }
                 out.println(key.parameterId+"\t "+key.parameterGroupId+"\t "+key.type+"\t "+TimeEncoding.toString(key.segmentStart)+"\t "+v.length+"\t "+s.getClass().getSimpleName());
                 it.next();

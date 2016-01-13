@@ -9,6 +9,7 @@ import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
+import org.yamcs.utils.IntArray;
 import org.yamcs.utils.SortedIntArray;
 
 /**
@@ -38,20 +39,35 @@ public class ParameterGroupIdDb {
         readDb();
     }
     
-    public synchronized int get(SortedIntArray s) throws RocksDBException {
+    /**
+     * Creates (if not already there) a new ParameterGroupId for the given parameter id array
+     * 
+     * @param s
+     * @return
+     * @throws RocksDBException
+     */
+    public synchronized int createAndGet(SortedIntArray s) throws RocksDBException {
         Integer pgid = pg2pgidCache.get(s);
         if(pgid == null) {
             int x = ++highestPgId;;
             pgid = x;
-            db.put(encodeInt(x), s.encodeToVarIntArray());
+            db.put(pgid2pg_cfh, encodeInt(x), s.encodeToVarIntArray());
             pg2pgidCache.put(s, pgid);
         }
         
         return pgid;
     }
     
-    public int get(int[] parameterIdArray) throws RocksDBException {
-        return get(new SortedIntArray(parameterIdArray));
+    /**
+     * Creates (if not already there) a new ParameterGroupId for the given parameter id array
+     * 
+     * The parameter id array is sorted before
+     * @param parameterIdArray
+     * @return
+     * @throws RocksDBException
+     */
+    public int createAndGet(int[] parameterIdArray) throws RocksDBException {
+        return createAndGet(new SortedIntArray(parameterIdArray));
     }
     
     private byte[] encodeInt(int x) {
@@ -82,5 +98,21 @@ public class ParameterGroupIdDb {
         for(Map.Entry<SortedIntArray, Integer> e: pg2pgidCache.entrySet()) {
             out.println(e.getValue()+": "+e.getKey());
         }
+    }
+
+    /**
+     * get all parameter group ids for the parameters from which this parameter id is part of
+     * @param pid
+     * @return
+     */
+    public synchronized int[] getAllGroups(int pid) {
+        IntArray r = new IntArray();
+        for (Map.Entry<SortedIntArray, Integer> e: pg2pgidCache.entrySet()) {
+            SortedIntArray s = e.getKey();
+            if(s.contains(pid)) {
+                r.add(e.getValue());
+            }
+        }
+        return r.asArray();
     }
 }

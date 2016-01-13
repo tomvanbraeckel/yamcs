@@ -245,6 +245,15 @@ public class SortedIntArray {
        
         return true;
     }
+    
+    /**
+     * returns true if this array contains the value
+     * @param pid
+     * @return
+     */
+    public boolean contains(int x) {
+        return Arrays.binarySearch(a, 0, length, x)>=0;
+    }
 
    
 

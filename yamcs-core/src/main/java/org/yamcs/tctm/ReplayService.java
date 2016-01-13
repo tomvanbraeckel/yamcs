@@ -107,7 +107,6 @@ public class ReplayService extends AbstractService implements ReplayListener, Ar
     
     @Override
     public void newData(ProtoDataType type, MessageLite data) {
-      //  System.out.println("ReplayService new Data received: "+data);
         switch(type) {
         case TM_PACKET:
             dataCount++;
@@ -158,7 +157,6 @@ public class ReplayService extends AbstractService implements ReplayListener, Ar
 
     @Override
     public void doStart() {
-        System.out.println("-----------In ReplayService.doStart");
         yarchReplay.start();
         notifyStarted();
     }

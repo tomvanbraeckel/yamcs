@@ -8,6 +8,8 @@ import org.junit.Test;
 import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.RocksDB;
 import org.yamcs.utils.FileUtils;
+import org.yamcs.utils.IntArray;
+
 
 public class TestParameterGroupIdMap {
 
@@ -23,11 +25,12 @@ public class TestParameterGroupIdMap {
         int[] p2 = new int[] {1,3,4};
         int[] p3 = new int[] {1,4,5};
         
-        int pg1 = pgidMap.get(p1);
-        int pg3 = pgidMap.get(p3);
-        int pg2 = pgidMap.get(p2);
+        int pg1 = pgidMap.createAndGet(p1);
+        int pg3 = pgidMap.createAndGet(p3);
+        int pg2 = pgidMap.createAndGet(p2);
 
-        
+        int[] ia = pgidMap.getAllGroups(1);
+        assertArrayEquals(ia, new int[] {pg1, pg3});
         
         assertEquals(pg1, pg2);
         assertTrue(pg3 > pg1);
@@ -37,16 +40,24 @@ public class TestParameterGroupIdMap {
         db = RocksDB.open(f.getAbsolutePath());
         cfh =  db.getDefaultColumnFamily();
         pgidMap = new ParameterGroupIdDb(db, cfh);
-        int pg4 = pgidMap.get(p1);
+        
+        int pg4 = pgidMap.createAndGet(p1);
         assertEquals(pg1, pg4);
         
-        int pg5 = pgidMap.get(p3);
-        assertEquals(pg3, pg5);
         int[] p4 = new int[] {1,4,7};
         
-        int pg6 = pgidMap.get(p4);
+        int pg6 = pgidMap.createAndGet(p4);
         
         assertTrue(pg6 > pg3);
+        
+        int[] ia1 = pgidMap.getAllGroups(1);
+        assertArrayEquals(new int[] {pg1, pg3, pg6}, ia1);
     }
 
+    void checkEquals(IntArray result, int...expected) {
+        assertEquals(expected.length, result.size());
+        for(int i=0;i<expected.length;i++) {
+            assertEquals(expected[i], result.get(i));
+        }
+    }
 }

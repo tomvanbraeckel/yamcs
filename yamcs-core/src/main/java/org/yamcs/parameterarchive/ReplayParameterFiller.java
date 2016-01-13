@@ -1,13 +1,12 @@
 package org.yamcs.parameterarchive;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import javax.naming.ConfigurationException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.yamcs.ParameterValue;
 import org.yamcs.ProcessorFactory;
 import org.yamcs.YProcessor;
@@ -34,7 +33,8 @@ import org.yamcs.utils.TimeEncoding;
 public class ReplayParameterFiller extends AbstractParameterFiller  {
     ReplayServer replayServer;
     long replayTime;
-    private final Logger log = LoggerFactory.getLogger(ReplayParameterFiller.class);
+    ScheduledThreadPoolExecutor executor;
+    long threshold = 60000;
     
     public ReplayParameterFiller(ParameterArchive parameterArchive) {
         super(parameterArchive);
@@ -66,14 +66,16 @@ public class ReplayParameterFiller extends AbstractParameterFiller  {
     
     
     private void buildArchive(long start, long stop) {
-        long segmentStart = SortedTimeSegment.getSegmentStart(start);
+        collectionSegmentStart = SortedTimeSegment.getSegmentStart(start);
         long segmentEnd = SortedTimeSegment.getSegmentEnd(stop);
-        log.info("Starting an parameter archive fillup for segment {} - {} ", TimeEncoding.toCombinedFormat(segmentStart), TimeEncoding.toCombinedFormat(segmentEnd));
+        //start ahead with one minute
+        start = collectionSegmentStart-60000;
+        log.info("Starting an parameter archive fillup for segment {} - {} ", TimeEncoding.toCombinedFormat(collectionSegmentStart), TimeEncoding.toCombinedFormat(segmentEnd));
         
         try {
             ParameterReplay pr = new ParameterReplay(start, stop);
             pr.run();
-            consolidateAllAndClear();
+            flush();
         } catch (Exception e) {
            log.error("Error when creating replay" ,e);
         }
@@ -86,6 +88,7 @@ public class ReplayParameterFiller extends AbstractParameterFiller  {
     }
 
     class ParameterReplay implements ParameterConsumer {
+        
         YProcessor yproc;
         public ParameterReplay(long start, long stop) throws org.yamcs.ConfigurationException, YProcessorException {
             ReplayRequest.Builder rrb = ReplayRequest.newBuilder().setSpeed(ReplaySpeed.newBuilder().setType(ReplaySpeedType.AFAP));
@@ -104,7 +107,21 @@ public class ReplayParameterFiller extends AbstractParameterFiller  {
 
         @Override
         public void updateItems(int subscriptionId, List<ParameterValue> items) {
-            ReplayParameterFiller.this.doUpdateItems(0, items);
+            long t = processParameters(items);
+            if(t<0)return;
+            
+            long nextSegmentStart = SortedTimeSegment.getNextSegmentStart(collectionSegmentStart);
+            
+            if(t>nextSegmentStart+threshold) {
+                log.debug("Writing to archive the segment: [{} - {})", TimeEncoding.toString(collectionSegmentStart), TimeEncoding.toString(nextSegmentStart));
+                Map<Integer, PGSegment> m = pgSegments.remove(collectionSegmentStart);
+                if(m!=null) {
+                    consolidateAndWriteToArchive(m.values());
+                } else {
+                    log.info("no data collected in this segment [{} - {})", TimeEncoding.toString(collectionSegmentStart), TimeEncoding.toString(nextSegmentStart));
+                }
+                collectionSegmentStart = nextSegmentStart;
+            }
         }
     }
    

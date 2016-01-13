@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.RocksDB;
@@ -53,7 +54,7 @@ public class ParameterIdDb {
      * @return
      * @throws ParameterArchive if there was an error creating and storing a new parameter_id
      */
-    public synchronized int get(String paramFqn, Value.Type engType, Value.Type rawType) throws ParameterArchiveException {
+    public synchronized int createAndGet(String paramFqn, Value.Type engType, Value.Type rawType) throws ParameterArchiveException {
         int type = numericType(engType, rawType);
         
         Map<Integer, Integer> m = p2pidCache.get(paramFqn);
@@ -76,8 +77,8 @@ public class ParameterIdDb {
      * @param engType
      * @return
      */
-    public int get(String paramFqn, Type engType) {
-        return get(paramFqn, engType, null);
+    public int createAndGet(String paramFqn, Type engType) {
+        return createAndGet(paramFqn, engType, null);
     }
 
     
@@ -128,7 +129,7 @@ public class ParameterIdDb {
         }
     }
 
-    Value.Type getType(int x) {
+    static Value.Type getType(int x) {
         if(x==0xFFFF) return null;
         else return Value.Type.valueOf(x);
     }
@@ -154,4 +155,46 @@ public class ParameterIdDb {
         return p2pidCache.size();
     }
 
+    /**
+     * Get all parameters ids for a given qualified name
+     * 
+     * return null if no parameter id exists for that fqn.
+     * 
+     * 
+     * @param qualifiedName
+     * @return
+     */
+    public synchronized ParameterId[] get(String fqn) {
+        Map<Integer, Integer> m = p2pidCache.get(fqn);
+        if(m==null) {
+            return null;
+        }
+        
+        ParameterId[] r = new ParameterId[m.size()];
+        int i = 0;
+        for(Entry<Integer, Integer> e: m.entrySet()) {
+            r[i++]=new ParameterId(e.getValue(), e.getKey());
+        }
+        return r;
+    }
+
+    public static class ParameterId {
+        public final int pid;
+        public final Type engType;
+        public final Type rawType;
+        
+        public ParameterId(int pid, int numericType) {
+            this.pid = pid;
+            int et =  numericType>>16;
+            int rt =  numericType&0xFFFF;
+            this.engType = getType(et);
+            this.rawType = getType(rt);
+        }
+       
+        @Override
+        public String toString() {
+            return "ParameterId [pid=" + pid + ", engType=" + engType
+                    + ", rawType=" + rawType + "]";
+        }
+    }
 }

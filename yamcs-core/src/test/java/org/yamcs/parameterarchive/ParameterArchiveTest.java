@@ -59,8 +59,8 @@ public class ParameterArchiveTest {
 
         FileUtils.deleteRecursively(dbroot+"/ParameterArchive");
         parchive = new ParameterArchive(instance);
-        pidMap = parchive.getParameterIdMap();
-        ParameterGroupIdDb pgidMap= parchive.getParameterGroupIdMap();
+        pidMap = parchive.getParameterIdDb();
+        ParameterGroupIdDb pgidMap= parchive.getParameterGroupIdDb();
         assertNotNull(pidMap);
         assertNotNull(pgidMap);
     }
@@ -69,24 +69,37 @@ public class ParameterArchiveTest {
     public void closeDb() throws Exception {
         parchive.close();
     }
-
+    
+    @Test
+    public void testPartitionIdEncoding() throws Exception {
+        byte[] prefix = ParameterArchive.CF_NAME_data_prefix;
+        long p1 = Partition.getPartitionId(1000*3600*24*1000L+3232L);
+        byte[] b = ParameterArchive.encodePartitionId(prefix, p1);
+        
+        assertArrayEquals(prefix, Arrays.copyOf(b, prefix.length));
+        long p2 = ParameterArchive.decodePartitionId(prefix, b);
+        
+        assertEquals(p1, p2);
+    }
+    
+    
     @Test
     public void test1() throws Exception {
         //create a parameter in the map
-        int p1id = pidMap.get("/test/p1", Type.BINARY);
+        int p1id = pidMap.createAndGet("/test/p1", Type.BINARY);
 
         //close and reopen the archive to check that the parameter is still there
         parchive.close();
 
         parchive = new ParameterArchive(instance);
-        pidMap = parchive.getParameterIdMap();
-        pgidMap = parchive.getParameterGroupIdMap();
+        pidMap = parchive.getParameterIdDb();
+        pgidMap = parchive.getParameterGroupIdDb();
         assertNotNull(pidMap);
         assertNotNull(pgidMap);
-        int p2id = pidMap.get("/test/p2", Type.SINT32);
+        int p2id = pidMap.createAndGet("/test/p2", Type.SINT32);
 
         assertFalse(p1id==p2id);
-        assertEquals(p1id, pidMap.get("/test/p1", Type.BINARY));
+        assertEquals(p1id, pidMap.createAndGet("/test/p1", Type.BINARY));
     }
 
 
@@ -95,9 +108,9 @@ public class ParameterArchiveTest {
 
         ParameterValue pv1_0 = getParameterValue(p1, 100, "blala100", 100);
 
-        int p1id = parchive.getParameterIdMap().get(p1.getQualifiedName(), pv1_0.getEngValue().getType(), pv1_0.getRawValue().getType());
+        int p1id = parchive.getParameterIdDb().createAndGet(p1.getQualifiedName(), pv1_0.getEngValue().getType(), pv1_0.getRawValue().getType());
 
-        int pg1id = parchive.getParameterGroupIdMap().get(new int[]{p1id});
+        int pg1id = parchive.getParameterGroupIdDb().createAndGet(new int[]{p1id});
         PGSegment pgSegment1 = new PGSegment(pg1id, 0, new SortedIntArray(new int[] {p1id}));
 
         pgSegment1.addRecord(100, Arrays.asList(pv1_0));
@@ -202,9 +215,9 @@ public class ParameterArchiveTest {
     @Test
     public void testRawEqualsEngParameter() throws Exception {
         ParameterValue pv1_0 = getParameterValue(p1, 100, "blala100", "blala100");
-        int p1id = parchive.getParameterIdMap().get(p1.getQualifiedName(), pv1_0.getEngValue().getType(), pv1_0.getRawValue().getType());
+        int p1id = parchive.getParameterIdDb().createAndGet(p1.getQualifiedName(), pv1_0.getEngValue().getType(), pv1_0.getRawValue().getType());
 
-        int pg1id = parchive.getParameterGroupIdMap().get(new int[]{p1id});
+        int pg1id = parchive.getParameterGroupIdDb().createAndGet(new int[]{p1id});
         PGSegment pgSegment1 = new PGSegment(pg1id, 0, new SortedIntArray(new int[] {p1id}));
 
         pgSegment1.addRecord(100, Arrays.asList(pv1_0));
@@ -281,11 +294,11 @@ public class ParameterArchiveTest {
         pv1_2.setAcquisitionStatus(AcquisitionStatus.INVALID);
 
 
-        int p1id = parchive.getParameterIdMap().get(p1.getQualifiedName(), pv1_0.getEngValue().getType());
-        int p2id = parchive.getParameterIdMap().get(p2.getQualifiedName(), pv2_0.getEngValue().getType());
+        int p1id = parchive.getParameterIdDb().createAndGet(p1.getQualifiedName(), pv1_0.getEngValue().getType());
+        int p2id = parchive.getParameterIdDb().createAndGet(p2.getQualifiedName(), pv2_0.getEngValue().getType());
 
-        int pg1id = parchive.getParameterGroupIdMap().get(new int[]{p1id, p2id});
-        int pg2id = parchive.getParameterGroupIdMap().get(new int[]{p1id});
+        int pg1id = parchive.getParameterGroupIdDb().createAndGet(new int[]{p1id, p2id});
+        int pg2id = parchive.getParameterGroupIdDb().createAndGet(new int[]{p1id});
 
 
 
@@ -416,11 +429,11 @@ public class ParameterArchiveTest {
 
 
 
-        int p1id = parchive.getParameterIdMap().get(p1.getQualifiedName(), pv1_0.getEngValue().getType());
-        int p2id = parchive.getParameterIdMap().get(p2.getQualifiedName(), pv2_0.getEngValue().getType());
+        int p1id = parchive.getParameterIdDb().createAndGet(p1.getQualifiedName(), pv1_0.getEngValue().getType());
+        int p2id = parchive.getParameterIdDb().createAndGet(p2.getQualifiedName(), pv2_0.getEngValue().getType());
 
-        int pg1id = parchive.getParameterGroupIdMap().get(new int[]{p1id, p2id});
-        int pg2id = parchive.getParameterGroupIdMap().get(new int[]{p1id});
+        int pg1id = parchive.getParameterGroupIdDb().createAndGet(new int[]{p1id, p2id});
+        int pg2id = parchive.getParameterGroupIdDb().createAndGet(new int[]{p1id});
 
         //ascending on empty db
         List<ParameterIdValueList> l0a = retrieveMultipleParameters(0, TimeEncoding.MAX_INSTANT, new int[]{p1id, p2id}, new int[]{pg1id, pg1id}, true);

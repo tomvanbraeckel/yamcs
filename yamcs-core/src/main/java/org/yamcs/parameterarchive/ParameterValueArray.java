@@ -22,4 +22,16 @@ public class ParameterValueArray {
         this.rawValues = rawValues;
         this.paramStatus = paramStatus;
     }
+    
+    public long[] getTimestamps() {
+        return timestamps;
+    }
+    
+    public Object getEngValues() {
+        return engValues;
+    }
+    
+    public Object getRawValues() {
+        return rawValues;
+    }
 }
