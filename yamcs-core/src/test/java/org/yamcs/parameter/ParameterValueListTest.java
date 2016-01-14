@@ -32,10 +32,10 @@ public class ParameterValueListTest {
 	ParameterValueList pvlist1 = new ParameterValueList(pvalues);
 	assertEquals(n+1, pvlist1.getSize());
 
-	ParameterValue pv10 = pvlist1.getLast(params[10]);
+	ParameterValue pv10 = pvlist1.getLastInserted(params[10]);
 	assertEquals(pvalues.get(10), pv10);
 
-	ParameterValue pv2 = pvlist1.getLast(params[2]);
+	ParameterValue pv2 = pvlist1.getLastInserted(params[2]);
 	assertEquals(pvalues.get(n), pv2);
 	assertEquals(1, pvlist1.count(params[0]));
 	assertEquals(2, pvlist1.count(params[2]));
@@ -90,12 +90,12 @@ public class ParameterValueListTest {
     
 	assertEquals(pv1, pvlist.removeFirst(p));
 	assertEquals(1, pvlist.getSize());
-	assertEquals(pv2, pvlist.getLast(p));
+	assertEquals(pv2, pvlist.getLastInserted(p));
 	pvlist.add(pv1);
 	
 	assertEquals(pv1, pvlist.removeLast(p));
 	assertEquals(1, pvlist.getSize());
-	assertEquals(pv2, pvlist.getLast(p));
+	assertEquals(pv2, pvlist.getLastInserted(p));
 	
 	
 	assertEquals(pv2, pvlist.removeLast(p));

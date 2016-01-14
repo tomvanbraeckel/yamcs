@@ -170,7 +170,7 @@ public class ParameterValueList implements Collection<ParameterValue> {
      * @param p
      * @return
      */
-    public ParameterValue getLast(Parameter p) {
+    public ParameterValue getLastInserted(Parameter p) {
         int index =  getHash(p) & (table.length - 1);
         ParameterValue r = null;
         for(Entry e = table[index] ; e!=null; e=e.next) {
