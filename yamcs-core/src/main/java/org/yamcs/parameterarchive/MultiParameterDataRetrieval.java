@@ -1,6 +1,9 @@
 package org.yamcs.parameterarchive;
 
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.NavigableMap;
 import java.util.PriorityQueue;
 import java.util.TreeMap;
@@ -11,6 +14,9 @@ import org.rocksdb.RocksIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yamcs.parameterarchive.ParameterArchive.Partition;
+import org.yamcs.protobuf.Pvalue.ParameterStatus;
+import org.yamcs.protobuf.Pvalue.ParameterValue;
+import org.yamcs.protobuf.Yamcs.NamedObjectId;
 import org.yamcs.utils.DecodingException;
 
 
@@ -20,6 +26,7 @@ public class MultiParameterDataRetrieval {
 
     SegmentEncoderDecoder vsEncoder = new SegmentEncoderDecoder();
     private final Logger log = LoggerFactory.getLogger(MultiParameterDataRetrieval.class);
+    private int count;
 
     public MultiParameterDataRetrieval(ParameterArchive parchive, MultipleParameterValueRequest mpvr) {
         this.parchive = parchive;
@@ -29,70 +36,103 @@ public class MultiParameterDataRetrieval {
     public void retrieve(Consumer<ParameterIdValueList> consumer) throws RocksDBException, DecodingException {
         long startPartitionId = Partition.getPartitionId(mpvr.start);
         long stopPartitionId = Partition.getPartitionId(mpvr.stop);
-        
-        NavigableMap<Long, Partition> parts = parchive.getPartitions(startPartitionId, stopPartitionId);
-        if(!mpvr.ascending) {
-            parts = parts.descendingMap();
-        }
-        for(Partition p: parts.values()) {
-            retrieveFromPartition(p, consumer);
+        count = 0;
+        try {
+            NavigableMap<Long, Partition> parts = parchive.getPartitions(startPartitionId, stopPartitionId);
+            if(!mpvr.ascending) {
+                parts = parts.descendingMap();
+            }
+            for(Partition p: parts.values()) {
+                retrieveFromPartition(p, consumer);
+            }
+        } catch (ConsumerAbortException e) {
+            log.debug("Stoped early due to receiving ConsumerAbortException");
         }
     }
 
     private void retrieveFromPartition(Partition p, Consumer<ParameterIdValueList> consumer) throws RocksDBException, DecodingException {
-       
+
         RocksIterator[] its = new RocksIterator[mpvr.parameterIds.length];
-        
+        Map<PartitionIterator, NamedObjectId> partition2ParameterName = new HashMap<>();
         PriorityQueue<PartitionIterator> queue = new PriorityQueue<PartitionIterator>(new PartitionIteratorComparator(mpvr.ascending));
         SegmentMerger merger = null;
-        
+        boolean retrieveEng = mpvr.retrieveEngValues||mpvr.retrieveRawValues;
         for(int i =0 ; i<mpvr.parameterIds.length; i++) {
             its[i] = parchive.getIterator(p);
-            PartitionIterator pi = new PartitionIterator(its[i], mpvr.parameterIds[i],  mpvr.parameterGroupIds[i], mpvr.start, mpvr.stop, mpvr.ascending, true, false, false);
+
+            PartitionIterator pi = new PartitionIterator(its[i], mpvr.parameterIds[i],  mpvr.parameterGroupIds[i], mpvr.start, mpvr.stop, mpvr.ascending, 
+                    retrieveEng,  mpvr.retrieveRawValues, mpvr.retrieveParamStatus);
             if(pi.isValid()) {
                 queue.add(pi);
+                partition2ParameterName.put(pi, mpvr.parameterNames[i]);
             }
-        }
-        while(!queue.isEmpty()) {
-            PartitionIterator pit = queue.poll();
-            SegmentKey key = pit.key();
-            if(merger ==null) {
-                merger = new SegmentMerger(key, mpvr.ascending);
-            } else {
-                if(key.segmentStart!=merger.key.segmentStart) {
-                    sendAllData(merger, consumer);
-                    merger = new SegmentMerger(key, mpvr.ascending);
+        } 
+
+        try {
+            while(!queue.isEmpty()) {
+                if((mpvr.limit>0) && (count>=mpvr.limit)) break;
+
+                PartitionIterator pit = queue.poll();
+                SegmentKey key = pit.key();
+                if(merger ==null) {
+                    merger = new SegmentMerger(key, mpvr);
+                } else {
+                    if(key.segmentStart!=merger.key.segmentStart) {
+                        sendAllData(merger, consumer);
+                        merger = new SegmentMerger(key, mpvr);
+                    }
+                }
+
+                SortedTimeSegment timeSegment = parchive.getTimeSegment(p, key.segmentStart, pit.getParameterGroupId());
+                if(timeSegment==null) {
+                    String msg = "Cannot find a time segment for parameterGroupId="+ pit.getParameterGroupId()+" segmentStart = "+key.segmentStart+" despite having a value segment for parameterId: "+pit.getParameterId();
+                    log.error(msg);
+                    throw new RuntimeException(msg);
+                }
+                ValueSegment engValueSegment = mpvr.retrieveEngValues?pit.engValue():null;
+                ParameterStatusSegment paramStatuSegment =  mpvr.retrieveParamStatus?pit.parameterStatus():null;
+
+                ValueSegment rawValueSegment = null;
+                if(mpvr.retrieveRawValues) {
+                    rawValueSegment = pit.rawValue();
+                    if(rawValueSegment==null) {
+                        rawValueSegment = pit.engValue();
+                    }
+                }
+
+                merger.currentParameterGroupId = pit.getParameterGroupId();
+                merger.currentParameterId = pit.getParameterId();
+                merger.currentParameterName = partition2ParameterName.get(pit);
+                new SegmentIterator(timeSegment, engValueSegment, rawValueSegment, paramStatuSegment, mpvr.start, mpvr.stop, mpvr.ascending).forEachRemaining(merger);
+                pit.next();
+                if(pit.isValid()) {
+                    queue.add(pit);
                 }
             }
-            
-            SortedTimeSegment timeSegment = parchive.getTimeSegment(p, key.segmentStart, pit.getParameterGroupId());
-            if(timeSegment==null) {
-                String msg = "Cannot find a time segment for parameterGroupId="+ pit.getParameterGroupId()+" segmentStart = "+key.segmentStart+" despite having a value segment for parameterId: "+pit.getParameterId();
-                log.error(msg);
-                throw new RuntimeException(msg);
+            if(merger!=null) {
+                sendAllData(merger, consumer);
             }
-            ValueSegment valueSegment = pit.engValue();
-            merger.currentParameterGroupId = pit.getParameterGroupId();
-            merger.currentParameterId = pit.getParameterId();
-            
-            new SegmentIterator(timeSegment, valueSegment, mpvr.start, mpvr.stop, mpvr.ascending).forEachRemaining(merger);
-            pit.next();
-            if(pit.isValid()) {
-                queue.add(pit);
+
+        } finally {
+            for(int i =0 ; i<mpvr.parameterIds.length; i++) {
+                its[i].dispose();
             }
-        }
-        if(merger!=null) {
-            sendAllData(merger, consumer);
-        }
-        
-        
-        for(int i =0 ; i<mpvr.parameterIds.length; i++) {
-            its[i].dispose();
         }
     }
 
     private void sendAllData(SegmentMerger merger, Consumer<ParameterIdValueList> consumer) {
-        merger.values.values().forEach(consumer);
+        Collection<ParameterIdValueList> c = merger.values.values();
+        if(mpvr.limit<0) {
+            merger.values.values().forEach(consumer);
+        } else {
+            if(count<mpvr.limit) {
+                for(ParameterIdValueList pivl: c) {
+                    consumer.accept(pivl);
+                    count++;
+                    if(count>=mpvr.limit) break;
+                }
+            }
+        }
     }
 
     static class SegmentMerger implements Consumer<TimedValue>{
@@ -100,13 +140,17 @@ public class MultiParameterDataRetrieval {
         TreeMap<Long,ParameterIdValueList> values;
         int currentParameterId;
         int currentParameterGroupId;
-        
-        public SegmentMerger(SegmentKey key, final boolean ascending) {
+        NamedObjectId currentParameterName;
+
+        final MultipleParameterValueRequest mpvr;
+
+        public SegmentMerger(SegmentKey key, MultipleParameterValueRequest mpvr) {
             this.key = key;
+            this.mpvr = mpvr;
             values = new TreeMap<>(new Comparator<Long>() {
                 @Override
                 public int compare(Long o1, Long o2) {
-                    if(ascending){
+                    if(mpvr.ascending){
                         return o1.compareTo(o2);
                     } else {
                         return o2.compareTo(o1);
@@ -114,7 +158,7 @@ public class MultiParameterDataRetrieval {
                 }
             });  
         }
-        
+
         @Override
         public void accept(TimedValue tv) {
             long k = k(currentParameterGroupId, tv.instant);
@@ -123,15 +167,24 @@ public class MultiParameterDataRetrieval {
                 vlist = new ParameterIdValueList(tv.instant, currentParameterGroupId);
                 values.put(k, vlist);
             }
-            vlist.add(currentParameterId, tv.value);
+            ParameterValue.Builder pvb = ParameterValue.newBuilder().setId(currentParameterName);
+            if(tv.engValue!=null) pvb.setEngValue(tv.engValue);
+            if(tv.rawValue!=null) pvb.setRawValue(tv.rawValue);
+            if(tv.paramStatus!=null) {
+                ParameterStatus ps = tv.paramStatus;
+                if(ps.hasAcquisitionStatus()) pvb.setAcquisitionStatus(ps.getAcquisitionStatus());
+                if(ps.hasMonitoringResult()) pvb.setMonitoringResult(ps.getMonitoringResult());
+                if(ps.getAlarmRangeCount()>0) pvb.addAllAlarmRange(ps.getAlarmRangeList());
+            }
+            vlist.add(currentParameterId, pvb.build());
         }
-        
+
         private long k(int parameterGroupId, long instant) {
             return ((long)parameterGroupId)<<SortedTimeSegment.NUMBITS_MASK | (instant & SortedTimeSegment.TIMESTAMP_MASK);
         }
-        
+
     }
-    
+
     static class PartitionIteratorComparator implements Comparator<PartitionIterator> {
         final boolean ascending;
         public PartitionIteratorComparator(boolean ascending) {
@@ -146,7 +199,7 @@ public class MultiParameterDataRetrieval {
             } else {
                 c= Long.compare(pit2.key().segmentStart, pit1.key().segmentStart);
             }
-            
+
             if(c!=0) {
                 return c;
             }

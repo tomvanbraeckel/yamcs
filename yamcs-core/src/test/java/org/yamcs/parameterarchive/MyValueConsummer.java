@@ -12,7 +12,7 @@ class MyValueConsummer implements Consumer<TimedValue> {
     @Override
     public void accept(TimedValue tv) {
         times.add(tv.instant);
-        values.add(tv.value);
+        values.add(tv.engValue);
     }
 
 }

@@ -8,9 +8,9 @@ import org.yamcs.protobuf.Pvalue.MonitoringResult;
 import org.yamcs.protobuf.Pvalue.ParameterStatus;
 import org.yamcs.xtce.FloatRange;
 
-public abstract class AbstractParameterStatusSegment extends BaseSegment {
+public abstract class ParameterStatusSegment extends BaseSegment {
 
-    public AbstractParameterStatusSegment(byte formatId) {
+    public ParameterStatusSegment(byte formatId) {
         super(formatId);
     }
 
@@ -47,5 +47,8 @@ public abstract class AbstractParameterStatusSegment extends BaseSegment {
             rangeb.setMaxInclusive(range.getMaxInclusive());
         pvfb.addAlarmRange(rangeb.build());
     }
-    public abstract ParameterStatus[] getRange(int posStart, int posStop, boolean ascending) ;
+    public abstract ParameterStatus[] getRange(int indexStart, int indexStop, boolean ascending) ;
+
+
+    public abstract ParameterStatus get(int index);
 }

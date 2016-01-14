@@ -23,13 +23,13 @@ public class PGSegment {
     final int parameterGroupId;
     final SortedIntArray parameterIds;
     private SortedTimeSegment timeSegment;
-    private List<GenericValueSegment> valueSegments;
+    private List<GenericValueSegment> engValueSegments;
     private List<GenericValueSegment> rawValueSegments;
     private List<BasicParameterStatusSegment> parameterStatusSegments;
     
     private List<ValueSegment> consolidatedValueSegments;
     private List<ValueSegment> consolidatedRawValueSegments;
-    private List<AbstractParameterStatusSegment> consolidatedParameterStatusSegments;
+    private List<ParameterStatusSegment> consolidatedParameterStatusSegments;
     
     private boolean consolidated = false;
     private final boolean storeRawValues = ParameterArchive.STORE_RAW_VALUES;
@@ -38,14 +38,14 @@ public class PGSegment {
         this.parameterGroupId = parameterGroupId;
         this.parameterIds = parameterIds;
         timeSegment = new SortedTimeSegment(segmentStart);
-        valueSegments = new ArrayList<>(parameterIds.size());
+        engValueSegments = new ArrayList<>(parameterIds.size());
         parameterStatusSegments = new ArrayList<>(parameterIds.size());
         if(storeRawValues) {
             rawValueSegments = new ArrayList<>(parameterIds.size());
         }
         
         for(int i=0; i<parameterIds.size(); i++) {
-            valueSegments.add(new GenericValueSegment());
+            engValueSegments.add(new GenericValueSegment());
             parameterStatusSegments.add(new BasicParameterStatusSegment());
             if(storeRawValues) {
                 rawValueSegments.add(new GenericValueSegment());
@@ -68,14 +68,14 @@ public class PGSegment {
         if(consolidated) {
             throw new IllegalStateException("PGSegment is consolidated");
         }
-        if(sortedPvList.size()!=valueSegments.size()) {
-            throw new IllegalArgumentException("Wrong number of values passed: "+sortedPvList.size()+";expected "+valueSegments.size());
+        if(sortedPvList.size()!=engValueSegments.size()) {
+            throw new IllegalArgumentException("Wrong number of values passed: "+sortedPvList.size()+";expected "+engValueSegments.size());
         }
         
         int pos = timeSegment.add(instant);
-        for(int i = 0; i<valueSegments.size(); i++) {
+        for(int i = 0; i<engValueSegments.size(); i++) {
             ParameterValue pv = sortedPvList.get(i);
-            valueSegments.get(i).add(pos, pv.getEngValue());
+            engValueSegments.get(i).add(pos, pv.getEngValue());
             Value rawValue = pv.getRawValue();
             if(storeRawValues && (rawValue!=null)) {
                 rawValueSegments.get(i).add(pos, rawValue);
@@ -89,25 +89,27 @@ public class PGSegment {
         if(pidx<0) {
             throw new IllegalArgumentException("Received a parameter id "+pvr.parameterId+" that is not part of this parameter group");
         }
-        ValueSegment vs = valueSegments.get(pidx);
+        ValueSegment engValues = pvr.retrieveEngineeringValues?engValueSegments.get(pidx):null;
+        ValueSegment rawValues = pvr.retrieveRawValues?rawValueSegments.get(pidx):null;
+        ParameterStatusSegment paramStatus= pvr.retrieveParameterStatus?parameterStatusSegments.get(pidx):null;
         
-        new SegmentIterator(timeSegment, vs, pvr.start, pvr.stop, pvr.ascending).forEachRemaining(consumer);
+        new SegmentIterator(timeSegment, engValues, rawValues, paramStatus, pvr.start, pvr.stop, pvr.ascending).forEachRemaining(consumer);
     }
  
     
     public void consolidate() {
         consolidated = true;
-        consolidatedValueSegments  = new ArrayList<ValueSegment>(valueSegments.size());
-        for(GenericValueSegment gvs: valueSegments) {
+        consolidatedValueSegments  = new ArrayList<ValueSegment>(engValueSegments.size());
+        for(GenericValueSegment gvs: engValueSegments) {
             consolidatedValueSegments.add(gvs.consolidate());
         }
         if(storeRawValues) {
-            consolidatedRawValueSegments  = new ArrayList<ValueSegment>(valueSegments.size());
+            consolidatedRawValueSegments  = new ArrayList<ValueSegment>(engValueSegments.size());
             
             //the raw values will only be stored if they are different than the engineering values
-            for(int i=0;i<valueSegments.size(); i++) {
+            for(int i=0;i<engValueSegments.size(); i++) {
                 GenericValueSegment rvs = rawValueSegments.get(i);
-                GenericValueSegment vs = valueSegments.get(i);
+                GenericValueSegment vs = engValueSegments.get(i);
                 if((rvs.size()==0) || rvs.equals(vs)) {
                     consolidatedRawValueSegments.add(null);
                 } else {
@@ -117,7 +119,7 @@ public class PGSegment {
         }
         
         consolidatedParameterStatusSegments =  new ArrayList<>(parameterStatusSegments.size());
-        for(int i=0;i<valueSegments.size(); i++) {
+        for(int i=0;i<engValueSegments.size(); i++) {
             consolidatedParameterStatusSegments.add(parameterStatusSegments.get(i).consolidate());
         }
     }
@@ -146,7 +148,7 @@ public class PGSegment {
         return consolidatedRawValueSegments;
     }
 
-    public List<AbstractParameterStatusSegment> getConsolidatedParameterStatusSegments() {
+    public List<ParameterStatusSegment> getConsolidatedParameterStatusSegments() {
         return consolidatedParameterStatusSegments;
     }
 }

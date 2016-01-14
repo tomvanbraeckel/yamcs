@@ -96,7 +96,7 @@ public class TestUtils {
         assertEquals(expectedPv.length, plist.values.size());
         for(int i=0; i<expectedPv.length; i++) {
             ParameterValue pv = expectedPv[i];
-            Value v = plist.values.get(i);
+            Value v = plist.values.get(i).getEngValue();
             assertEquals(pv.getEngValue(), v);
         }
     }

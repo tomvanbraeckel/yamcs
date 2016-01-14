@@ -18,7 +18,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
  * @author nm
  *
  */
-public class RLEParameterStatusSegment extends AbstractParameterStatusSegment {
+public class RLEParameterStatusSegment extends ParameterStatusSegment {
     //count for each status in the status list - the sum of all counts is equal with size
     IntArray counts;
     List<ParameterStatus> statusList;
@@ -177,10 +177,10 @@ public class RLEParameterStatusSegment extends AbstractParameterStatusSegment {
     }
 
 
-    public ParameterStatus get(int pos) {
+    public ParameterStatus get(int index) {
         int k = 0;
         int i = 0;
-        while(k<=pos) {
+        while(k<=index) {
             k+=counts.get(i);
             i++;
         }

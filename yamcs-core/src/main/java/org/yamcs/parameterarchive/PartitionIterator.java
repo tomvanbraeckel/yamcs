@@ -152,9 +152,9 @@ public class PartitionIterator {
         return (ValueSegment) segmentEncoder.decode(currentRawValueSegment, currentKey.segmentStart);
     }
 
-    AbstractParameterStatusSegment parameterStatus() throws DecodingException {
+    ParameterStatusSegment parameterStatus() throws DecodingException {
         if(currentStatusSegment==null) return null;
-        return (AbstractParameterStatusSegment) segmentEncoder.decode(currentStatusSegment, currentKey.segmentStart);
+        return (ParameterStatusSegment) segmentEncoder.decode(currentStatusSegment, currentKey.segmentStart);
     }
 
     boolean isValid() {

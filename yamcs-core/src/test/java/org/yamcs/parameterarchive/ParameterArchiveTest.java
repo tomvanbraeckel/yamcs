@@ -17,6 +17,7 @@ import org.yamcs.ParameterValue;
 import org.yamcs.YamcsServer;
 import org.yamcs.parameterarchive.ParameterArchive.Partition;
 import org.yamcs.protobuf.Pvalue.AcquisitionStatus;
+import org.yamcs.protobuf.Yamcs.NamedObjectId;
 import org.yamcs.protobuf.Yamcs.Value;
 import org.yamcs.protobuf.Yamcs.Value.Type;
 import org.yamcs.utils.DecodingException;
@@ -541,12 +542,30 @@ public class ParameterArchiveTest {
         assertEquals(1, l6d.size());
         checkEquals(l6d.get(0), t2, pv1_3, pv2_1);
 
+        
+
+        //ascending retrieving two para with limit 2
+        List<ParameterIdValueList> l7a = retrieveMultipleParameters(0, TimeEncoding.MAX_INSTANT, new int[]{p1id, p2id}, new int[]{pg1id, pg1id}, true, 2);
+        assertEquals(2, l7a.size());
+        checkEquals(l7a.get(0), 100, pv1_0, pv2_0);
+        checkEquals(l7a.get(1), t2, pv1_3, pv2_1);
+        
         parchive.close();
     }
 
 
     List<ParameterIdValueList> retrieveMultipleParameters(long start, long stop, int[] parameterIds, int[] parameterGroupIds,  boolean ascending) throws Exception {
-        MultipleParameterValueRequest mpvr = new MultipleParameterValueRequest(start, stop, parameterIds, parameterGroupIds, ascending);
+       return retrieveMultipleParameters(start, stop, parameterIds, parameterGroupIds, ascending, -1);
+    }
+    
+    List<ParameterIdValueList> retrieveMultipleParameters(long start, long stop, int[] parameterIds, int[] parameterGroupIds,  boolean ascending, int limit) throws Exception {
+        NamedObjectId[] parameterNames = new NamedObjectId[parameterIds.length];
+        for(int i =0;i<parameterIds.length;i++) {
+            parameterNames[i] = NamedObjectId.newBuilder().setName("p"+parameterIds[i]).build();
+        }
+        MultipleParameterValueRequest mpvr = new MultipleParameterValueRequest(start, stop, parameterNames, parameterIds, parameterGroupIds, ascending);
+        mpvr.setLimit(limit);
+        
         MultiParameterDataRetrieval mpdr = new MultiParameterDataRetrieval(parchive, mpvr);
         MultiValueConsumer c = new MultiValueConsumer();
         mpdr.retrieve(c);

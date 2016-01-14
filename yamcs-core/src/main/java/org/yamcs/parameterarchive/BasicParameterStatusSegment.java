@@ -16,11 +16,11 @@ import com.google.protobuf.InvalidProtocolBufferException;
  * @author nm
  *
  */
-public class BasicParameterStatusSegment extends AbstractParameterStatusSegment{
+public class BasicParameterStatusSegment extends ParameterStatusSegment {
     List<ParameterStatus> values = new ArrayList<>();
 
     public BasicParameterStatusSegment() {
-        super(AbstractParameterStatusSegment.FORMAT_ID_BasicParameterStatusSegment);
+        super(ParameterStatusSegment.FORMAT_ID_BasicParameterStatusSegment);
     }
 
     @Override
@@ -75,7 +75,7 @@ public class BasicParameterStatusSegment extends AbstractParameterStatusSegment{
     }
 
 
-    public AbstractParameterStatusSegment consolidate() {
+    public ParameterStatusSegment consolidate() {
         RLEParameterStatusSegment rle = new RLEParameterStatusSegment();
         for(ParameterStatus ps:values) {
             rle.addParameterStatus(ps);
@@ -90,5 +90,10 @@ public class BasicParameterStatusSegment extends AbstractParameterStatusSegment{
 
     public void addParameterValue(int pos, ParameterValue pv) {
         values.add(pos, getStatus(pv));
+    }
+
+    @Override
+    public ParameterStatus get(int index) {
+        return values.get(index);
     }
 }

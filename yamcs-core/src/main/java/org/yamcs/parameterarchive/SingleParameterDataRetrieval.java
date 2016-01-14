@@ -117,7 +117,7 @@ public class SingleParameterDataRetrieval {
         
         ValueSegment engValueSegment = pit.engValue();
         ValueSegment rawValueSegment = pit.rawValue();
-        AbstractParameterStatusSegment parameterStatusSegment = pit.parameterStatus();
+        ParameterStatusSegment parameterStatusSegment = pit.parameterStatus();
         
         //retrieveRawValues will be set only when the rawValues do exist-> if it is null means they are equal with the engValues
         if((rawValueSegment == null) && (spvr.retrieveRawValues)) {

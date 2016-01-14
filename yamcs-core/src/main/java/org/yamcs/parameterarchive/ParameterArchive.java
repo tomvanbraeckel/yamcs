@@ -215,7 +215,7 @@ public class ParameterArchive  extends AbstractService {
         //and then the consolidated value segments
         List<ValueSegment> consolidated = pgs.getConsolidatedValueSegments();
         List<ValueSegment> consolidatedRawValues = pgs.getConsolidatedRawValueSegments();
-        List<AbstractParameterStatusSegment> satusSegments = pgs.getConsolidatedParameterStatusSegments();
+        List<ParameterStatusSegment> satusSegments = pgs.getConsolidatedParameterStatusSegments();
 
         for(int i=0; i<consolidated.size(); i++) {
             BaseSegment vs= consolidated.get(i);
@@ -233,7 +233,7 @@ public class ParameterArchive  extends AbstractService {
 
                 }
             }
-            AbstractParameterStatusSegment pss = satusSegments.get(i);
+            ParameterStatusSegment pss = satusSegments.get(i);
             byte[] pssKey = new SegmentKey(parameterId, pgs.getParameterGroupId(), pgs.getSegmentStart(), SegmentKey.TYPE_PARAMETER_STATUS).encode();
             byte[] pssValue = vsEncoder.encode(pss);
             writeBatch.put(p.dataCfh, pssKey, pssValue);
@@ -262,6 +262,12 @@ public class ParameterArchive  extends AbstractService {
         }
     }
 
+    public Future<?> reprocess(long start, long stop) {
+        if(stop>realtimeFiller.getTimeWindowStart()) {
+            throw new IllegalArgumentException("time interval overlaps with the realtime filler operations");
+        }
+        return replayFiller.scheduleRequest(start, stop);
+    }
 
     /** 
      * a copy of the partitions from start to stop inclusive
@@ -348,10 +354,7 @@ public class ParameterArchive  extends AbstractService {
         notifyStopped();
     }
 
-    public Future<?> scheduleFilling(long start, long stop) {
-        return replayFiller.scheduleRequest(start, stop);
-    }
-
+ 
     public void printStats(PrintStream out)  {
         try {
             for(Partition p:partitions.values()) {

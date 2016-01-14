@@ -2,22 +2,30 @@ package org.yamcs.parameterarchive;
 
 import java.util.function.Consumer;
 
+import org.yamcs.protobuf.Pvalue.ParameterStatus;
 import org.yamcs.protobuf.Yamcs.Value;
 
 public class SegmentIterator {
     final SortedTimeSegment timeSegment;
     final ValueSegment valueSegment;
+    final ValueSegment rawValueSegment;
+    final ParameterStatusSegment parameterStatusSegment;
+    
     final long start;
     final long stop;
     final boolean ascending;
     int pos;
     
-    public SegmentIterator(SortedTimeSegment timeSegment, ValueSegment valueSegment, long start, long stop, boolean ascending) {
+    public SegmentIterator(SortedTimeSegment timeSegment, ValueSegment valueSegment, ValueSegment rawValueSegment, ParameterStatusSegment parameterStatusSegment,
+            long start, long stop, boolean ascending) {
         this.start = start;
         this.stop = stop;
         this.ascending = ascending;
         this.timeSegment = timeSegment;
         this.valueSegment = valueSegment;
+        this.rawValueSegment = rawValueSegment;
+        this.parameterStatusSegment = parameterStatusSegment;
+        
         init();
     }
 
@@ -51,25 +59,31 @@ public class SegmentIterator {
     
     public TimedValue next() {
         long t = timeSegment.getTime(pos);
-        Value v = valueSegment.get(pos);
+        Value ev = (valueSegment==null)?null:valueSegment.get(pos);
+        Value rv = (rawValueSegment==null)?null:rawValueSegment.get(pos);
+        ParameterStatus ps = (parameterStatusSegment==null)?null:parameterStatusSegment.get(pos);
+        
         if(ascending) {
             pos++;
         } else {
             pos--;
         }
-        return new TimedValue(t,v);
+        return new TimedValue(t,ev, rv, ps);
     }
 
     public void forEachRemaining(Consumer<TimedValue> consumer) {
         while(hasNext()) {
             long t = timeSegment.getTime(pos);
-            Value v = valueSegment.get(pos);
+            Value ev = (valueSegment==null)?null:valueSegment.get(pos);
+            Value rv = (rawValueSegment==null)?null:rawValueSegment.get(pos);
+            ParameterStatus ps = (parameterStatusSegment==null)?null:parameterStatusSegment.get(pos);
+
             if(ascending) {
                 pos++;
             } else {
                 pos--;
             }
-            consumer.accept(new TimedValue(t, v));
+            consumer.accept(new TimedValue(t, ev, rv, ps));
         }
     }
         

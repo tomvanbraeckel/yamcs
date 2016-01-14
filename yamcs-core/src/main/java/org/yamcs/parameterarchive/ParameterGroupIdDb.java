@@ -113,6 +113,6 @@ public class ParameterGroupIdDb {
                 r.add(e.getValue());
             }
         }
-        return r.asArray();
+        return r.toArray();
     }
 }
