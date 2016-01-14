@@ -1,6 +1,5 @@
 package org.yamcs.parameter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.List;
@@ -14,7 +13,9 @@ import org.yamcs.xtce.Parameter;
  * 
  * Used by the {@link org.yamcs.parameter.ParameterRequestManagerImpl} to cache last values of parameters.
  * 
- * The cache will contain the parameters for a predefined 
+ * The cache will contain the parameters for a predefined time period but can exceed that period if space is available in the CacheEntry.
+ * 
+ * A CacheEntry also has a maximum size to prevent it accumulating parameters ad infinitum (e.g. if there are bogus parameters with the timestamp never changing)
  * 
  * 
  * We keep delivery consisting of lists of parameter values together such that
@@ -24,8 +25,11 @@ import org.yamcs.xtce.Parameter;
  *
  */
 public class ParameterCache {
-    ConcurrentHashMap<Parameter, CacheEntry> cache = new ConcurrentHashMap<Parameter, CacheEntry>();
-
+    final ConcurrentHashMap<Parameter, CacheEntry> cache = new ConcurrentHashMap<Parameter, CacheEntry>();
+    final long timeToCache;
+    public ParameterCache(long timeToCache) {
+        this.timeToCache = timeToCache;
+    }
     /**
      * update the parameters in the cache
 
@@ -38,7 +42,7 @@ public class ParameterCache {
             Parameter p = pv.getParameter();
             CacheEntry ce = cache.get(p);
             if(ce==null) {
-                ce = new CacheEntry();
+                ce = new CacheEntry(p, timeToCache);
                 cache.put(p, ce);
             }
             ce.add(pvlist);
@@ -69,7 +73,8 @@ public class ParameterCache {
                 bs.clear(i);
                 //find all the other parameters that are in this delivery
                 for (int j = bs.nextSetBit(i); j >= 0; j = bs.nextSetBit(j+1)) {
-                    pv = pvlist.getLastInserted(p);
+                    Parameter p1 = plist.get(j);
+                    pv = pvlist.getLastInserted(p1);
                     if(pv!=null) {
                         result.add(pv);
                         bs.clear(j);
@@ -85,44 +90,70 @@ public class ParameterCache {
 
 
     /**
-     * Returns cached value for parameter or null if there is no value in the cache
+     * Returns last cached value for parameter or null if there is no value in the cache
      * @param plist
      * @return
      */
-    ParameterValue getValue(Parameter p) {
+    ParameterValue getLastValue(Parameter p) {
         CacheEntry ce = cache.get(p);
         if(ce==null) return null;
         ParameterValueList pvlist = ce.getLast();
         return pvlist.getLastInserted(p);
     }
 
+    /**
+     * Stores a cache for one parameter as an array of the ParameterValueList in which it is part of.
+     * 
+     * It ensure minimum 
+     * 
+     * @author nm
+     *
+     */
     static final class CacheEntry {
-        volatile ParameterValueList[] pvlistArray;
-        volatile int head;
-        static int DEFAULT_CAPACITY = 100;
-
-        public CacheEntry() {
-            pvlistArray = new ParameterValueList[DEFAULT_CAPACITY];
+        final Parameter parameter;
+        private volatile ParameterValueList[] elements;
+        volatile int tail = 0;
+        static final int INITIAL_CAPACITY = 128;
+        static final int MAX_CAPACITY = 4096;
+        final long timeToCache;
+        
+        public CacheEntry(Parameter p, long timeToCache) {
+            this.parameter = p;
+            this.timeToCache = timeToCache;
+            elements = new ParameterValueList[INITIAL_CAPACITY];
         }
 
        
 
         ParameterValueList getLast() {
-            return pvlistArray[head];
+            return elements[(tail-1)&(elements.length-1)];
         }
         
         public synchronized void add(ParameterValueList pvlist) {
-            
+            ParameterValueList pv1 = elements[tail];
+            if(pv1!=null) {
+                ParameterValue oldpv = pv1.getFirstInserted(parameter);
+                ParameterValue newpv = pvlist.getFirstInserted(parameter);
+                if((oldpv==null) || (newpv==null)) return; // shouldn't happen
+                
+                if(newpv.getAcquisitionTime()-oldpv.getAcquisitionTime()<timeToCache) {
+                    doubleCapacity();
+                }
+            }
+            elements[tail] = pvlist;
+            tail = (tail+1) & (elements.length-1);
         }
         
-        private void ensureCapacity(int minCapacity) {
-            if(minCapacity<=pvlistArray.length) return;
+        private void doubleCapacity() {
+            int capacity = elements.length;
+            if(capacity>=MAX_CAPACITY) return;
 
-            int capacity = pvlistArray.length;
-            int newCapacity = capacity + (capacity >> 1);
-            if(newCapacity<minCapacity) newCapacity = minCapacity;
+            int newCapacity = 2*capacity;
 
-            pvlistArray = Arrays.copyOf(pvlistArray, newCapacity);
+            ParameterValueList[]  newElements = new ParameterValueList[newCapacity];
+            System.arraycopy(elements, 0, newElements, 0, tail);
+            System.arraycopy(elements, tail, newElements, tail+capacity, capacity-tail);
+            elements = newElements;
         }
     }
 }

@@ -82,7 +82,9 @@ public class YProcessor extends AbstractService {
 
     private boolean parameterCacheEnabled = false;
     private boolean parameterCacheAll = false;
-
+    private long parameterCacheDuration = 10*60*1000;
+    
+    
     final Logger log;
     static Set<YProcessorListener> listeners=new CopyOnWriteArraySet<>(); //send notifications for added and removed processors to this
 
@@ -231,6 +233,14 @@ public class YProcessor extends AbstractService {
             }
             parameterCacheAll = (Boolean)v;
             if(parameterCacheAll) parameterCacheEnabled=true;
+        }
+        
+        v = cacheConfig.get("duration");
+        if(v!=null) {
+            if(!(v instanceof Integer)) {
+                throw new ConfigurationException("Unknown value '"+v+"' for parameterCache -> duration. Integer (number of seconds) expected .");
+            }
+            parameterCacheDuration = (Integer)v *1000L;
         }
     }
 
@@ -536,6 +546,10 @@ public class YProcessor extends AbstractService {
         return parameterCacheEnabled;
     }
 
+    public long parameterCacheDuration() {
+        return parameterCacheDuration;
+    }
+    
     public boolean cacheAllParameters() {
         return parameterCacheAll;
     }

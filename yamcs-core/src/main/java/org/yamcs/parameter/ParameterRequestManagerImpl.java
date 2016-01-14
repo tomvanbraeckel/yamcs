@@ -84,7 +84,7 @@ public class ParameterRequestManagerImpl implements ParameterRequestManager {
 	}
 	
 	if(yproc.isParameterCacheEnabled()) {
-	    parameterCache = new ParameterCache();		   
+	    parameterCache = new ParameterCache(yproc.parameterCacheDuration());		   
 	}
 	cacheAll = yproc.cacheAllParameters();
 	executor = yproc.getExecutor();
@@ -530,7 +530,7 @@ public class ParameterRequestManagerImpl implements ParameterRequestManager {
     }
 
     public ParameterValue getValueFromCache(Parameter param) {
-   	return parameterCache.getValue(param);
+   	return parameterCache.getLastValue(param);
     }
     
     public void start() {

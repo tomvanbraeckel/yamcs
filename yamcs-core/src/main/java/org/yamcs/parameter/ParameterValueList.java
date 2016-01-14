@@ -180,7 +180,20 @@ public class ParameterValueList implements Collection<ParameterValue> {
         }
         return r;
     }
-
+    
+    public ParameterValue getFirstInserted(Parameter p) {
+        int index =  getHash(p) & (table.length - 1);
+        ParameterValue r = null;
+        for(Entry e = table[index] ; e!=null; e=e.next) {
+            if(e.pv.getParameter()==p) {
+                r = e.pv;
+                break;
+            }
+        }
+        return r;
+    }
+    
+    
     /**
      * Remove the last inserted value for Parameter p
      * 
@@ -456,4 +469,7 @@ public class ParameterValueList implements Collection<ParameterValue> {
         }
 
     }
+
+
+   
 }

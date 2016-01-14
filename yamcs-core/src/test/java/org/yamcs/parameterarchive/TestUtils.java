@@ -25,10 +25,10 @@ public class TestUtils {
         pv.setEngineeringValue(v);
         return pv;
     }
-    static void checkEquals( ParameterValueArray pva, ParameterValue...pvs) {
+    public static void checkEquals( ParameterValueArray pva, ParameterValue...pvs) {
         checkEquals(true, true, true, pva, pvs);
     }
-    static void checkEquals(boolean shouldHaveEngValues, boolean shouldHaveRawValues, boolean shouldHaveParameterStatus, ParameterValueArray pva, ParameterValue...pvs) {
+    public static void checkEquals(boolean shouldHaveEngValues, boolean shouldHaveRawValues, boolean shouldHaveParameterStatus, ParameterValueArray pva, ParameterValue...pvs) {
         assertEquals(pvs.length, pva.timestamps.length);
         for(int i=0; i<pvs.length; i++) {
             ParameterValue pv = pvs[i];
@@ -91,7 +91,7 @@ public class TestUtils {
         assertEquals(RLEParameterStatusSegment.getStatus(parameterValue), parameterStatus);
     }
 
-    static void checkEquals(ParameterIdValueList plist, long expectedTime, ParameterValue... expectedPv) {
+    public static void checkEquals(ParameterIdValueList plist, long expectedTime, ParameterValue... expectedPv) {
         assertEquals(expectedTime, plist.instant);
         assertEquals(expectedPv.length, plist.values.size());
         for(int i=0; i<expectedPv.length; i++) {
@@ -109,4 +109,6 @@ public class TestUtils {
             assertEquals(pv.getEngValue(), c.values.get(i));
         }
     }
+    
+    
 }
