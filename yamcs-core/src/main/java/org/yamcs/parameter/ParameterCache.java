@@ -152,7 +152,7 @@ public class ParameterCache {
                     t = (t-1)&(n-1);
                     ParameterValueList pvl = elements[t];
                     if(pvl==null) break;
-                    plist.add(pvl.getFirstInserted(parameter));
+                    pvl.forEach(parameter, (ParameterValue pv) -> plist.add(pv));
                     
                 } while (t!=_tail);
                     

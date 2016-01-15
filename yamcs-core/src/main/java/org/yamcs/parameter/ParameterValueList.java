@@ -3,6 +3,7 @@ package org.yamcs.parameter;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.function.Consumer;
 
 import org.yamcs.ParameterValue;
 import org.yamcs.xtce.Parameter;
@@ -193,6 +194,20 @@ public class ParameterValueList implements Collection<ParameterValue> {
         return r;
     }
     
+    /**
+     * Performs the given action for each value of the parameter p
+     * The values are considered in insertion order - oldest is first to be processed
+     * @param p
+     * @param action
+     */
+    public void forEach(Parameter p, Consumer<ParameterValue> action) {
+        int index =  getHash(p) & (table.length - 1);
+        for(Entry e = table[index] ; e!=null; e=e.next) {
+            if(e.pv.getParameter()==p) {
+                action.accept(e.pv);
+            }
+        }
+    }
     
     /**
      * Remove the last inserted value for Parameter p
