@@ -4,6 +4,8 @@ import java.util.BitSet;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.yamcs.ParameterValue;
 import org.yamcs.xtce.Parameter;
@@ -102,6 +104,19 @@ public class ParameterCache {
     }
 
     /**
+     * Returns all values from the cache for the parameter or null if there is no value cached
+     * 
+     * @param plist
+     * @return
+     */
+    List<ParameterValue> getAllValues(Parameter p) {
+        CacheEntry ce = cache.get(p);
+        if(ce==null) return null;
+
+        return ce.getAll();
+    }
+
+    /**
      * Stores a cache for one parameter as an array of the ParameterValueList in which it is part of.
      * 
      * It ensure minimum 
@@ -111,39 +126,73 @@ public class ParameterCache {
      */
     static final class CacheEntry {
         final Parameter parameter;
-        private volatile ParameterValueList[] elements;
-        volatile int tail = 0;
+        private  ParameterValueList[] elements;
+        int tail = 0;
         static final int INITIAL_CAPACITY = 128;
         static final int MAX_CAPACITY = 4096;
         final long timeToCache;
-        
+        ReadWriteLock lock = new ReentrantReadWriteLock();
+
         public CacheEntry(Parameter p, long timeToCache) {
             this.parameter = p;
             this.timeToCache = timeToCache;
             elements = new ParameterValueList[INITIAL_CAPACITY];
         }
 
-       
+
+
+        public  List<ParameterValue> getAll() {
+            lock.readLock().lock();
+            try {
+                List<ParameterValue> plist = new ArrayList<>();
+                int _tail = tail;
+                int n = elements.length;
+                int t = _tail; 
+                do {
+                    t = (t-1)&(n-1);
+                    ParameterValueList pvl = elements[t];
+                    if(pvl==null) break;
+                    plist.add(pvl.getFirstInserted(parameter));
+                    
+                } while (t!=_tail);
+                    
+                return plist;
+            } finally {
+                lock.readLock().unlock();
+            }
+        }
+
+
 
         ParameterValueList getLast() {
-            return elements[(tail-1)&(elements.length-1)];
+            lock.readLock().lock();
+            try {
+                return elements[(tail-1)&(elements.length-1)];
+            } finally {
+                lock.readLock().unlock();
+            } 
         }
-        
-        public synchronized void add(ParameterValueList pvlist) {
-            ParameterValueList pv1 = elements[tail];
-            if(pv1!=null) {
-                ParameterValue oldpv = pv1.getFirstInserted(parameter);
-                ParameterValue newpv = pvlist.getFirstInserted(parameter);
-                if((oldpv==null) || (newpv==null)) return; // shouldn't happen
-                
-                if(newpv.getAcquisitionTime()-oldpv.getAcquisitionTime()<timeToCache) {
-                    doubleCapacity();
+
+        public void add(ParameterValueList pvlist) {
+            lock.writeLock().lock();
+            try {
+                ParameterValueList pv1 = elements[tail];
+                if(pv1!=null) {
+                    ParameterValue oldpv = pv1.getFirstInserted(parameter);
+                    ParameterValue newpv = pvlist.getFirstInserted(parameter);
+                    if((oldpv==null) || (newpv==null)) return; // shouldn't happen
+
+                    if(newpv.getAcquisitionTime()-oldpv.getAcquisitionTime()<timeToCache) {
+                        doubleCapacity();
+                    }
                 }
+                elements[tail] = pvlist;
+                tail = (tail+1) & (elements.length-1);
+            } finally {
+                lock.writeLock().unlock();
             }
-            elements[tail] = pvlist;
-            tail = (tail+1) & (elements.length-1);
         }
-        
+
         private void doubleCapacity() {
             int capacity = elements.length;
             if(capacity>=MAX_CAPACITY) return;
