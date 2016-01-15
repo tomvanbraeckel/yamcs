@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.rocksdb.ColumnFamilyDescriptor;
 import org.rocksdb.ColumnFamilyHandle;
@@ -24,10 +26,10 @@ import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yamcs.YamcsServer;
+import org.yamcs.time.TimeService;
 import org.yamcs.utils.DecodingException;
 import org.yamcs.utils.TimeEncoding;
-import org.yamcs.web.HttpServer;
-import org.yamcs.web.rest.archive.ArchiveParameter2RestHandler;
 import org.yamcs.yarch.YarchDatabase;
 
 import com.google.common.util.concurrent.AbstractService;
@@ -50,11 +52,16 @@ public class ParameterArchive  extends AbstractService {
     private TreeMap<Long, Partition> partitions = new TreeMap<Long, ParameterArchive.Partition>();
     SegmentEncoderDecoder vsEncoder = new SegmentEncoderDecoder();
     public final static boolean STORE_RAW_VALUES = true; 
-    RealtimeParameterFiller realtimeFiller;
-    ReplayParameterFiller replayFiller;
-
+    ScheduledThreadPoolExecutor executor=new ScheduledThreadPoolExecutor(1);
+       
+    //how often the near realtime filling should run
+    // data in between should be obtainable from the parameter cache
+    private long nrtFillTime = 10*60*1000;
+    final TimeService timeService;
+    
     public ParameterArchive(String instance) throws RocksDBException {
         this.yamcsInstance = instance;
+        this.timeService = YamcsServer.getTimeService(instance);
         String dbpath = YarchDatabase.getInstance(instance).getRoot() +"/ParameterArchive";
         File f = new File(dbpath+"/IDENTITY");
         if(f.exists()) {
@@ -64,8 +71,6 @@ public class ParameterArchive  extends AbstractService {
         }
         parameterIdMap = new ParameterIdDb(rdb, p2pid_cfh);
         parameterGroupIdMap = new ParameterGroupIdDb(rdb, pgid2pg_cfh);
-        realtimeFiller = new RealtimeParameterFiller(this);
-        replayFiller = new ReplayParameterFiller(this);
         
        // HttpServer.getInstance().registerRouteHandler(yamcsInstance, new ArchiveParameter2RestHandler());
     }
@@ -263,10 +268,26 @@ public class ParameterArchive  extends AbstractService {
     }
 
     public Future<?> reprocess(long start, long stop) {
-        if(stop>realtimeFiller.getTimeWindowStart()) {
-            throw new IllegalArgumentException("time interval overlaps with the realtime filler operations");
+        log.debug("Scheduling a reprocess for interval [{} - {}]", TimeEncoding.toString(start), TimeEncoding.toString(stop));
+        return executor.schedule(()->doReprocess(start,stop), 0, TimeUnit.SECONDS);
+    }
+
+    /**
+     * runs periodically to build the archive near realtime
+     */
+    private void fillNearRealtime() {
+        long currentTime = timeService.getMissionTime();
+        reprocess(currentTime-2*nrtFillTime, currentTime);
+    }
+    
+    private void doReprocess(long start, long stop) {
+        ArchiveFillerTask aft;
+        try {
+            aft = new ArchiveFillerTask(this, start, stop);
+            aft.run();
+        } catch (Exception e) {
+            log.error("Error when running the archive filler task",e);
         }
-        return replayFiller.scheduleRequest(start, stop);
     }
 
     /** 
@@ -337,20 +358,14 @@ public class ParameterArchive  extends AbstractService {
 
     @Override
     protected void doStart() {
-        realtimeFiller.startAsync();
-        replayFiller.startAsync();
-        realtimeFiller.awaitRunning();
-        replayFiller.awaitRunning();
         notifyStarted();
+        executor.scheduleAtFixedRate(this::fillNearRealtime, nrtFillTime, nrtFillTime, TimeUnit.MILLISECONDS);
     }
 
     @Override
     protected void doStop() {
-        realtimeFiller.stopAsync();
-        replayFiller.stopAsync();
-        realtimeFiller.awaitTerminated();
-        replayFiller.awaitTerminated();
         rdb.close();
+        executor.shutdown();
         notifyStopped();
     }
 

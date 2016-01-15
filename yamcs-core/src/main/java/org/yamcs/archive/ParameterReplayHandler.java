@@ -40,6 +40,16 @@ import org.yamcs.yarch.Tuple;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.protobuf.MessageLite;
 
+/**
+ * provide parameter replays by creating an internal processor.
+ * Should not be used anymore since the processor created cannot be configured.
+ * 
+ * Instead a replay processor should be used (for instance @see org.yamcs.parameterarchive.ArchiveFillerTask)
+ *  
+ * @author nm
+ *
+ */
+@Deprecated
 public class ParameterReplayHandler implements ReplayHandler, ParameterWithIdConsumer {
     final XtceDb xtcedb;
     static Logger log=LoggerFactory.getLogger(ParameterReplayHandler.class.getName());

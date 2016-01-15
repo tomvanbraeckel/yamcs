@@ -53,7 +53,7 @@ public class IntegrationTestParameterArchive extends AbstractIntegrationTest {
     @Test
     public void testRestRetrieval() throws Exception {
       //  Logger.getLogger("org.yamcs").setLevel(Level.INFO);
-       // Logger.getLogger("org.yamcs.parameterarchive").setLevel(Level.ALL);
+        Logger.getLogger("org.yamcs.parameterarchive").setLevel(Level.ALL);
         generateData("2015-01-02T10:00:00", 2*3600);
         ParameterArchive parameterArchive = YamcsServer.getService(yamcsInstance, ParameterArchive.class);
         Future<?> f = parameterArchive.reprocess(TimeEncoding.parse("2015-01-02T10:00:00"), TimeEncoding.parse("2016-01-02T11:00:00"));

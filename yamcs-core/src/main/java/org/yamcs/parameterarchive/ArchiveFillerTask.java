@@ -11,40 +11,59 @@ import org.rocksdb.RocksDBException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yamcs.ParameterValue;
+import org.yamcs.ProcessorFactory;
+import org.yamcs.YProcessor;
+import org.yamcs.YProcessorException;
+import org.yamcs.parameter.ParameterConsumer;
+import org.yamcs.protobuf.Yamcs.EndAction;
+import org.yamcs.protobuf.Yamcs.PacketReplayRequest;
+import org.yamcs.protobuf.Yamcs.PpReplayRequest;
+import org.yamcs.protobuf.Yamcs.ReplayRequest;
+import org.yamcs.protobuf.Yamcs.ReplaySpeed;
 import org.yamcs.protobuf.Yamcs.Value;
+import org.yamcs.protobuf.Yamcs.ReplaySpeed.ReplaySpeedType;
 import org.yamcs.utils.SortedIntArray;
 import org.yamcs.utils.TimeEncoding;
 
-import com.google.common.util.concurrent.AbstractService;
-
-/**
- * Collects parameters in segments
- * 
- * 
- * @author nm
- *
- */
-public abstract class AbstractParameterFiller extends AbstractService {
-    protected final ParameterArchive parameterArchive;
+class ArchiveFillerTask implements ParameterConsumer {
+    final ParameterArchive parameterArchive;
     protected Logger log = LoggerFactory.getLogger(this.getClass());
-
-    //segment start -> ParameterGroup_id -> PGSegment
+    
+    final YProcessor yproc;
+    
+    
+  //segment start -> ParameterGroup_id -> PGSegment
     protected TreeMap<Long, Map<Integer, PGSegment>> pgSegments = new TreeMap<>();
     protected final ParameterIdDb parameterIdMap;
     protected final ParameterGroupIdDb parameterGroupIdMap;
 
-
     //ignore any data older than this
-    protected long collectionSegmentStart;
-
-
-    public AbstractParameterFiller(ParameterArchive parameterArchive) {
+    long collectionSegmentStart;
+    
+    long threshold = 60000;
+    
+    
+    public ArchiveFillerTask(ParameterArchive parameterArchive, long start, long stop) throws org.yamcs.ConfigurationException, YProcessorException {
         this.parameterArchive = parameterArchive;
-        parameterIdMap = parameterArchive.getParameterIdDb();
-        parameterGroupIdMap = parameterArchive.getParameterGroupIdDb();
+        this.parameterIdMap = parameterArchive.getParameterIdDb();
+        this.parameterGroupIdMap = parameterArchive.getParameterGroupIdDb();
+        
+        collectionSegmentStart = SortedTimeSegment.getSegmentStart(start);
+        long segmentEnd = SortedTimeSegment.getSegmentEnd(stop);
+        //start ahead with one minute
+        start = collectionSegmentStart-60000;
+        log.info("Starting an parameter archive fillup for segment [{} - {}]", TimeEncoding.toString(collectionSegmentStart), TimeEncoding.toString(segmentEnd));
+        
+        
+        ReplayRequest.Builder rrb = ReplayRequest.newBuilder().setSpeed(ReplaySpeed.newBuilder().setType(ReplaySpeedType.AFAP));
+        rrb.setEndAction(EndAction.QUIT);
+        rrb.setStart(start).setStop(stop);
+        rrb.setPacketRequest(PacketReplayRequest.newBuilder().build());
+        rrb.setPpRequest(PpReplayRequest.newBuilder().build());
+        yproc = ProcessorFactory.create(parameterArchive.getYamcsInstance(), "ParameterArchive-buildup", "Archive", "internal", rrb.build());
+        yproc.getParameterRequestManager().subscribeAll(this);
     }
-
-
+    
     /**
      * adds the parameters to the pgSegments structure and return the highest timestamp or -1 if all parameters have been ignored (because they were too old)
      * 
@@ -125,6 +144,34 @@ public abstract class AbstractParameterFiller extends AbstractService {
             log.error("failed to write data to the archive", e);
         }
     }
+
+   
+
+    public void run() {
+        yproc.start();
+        yproc.awaitTerminated();
+    }
+
+    @Override
+    public void updateItems(int subscriptionId, List<ParameterValue> items) {
+        long t = processParameters(items);
+        if(t<0)return;
+        
+        long nextSegmentStart = SortedTimeSegment.getNextSegmentStart(collectionSegmentStart);
+        
+        if(t>nextSegmentStart + threshold) {
+            log.debug("Writing to archive the segment: [{} - {})", TimeEncoding.toString(collectionSegmentStart), TimeEncoding.toString(nextSegmentStart));
+            Map<Integer, PGSegment> m = pgSegments.remove(collectionSegmentStart);
+            if(m!=null) {
+                consolidateAndWriteToArchive(m.values());
+            } else {
+                log.info("no data collected in this segment [{} - {})", TimeEncoding.toString(collectionSegmentStart), TimeEncoding.toString(nextSegmentStart));
+            }
+            collectionSegmentStart = nextSegmentStart;
+        }
+    }
+    
+    
 
 
     /*builds incrementally a list of parameter id and parameter value, sorted by parameter ids */
