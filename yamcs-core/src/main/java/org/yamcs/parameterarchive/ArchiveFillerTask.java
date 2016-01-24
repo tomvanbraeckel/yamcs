@@ -52,7 +52,8 @@ class ArchiveFillerTask implements ParameterConsumer {
         long segmentEnd = SortedTimeSegment.getSegmentEnd(stop);
         //start ahead with one minute
         start = collectionSegmentStart-60000;
-        log.info("Starting an parameter archive fillup for segment [{} - {}]", TimeEncoding.toString(collectionSegmentStart), TimeEncoding.toString(segmentEnd));
+        String timePeriod = '['+TimeEncoding.toString(collectionSegmentStart)+"-"+ TimeEncoding.toString(segmentEnd)+']';
+        log.info("Starting an parameter archive fillup for segment {}", timePeriod );
         
         
         ReplayRequest.Builder rrb = ReplayRequest.newBuilder().setSpeed(ReplaySpeed.newBuilder().setType(ReplaySpeedType.AFAP));
@@ -60,7 +61,7 @@ class ArchiveFillerTask implements ParameterConsumer {
         rrb.setStart(start).setStop(stop);
         rrb.setPacketRequest(PacketReplayRequest.newBuilder().build());
         rrb.setPpRequest(PpReplayRequest.newBuilder().build());
-        yproc = ProcessorFactory.create(parameterArchive.getYamcsInstance(), "ParameterArchive-buildup", "Archive", "internal", rrb.build());
+        yproc = ProcessorFactory.create(parameterArchive.getYamcsInstance(), "ParameterArchive-buildup_"+timePeriod, "Archive", "internal", rrb.build());
         yproc.getParameterRequestManager().subscribeAll(this);
     }
     
@@ -76,7 +77,7 @@ class ArchiveFillerTask implements ParameterConsumer {
     protected long processParameters(List<ParameterValue> items) {
         Map<Long, SortedParameterList> m = new HashMap<>();
         for(ParameterValue pv: items) {
-            long t = pv.getAcquisitionTime();
+            long t = pv.getGenerationTime();
             if(t<collectionSegmentStart) {
                 log.info("Ignoring data at time {} because older than CollectionSegmentStart={}", TimeEncoding.toString(t), TimeEncoding.toString(collectionSegmentStart)); 
                 continue;
@@ -121,9 +122,13 @@ class ArchiveFillerTask implements ParameterConsumer {
         }
 
     }
-    
+    public void run() {
+        yproc.start();
+        yproc.awaitTerminated();
+        flush();
+    }
 
-    protected void flush() {
+    void flush() {
         log.info("Starting a consolidation process, number of intervals: "+pgSegments.size());
         for(Map<Integer, PGSegment> m: pgSegments.values()) {
             consolidateAndWriteToArchive(m.values());
@@ -147,10 +152,7 @@ class ArchiveFillerTask implements ParameterConsumer {
 
    
 
-    public void run() {
-        yproc.start();
-        yproc.awaitTerminated();
-    }
+   
 
     @Override
     public void updateItems(int subscriptionId, List<ParameterValue> items) {
@@ -164,9 +166,7 @@ class ArchiveFillerTask implements ParameterConsumer {
             Map<Integer, PGSegment> m = pgSegments.remove(collectionSegmentStart);
             if(m!=null) {
                 consolidateAndWriteToArchive(m.values());
-            } else {
-                log.info("no data collected in this segment [{} - {})", TimeEncoding.toString(collectionSegmentStart), TimeEncoding.toString(nextSegmentStart));
-            }
+            } 
             collectionSegmentStart = nextSegmentStart;
         }
     }

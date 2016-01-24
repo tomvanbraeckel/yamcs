@@ -226,7 +226,7 @@ public class ArchiveParameter2RestHandler extends RestHandler {
         NamedObjectId[] pnames = new NamedObjectId[pidArray.size()];
         Arrays.fill(pnames, id);
         MultipleParameterValueRequest mpvr = new MultipleParameterValueRequest(start, stop, pnames, pidArray.toArray(), pgidArray.toArray(), ascending);
-        
+        mpvr.setStoreUtcTime(true);
         // do not use set limit because the data can be filtered down (e.g. noRepeat) and the limit applies the final filtered data not to the input
         // one day the parameter archive will be smarter and do the filtering inside
         //mpvr.setLimit(limit);

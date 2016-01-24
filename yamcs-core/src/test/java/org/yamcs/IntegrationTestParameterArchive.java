@@ -86,17 +86,15 @@ public class IntegrationTestParameterArchive extends AbstractIntegrationTest {
         httpClient = new HttpClient();
         resp = httpClient.doRequest("http://localhost:9190/api/archive/IntegrationTest/parameters2/REFMDB/SUBSYS1/FloatPara1_1_2?start=2015-01-02T10:00:00&stop=2015-01-02T11:00:00&norepeat", HttpMethod.GET, null, currentUser);
         pdata = fromJson(resp, SchemaPvalue.ParameterData.MERGE).build();
-        System.out.println("pdata: "+pdata);
         
         assertEquals(1, pdata.getParameterCount());
-        engValue = pdata.getParameter(0).getEngValue();
-        assertEquals(0.167291805148, engValue.getFloatValue(), 1e-5);
+        org.yamcs.protobuf.Pvalue.ParameterValue pv = pdata.getParameter(0);
+        
+        assertEquals("2015-01-02T11:00:00.000", TimeEncoding.toString(pv.getAcquisitionTime()));
+        assertEquals(0.167291805148, pv.getEngValue().getFloatValue(), 1e-5);
         AcquisitionStatus acqs = pdata.getParameter(0).getAcquisitionStatus();
         assertEquals(AcquisitionStatus.ACQUIRED, acqs);
         
     }
-    
-    
-    
 
 }

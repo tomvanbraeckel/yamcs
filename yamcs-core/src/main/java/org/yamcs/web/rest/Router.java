@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yamcs.parameterarchive.ParameterArchiveMaintenanceRestHandler;
 import org.yamcs.protobuf.Rest.GetApiOverviewResponse;
 import org.yamcs.protobuf.SchemaRest;
 import org.yamcs.security.AuthenticationToken;
@@ -93,6 +94,7 @@ public class Router {
         registerRouteHandler(null, new ArchiveIndexRestHandler());
         registerRouteHandler(null, new ArchivePacketRestHandler());
         registerRouteHandler(null, new ArchiveParameterRestHandler());
+        registerRouteHandler(null, new ParameterArchiveMaintenanceRestHandler());
         registerRouteHandler(null, new ArchiveParameter2RestHandler());
         registerRouteHandler(null, new ArchiveStreamRestHandler());
         registerRouteHandler(null, new ArchiveTableRestHandler());

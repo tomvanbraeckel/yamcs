@@ -18,6 +18,7 @@ import org.yamcs.protobuf.Pvalue.ParameterStatus;
 import org.yamcs.protobuf.Pvalue.ParameterValue;
 import org.yamcs.protobuf.Yamcs.NamedObjectId;
 import org.yamcs.utils.DecodingException;
+import org.yamcs.utils.TimeEncoding;
 
 
 public class MultiParameterDataRetrieval {
@@ -168,6 +169,10 @@ public class MultiParameterDataRetrieval {
                 values.put(k, vlist);
             }
             ParameterValue.Builder pvb = ParameterValue.newBuilder().setId(currentParameterName);
+            pvb.setGenerationTime(tv.instant);
+            if(mpvr.storeUtcTime) {
+                pvb.setGenerationTimeUTC(TimeEncoding.toString(tv.instant));
+            }
             if(tv.engValue!=null) pvb.setEngValue(tv.engValue);
             if(tv.rawValue!=null) pvb.setRawValue(tv.rawValue);
             if(tv.paramStatus!=null) {
@@ -176,6 +181,7 @@ public class MultiParameterDataRetrieval {
                 if(ps.hasMonitoringResult()) pvb.setMonitoringResult(ps.getMonitoringResult());
                 if(ps.getAlarmRangeCount()>0) pvb.addAllAlarmRange(ps.getAlarmRangeList());
             }
+            
             vlist.add(currentParameterId, pvb.build());
         }
 

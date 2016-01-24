@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yamcs.ContainerExtractionResult;
 import org.yamcs.parameter.ParameterValueList;
-import org.yamcs.utils.TimeEncoding;
 import org.yamcs.xtce.Parameter;
 import org.yamcs.xtce.SequenceContainer;
 import org.yamcs.xtce.XtceDb;
@@ -18,10 +17,7 @@ import org.yamcs.xtce.XtceDb;
  * Extracts parameters out of packets based on the XTCE description
  *
  * 
- *  @author mache
- * 
  */
-
 public class XtceTmExtractor {
     private static final Logger log=LoggerFactory.getLogger(XtceTmExtractor.class);
     protected final Subscription subscription;
@@ -31,6 +27,9 @@ public class XtceTmExtractor {
     final SequenceContainer rootContainer;
     ParameterValueList paramResult=new ParameterValueList();
     ArrayList<ContainerExtractionResult> containerResult=new ArrayList<ContainerExtractionResult>();
+    boolean ignoreOutOfContainerEntries = false;
+    
+    
 
     /**
      * Creates a TmExtractor extracting data according to the XtceDb
@@ -84,9 +83,7 @@ public class XtceTmExtractor {
 	    paramResult=new ParameterValueList();
 	    containerResult=new ArrayList<ContainerExtractionResult>();
 	    synchronized(subscription) {
-		ProcessingContext pcontext=new ProcessingContext(bb, 0, 0, subscription, paramResult, containerResult, aquisitionTime, generationTime, stats);
-		
-		
+		ProcessingContext pcontext=new ProcessingContext(bb, 0, 0, subscription, paramResult, containerResult, aquisitionTime, generationTime, stats, ignoreOutOfContainerEntries);
 		pcontext.sequenceContainerProcessor.extract(startContainer);
 	    }
 	} catch (Exception e) {
@@ -101,7 +98,22 @@ public class XtceTmExtractor {
     public ProcessingStatistics getStatistics(){
 	return stats;
     }
+    
+    public boolean isIgnoreOutOfContainerEntries() {
+        return ignoreOutOfContainerEntries;
+    }
 
+    /**
+     * If set to true, the entries that  fit outside the packet definition, will not be even logged.
+     * If set to false, a log message at WARNING level will be printed for the first entry that fits outside the binary packet.
+     * 
+     * In both cases, the processing stops at first such entry.
+     *  
+     * @param ignoreOutOfContainerEntries
+     */
+    public void setIgnoreOutOfContainerEntries(boolean ignoreOutOfContainerEntries) {
+        this.ignoreOutOfContainerEntries = ignoreOutOfContainerEntries;
+    }
 
     public void startProviding(SequenceContainer sequenceContainer) {
 	synchronized(subscription) {

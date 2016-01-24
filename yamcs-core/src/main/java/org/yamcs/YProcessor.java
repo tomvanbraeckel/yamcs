@@ -62,7 +62,9 @@ public class YProcessor extends AbstractService {
     private CommandHistoryRequestManager commandHistoryRequestManager;
 
     private CommandingManager commandingManager;
-
+    private final String CONFIG_KEY_alarm ="alarm";
+    private final String CONFIG_KEY_tmProcessor ="tmProcessor";
+    private final String CONFIG_KEY_parameterCache ="parameterCache";
 
     private TmPacketProvider tmPacketProvider;
     private CommandReleaser commandReleaser;
@@ -119,25 +121,31 @@ public class YProcessor extends AbstractService {
 
     @SuppressWarnings("unchecked")
     void init(TcTmService tctms, Map<String, Object> config) throws YProcessorException, ConfigurationException {
-        xtcedb=XtceDbFactory.getInstance(yamcsInstance);
+        xtcedb = XtceDbFactory.getInstance(yamcsInstance);
         timeService = YamcsServer.getTimeService(yamcsInstance);
+        Map<String, Object> tmProcessorConfig = null;
         synchronized(instances) {
             if(instances.containsKey(key(yamcsInstance,name))) throw new YProcessorException("A processor named '"+name+"' already exists in instance "+yamcsInstance);
             if(config!=null) {
                 for(String c: config.keySet()) {
-                    if("alarm".equals(c)) {
+                    if(CONFIG_KEY_alarm.equals(c)) {
                         Object o = config.get(c);
                         if(!(o instanceof Map)) {
-                            throw new ConfigurationException("alarm configuration should be a map");
+                            throw new ConfigurationException(CONFIG_KEY_alarm+" configuration should be a map");
                         }
                         configureAlarms((Map<String, Object>) o);
-                    } else if("parameterCache".equals(c)) {
+                    } else if(CONFIG_KEY_parameterCache.equals(c)) {
                         Object o = config.get(c);
                         if(!(o instanceof Map)) {
-                            throw new ConfigurationException("parameterCache configuration should be a map");
+                            throw new ConfigurationException(CONFIG_KEY_parameterCache + " configuration should be a map");
                         }
                         configureParameterCache((Map<String, Object>) o);
-                    }else {
+                    } else if(CONFIG_KEY_tmProcessor.equals(c)) {
+                        Object o = config.get(c);
+                        if(!(o instanceof Map)) {
+                            throw new ConfigurationException(CONFIG_KEY_tmProcessor+ " configuration should be a map");
+                        }
+                    } else {
                         log.warn("Ignoring unknown config key '"+c+"'");
                     }
                 }
@@ -155,7 +163,7 @@ public class YProcessor extends AbstractService {
 
 
             // Shared between prm and crm
-            tmProcessor = new XtceTmProcessor(this);
+            tmProcessor = new XtceTmProcessor(this, tmProcessorConfig);
             if(tmPacketProvider!=null) {
                 tmPacketProvider.init(this, tmProcessor);
             }

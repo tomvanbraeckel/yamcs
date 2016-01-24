@@ -259,7 +259,7 @@ public class ParameterArchiveTest {
 
     ParameterValue getParameterValue(Parameter p, long instant, String sv) {
         ParameterValue pv = new ParameterValue(p);
-        pv.setAcquisitionTime(instant);
+        pv.setGenerationTime(instant);
         Value v = ValueUtility.getStringValue(sv);
         pv.setEngineeringValue(v);
         return pv;
@@ -267,7 +267,7 @@ public class ParameterArchiveTest {
 
     ParameterValue getParameterValue(Parameter p, long instant, String sv, int rv) {
         ParameterValue pv = new ParameterValue(p);
-        pv.setAcquisitionTime(instant);
+        pv.setGenerationTime(instant);
         Value v = ValueUtility.getStringValue(sv);
         pv.setEngineeringValue(v);
         pv.setRawValue(ValueUtility.getUint32Value(rv));
@@ -276,7 +276,7 @@ public class ParameterArchiveTest {
     
     ParameterValue getParameterValue(Parameter p, long instant, String sv, String rv) {
         ParameterValue pv = new ParameterValue(p);
-        pv.setAcquisitionTime(instant);
+        pv.setGenerationTime(instant);
         Value v = ValueUtility.getStringValue(sv);
         pv.setEngineeringValue(v);
         pv.setRawValue(ValueUtility.getStringValue(rv));
