@@ -145,6 +145,7 @@ public class YProcessor extends AbstractService {
                         if(!(o instanceof Map)) {
                             throw new ConfigurationException(CONFIG_KEY_tmProcessor+ " configuration should be a map");
                         }
+                        tmProcessorConfig = (Map<String, Object>) o;
                     } else {
                         log.warn("Ignoring unknown config key '"+c+"'");
                     }
