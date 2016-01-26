@@ -86,6 +86,7 @@ public class GenericValueSegment extends ValueSegment {
         case UINT64:
             return UInt64ValueSegment.consolidate(values);
         case BINARY:
+            return BinaryValueSegment.consolidate(values);
         case TIMESTAMP:
         case SINT64:
 

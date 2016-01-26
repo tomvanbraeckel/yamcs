@@ -70,4 +70,9 @@ public class FloatValueSegment extends ValueSegment {
         }
         return fvs;
     }
+
+    @Override
+    public int size() {
+        return 0;
+    }
 }

@@ -26,6 +26,8 @@ public abstract class BaseSegment {
     public static final byte FORMAT_ID_FloatValueSegment = 16;
     public static final byte FORMAT_ID_DoubleValueSegment = 17;
     public static final byte FORMAT_ID_UInt64ValueSegment = 18;
+    public static final byte FORMAT_ID_BinaryValueSegment = 19;
+    public static final byte FORMAT_ID_BinaryEnumValueSegment = 20;
     
     
     protected byte formatId;
@@ -88,8 +90,14 @@ public abstract class BaseSegment {
             return new DoubleValueSegment();
         case FORMAT_ID_UInt64ValueSegment:
             return new UInt64ValueSegment();
+        case FORMAT_ID_BinaryEnumValueSegment:
+            return new BinaryEnumValueSegment();
+        case FORMAT_ID_BinaryValueSegment:
+            return new BinaryValueSegment();
         default:
           throw new DecodingException("Invalid value format id "+formatId); 
         }
     }
+    
+    public abstract int size();
 }

@@ -69,5 +69,10 @@ public class UInt64ValueSegment extends ValueSegment {
     public Value get(int index) {
         return ValueUtility.getUint64Value(values[index]);
     }
+
+    @Override
+    public int size() {
+        return values.length;
+    }
     
 }

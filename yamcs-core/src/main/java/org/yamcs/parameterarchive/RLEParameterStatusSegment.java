@@ -192,7 +192,8 @@ public class RLEParameterStatusSegment extends ParameterStatusSegment {
      * the number of elements in this segment (not taking into account any compression due to run-length encoding)
      * @return
      */
-    public int getSize() {
+    @Override
+    public int size() {
         return size;
     }
 }

@@ -106,4 +106,10 @@ public class StringValueSegment extends ValueSegment {
         return values.toString();
     }
 
+
+    @Override
+    public int size() {
+        return values.size();
+    }
+
 }

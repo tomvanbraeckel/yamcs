@@ -381,7 +381,7 @@ public class ParameterArchive  extends AbstractService {
         }
     }
     public void printKeys(PrintStream out) {
-        out.println("pid\t pgid\t type\t SegmentStart\t size \t stype");
+        out.println("pid\t pgid\t type\tSegmentStart\tcount\tsize\tstype");
         SegmentEncoderDecoder decoder = new SegmentEncoderDecoder();
         for(Partition p:partitions.values()) {
             RocksIterator it = getIterator(p);
@@ -395,7 +395,7 @@ public class ParameterArchive  extends AbstractService {
                 } catch (DecodingException e) {
                     throw new RuntimeException(e);
                 }
-                out.println(key.parameterId+"\t "+key.parameterGroupId+"\t "+key.type+"\t "+TimeEncoding.toString(key.segmentStart)+"\t "+v.length+"\t "+s.getClass().getSimpleName());
+                out.println(key.parameterId+"\t "+key.parameterGroupId+"\t "+key.type+"\t"+TimeEncoding.toString(key.segmentStart)+"\t"+s.size()+"\t"+v.length+"\t"+s.getClass().getSimpleName());
                 it.next();
             }
         }

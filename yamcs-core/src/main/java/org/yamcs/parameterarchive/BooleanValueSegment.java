@@ -81,4 +81,13 @@ public class BooleanValueSegment extends ValueSegment {
         
         return r;
     }
+
+
+    /**
+     * returns the size of the BitSet storing the values - this will round up to the size of long
+     */
+    @Override
+    public int size() {
+        return bitSet.size();
+    }
 }

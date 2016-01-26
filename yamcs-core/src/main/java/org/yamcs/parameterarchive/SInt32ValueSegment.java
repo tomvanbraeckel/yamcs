@@ -9,8 +9,6 @@ import org.yamcs.utils.ValueUtility;
 import org.yamcs.utils.VarIntUtil;
 
 public class SInt32ValueSegment extends ValueSegment {
-
-    
     SInt32ValueSegment() {
         super(FORMAT_ID_SInt32ValueSegment);
     }
@@ -69,5 +67,10 @@ public class SInt32ValueSegment extends ValueSegment {
             segment.values[i] = values.get(i).getSint32Value();
         }
         return segment;
+    }
+
+    @Override
+    public int size() {
+        return values.length;
     }
 }

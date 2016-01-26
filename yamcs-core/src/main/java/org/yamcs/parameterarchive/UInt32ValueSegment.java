@@ -70,4 +70,9 @@ public class UInt32ValueSegment extends ValueSegment {
         
         return r;
     }
+
+    @Override
+    public int size() {
+        return values.length;
+    }
 }

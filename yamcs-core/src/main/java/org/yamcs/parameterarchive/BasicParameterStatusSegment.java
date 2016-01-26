@@ -96,4 +96,9 @@ public class BasicParameterStatusSegment extends ParameterStatusSegment {
     public ParameterStatus get(int index) {
         return values.get(index);
     }
+
+    @Override
+    public int size() {
+        return values.size();
+    }
 }

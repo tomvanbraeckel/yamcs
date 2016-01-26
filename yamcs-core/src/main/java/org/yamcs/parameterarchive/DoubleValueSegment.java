@@ -72,4 +72,10 @@ public class DoubleValueSegment extends ValueSegment {
         
         return r;
     }
+
+
+    @Override
+    public int size() {
+        return doubles.length;
+    }
 }
