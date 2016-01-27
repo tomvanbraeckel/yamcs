@@ -28,42 +28,42 @@ public class TestUtils {
     public static void checkEquals( ParameterValueArray pva, ParameterValue...pvs) {
         checkEquals(true, true, true, pva, pvs);
     }
-    public static void checkEquals(boolean shouldHaveEngValues, boolean shouldHaveRawValues, boolean shouldHaveParameterStatus, ParameterValueArray pva, ParameterValue...pvs) {
-        assertEquals(pvs.length, pva.timestamps.length);
-        for(int i=0; i<pvs.length; i++) {
-            ParameterValue pv = pvs[i];
-            assertEquals(pv.getAcquisitionTime(), pva.timestamps[i]);
+    public static void checkEquals(boolean shouldHaveEngValues, boolean shouldHaveRawValues, boolean shouldHaveParameterStatus, ParameterValueArray actualPva, ParameterValue...expectedPvs) {
+        assertEquals(expectedPvs.length, actualPva.timestamps.length);
+        for(int i=0; i<expectedPvs.length; i++) {
+            ParameterValue pv = expectedPvs[i];
+            assertEquals(pv.getGenerationTime(), actualPva.timestamps[i]);
         }
         if(shouldHaveEngValues) {
-            Value v = pvs[0].getEngValue();
+            Value v = expectedPvs[0].getEngValue();
             if(v.getType()==Type.STRING) {
-                assertTrue(pva.engValues instanceof String[]);
-                String[] s = (String[]) pva.engValues;
-                for(int i=0; i<pvs.length; i++) {
-                    v = pvs[i].getEngValue();
+                assertTrue(actualPva.engValues instanceof String[]);
+                String[] s = (String[]) actualPva.engValues;
+                for(int i=0; i<expectedPvs.length; i++) {
+                    v = expectedPvs[i].getEngValue();
                     assertEquals(v.getStringValue(), s[i]);
                 }            
             } else {
                 fail("check for "+v.getType()+" not implemented");
             }
         } else {
-            assertNull(pva.engValues);
+            assertNull(actualPva.engValues);
         }
         if(shouldHaveRawValues) {
-            Value rv = pvs[0].getRawValue();
+            Value rv = expectedPvs[0].getRawValue();
             if(rv!=null) {
                 if(rv.getType()==Type.UINT32) {
-                    assertTrue(pva.rawValues instanceof int[]);
-                    int[] s = (int[]) pva.rawValues;
-                    for(int i=0; i<pvs.length; i++) {
-                        rv = pvs[i].getRawValue();
+                    assertTrue(actualPva.rawValues instanceof int[]);
+                    int[] s = (int[]) actualPva.rawValues;
+                    for(int i=0; i<expectedPvs.length; i++) {
+                        rv = expectedPvs[i].getRawValue();
                         assertEquals(rv.getUint32Value(), s[i]);
                     }            
                 } else if(rv.getType()==Type.STRING) {
-                    assertTrue(pva.rawValues instanceof String[]);
-                    String[] s = (String[]) pva.rawValues;
-                    for(int i=0; i<pvs.length; i++) {
-                        Value v = pvs[i].getRawValue();
+                    assertTrue(actualPva.rawValues instanceof String[]);
+                    String[] s = (String[]) actualPva.rawValues;
+                    for(int i=0; i<expectedPvs.length; i++) {
+                        Value v = expectedPvs[i].getRawValue();
                         assertEquals(v.getStringValue(), s[i]);
                     }                
                 }else {
@@ -71,16 +71,16 @@ public class TestUtils {
                 }
             }
         } else {
-            assertNull(pva.rawValues);
+            assertNull(actualPva.rawValues);
         }
         if(shouldHaveParameterStatus) {
-            assertNotNull(pva.paramStatus);
-            assertEquals(pvs.length, pva.paramStatus.length);
-            for(int i=0; i<pvs.length; i++) {
-                checkEquals(pvs[i], pva.paramStatus[i]);
+            assertNotNull(actualPva.paramStatus);
+            assertEquals(expectedPvs.length, actualPva.paramStatus.length);
+            for(int i=0; i<expectedPvs.length; i++) {
+                checkEquals(expectedPvs[i], actualPva.paramStatus[i]);
             }
         } else {
-            assertNull(pva.paramStatus);
+            assertNull(actualPva.paramStatus);
         }
     }
 

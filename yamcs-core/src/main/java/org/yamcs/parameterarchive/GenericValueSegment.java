@@ -2,6 +2,7 @@ package org.yamcs.parameterarchive;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.yamcs.protobuf.Yamcs.Value;
@@ -72,9 +73,9 @@ public class GenericValueSegment extends ValueSegment {
         Type type = values.get(0).getType();
         switch(type) {
         case UINT32:
-            return UInt32ValueSegment.consolidate(values);
+            return IntValueSegment.consolidate(values, false);
         case SINT32:
-            return SInt32ValueSegment.consolidate(values);
+            return IntValueSegment.consolidate(values, true);
         case STRING:
             return StringValueSegment.consolidate(values);
         case BOOLEAN:
@@ -136,14 +137,30 @@ public class GenericValueSegment extends ValueSegment {
             return false;
         if (getClass() != obj.getClass())
             return false;
+
         GenericValueSegment other = (GenericValueSegment) obj;
         if (values == null) {
-            if (other.values != null)
-                return false;
-        } else if (!values.equals(other.values))
-            return false;
+            if (other.values != null)  return false;
+            else return true;
+        } else {
+            if(other.values==null) return false;
+        }
+
+        return equal(values, other.values);
+    }
+
+    private static boolean equal(List<Value> values1, List<Value> values2) {
+        if(values1.size()!=values2.size()) return false;
+        for(int i=0; i<values1.size(); i++) {
+            Value v1 = values1.get(i);
+            Value v2 = values2.get(i);
+            byte[] b1 = v1.toByteArray();
+            byte[] b2 = v2.toByteArray();
+            if(!Arrays.equals(b1, b2)) return false;
+        }
         return true;
     }
+
 
     public int size() {
         return values.size();

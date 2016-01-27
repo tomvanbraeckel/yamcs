@@ -8,41 +8,66 @@ import org.yamcs.utils.DecodingException;
 import org.yamcs.utils.ValueUtility;
 import org.yamcs.utils.VarIntUtil;
 
-public class UInt32ValueSegment extends ValueSegment {
-    UInt32ValueSegment() {
-        super(FORMAT_ID_UInt32ValueSegment);
+/**
+ * 32 bit integers  
+ * encoded as deltas of deltas (good if the values are relatively constant or in increasing order)
+ *  
+ * @author nm
+ *
+ */
+public class IntValueSegment extends ValueSegment {
+    private boolean signed;
+    int[] values;
+    
+    IntValueSegment() {
+        super(FORMAT_ID_IntValueSegment);
     }
 
 
-    int[] values;
+    
     
     @Override
     public void writeTo(ByteBuffer bb) {
+        bb.put(signed?(byte)1:0);
+        
         int n = values.length;
+        int[] ddz = VarIntUtil.encodeDeltaDeltaZigZag(values);
+        
         VarIntUtil.writeVarInt32(bb, n);
         for(int i=0; i<n; i++) {
-            VarIntUtil.writeVarInt32(bb, values[i]);
+            VarIntUtil.writeVarInt32(bb, ddz[i]);
         }
     }
 
     @Override
     public void parseFrom(ByteBuffer bb) throws DecodingException {
+        signed = (bb.get()==1);
         int n = VarIntUtil.readVarInt32(bb);
-        values = new int[n];
+        int[] ddz = new int[n];
         for(int i=0; i<n; i++) {
-            values[i]=VarIntUtil.readVarInt32(bb);
+            ddz[i]=VarIntUtil.readVarInt32(bb);
         }
+        values = VarIntUtil.decodeDeltaDeltaZigZag(ddz);
     }
 
-    public static UInt32ValueSegment  consolidate(List<Value> values) {
-        UInt32ValueSegment segment = new UInt32ValueSegment();
+    public static IntValueSegment  consolidate(List<Value> values, boolean signed) {
+        IntValueSegment segment = new IntValueSegment();
         int n = values.size();
         segment.values = new int[n];
-        for(int i =0;i<n; i++) {
-            segment.values[i] = values.get(i).getUint32Value();
+        segment.signed = signed;
+        if(signed) {
+            for(int i =0;i<n; i++) {
+                segment.values[i] = values.get(i).getSint32Value();
+            }    
+        } else {
+            for(int i =0;i<n; i++) {
+                segment.values[i] = values.get(i).getUint32Value();
+            }    
         }
+        
         return segment;
     }
+    
 
     @Override
     public int getMaxSerializedSize() {
@@ -52,7 +77,11 @@ public class UInt32ValueSegment extends ValueSegment {
 
     @Override
     public Value get(int index) {
-        return ValueUtility.getUint32Value(values[index]);
+        if(signed) {
+            return ValueUtility.getSint32Value(values[index]);
+        } else {
+            return ValueUtility.getUint32Value(values[index]);
+        }
     }
     
     @Override

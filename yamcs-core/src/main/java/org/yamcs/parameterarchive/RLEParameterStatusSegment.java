@@ -2,6 +2,7 @@ package org.yamcs.parameterarchive;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.yamcs.ParameterValue;
@@ -22,11 +23,17 @@ public class RLEParameterStatusSegment extends ParameterStatusSegment {
     //count for each status in the status list - the sum of all counts is equal with size
     IntArray counts;
     List<ParameterStatus> statusList;
+    
+    //we keep a serialised version to use instead of equals which is quite slow - and we need the serialized version  anyway 
+    List<byte[]> serializedStatusList;
+    
+    
     int size = 0;
 
     RLEParameterStatusSegment() {
         super(FORMAT_ID_RLEParameterStatusSegment);
         statusList = new ArrayList<>();
+        serializedStatusList = new ArrayList<>();
         counts = new IntArray();
     }
 
@@ -37,10 +44,11 @@ public class RLEParameterStatusSegment extends ParameterStatusSegment {
     
     void addParameterStatus(ParameterStatus ps) {
         boolean added = false;
-
+        byte[] sps = ps.toByteArray();
+        
         if(!statusList.isEmpty()) {
-            ParameterStatus lastFlag = statusList.get(statusList.size()-1);
-            if(ps.equals(lastFlag)) {
+            byte[] lastFlag = serializedStatusList.get(serializedStatusList.size()-1);
+            if(Arrays.equals(sps, lastFlag)) {
                 int n = counts.size() -1;
                 int lastCount = counts.get(n);
                 lastCount++;
@@ -52,6 +60,7 @@ public class RLEParameterStatusSegment extends ParameterStatusSegment {
         if(!added) {
             counts.add(1);
             statusList.add(ps);
+            serializedStatusList.add(sps);
         }
         size++;
     }
@@ -67,11 +76,10 @@ public class RLEParameterStatusSegment extends ParameterStatusSegment {
         //then write the flags
         VarIntUtil.writeVarInt32(bb, statusList.size());
         
-        for(int i=0; i<statusList.size(); i++) {
-            ParameterStatus ps = statusList.get(i);
-            byte[] b= ps.toByteArray();
-            VarIntUtil.writeVarInt32(bb, b.length);
-            bb.put(b);
+        for(int i=0; i<serializedStatusList.size(); i++) {
+            byte[] sps = serializedStatusList.get(i);
+            VarIntUtil.writeVarInt32(bb, sps.length);
+            bb.put(sps);
         }
     }
 

@@ -11,17 +11,18 @@ import org.junit.Test;
 import org.yamcs.utils.DecodingException;
 import org.yamcs.utils.ValueUtility;
 
-public class Uint32ValueSegmentTest {
+public class IntValueSegmentTest {
     @Test
     public void test() throws IOException, DecodingException {
-        UInt32ValueSegment fvs = UInt32ValueSegment.consolidate(Arrays.asList(ValueUtility.getUint32Value(1), ValueUtility.getUint32Value(2), ValueUtility.getUint32Value(3)));
-        assertEquals(16, fvs.getMaxSerializedSize());
+        IntValueSegment fvs = IntValueSegment.consolidate(Arrays.asList(ValueUtility.getUint32Value(1), ValueUtility.getUint32Value(2), ValueUtility.getUint32Value(3)), false);
+        assertEquals(19, fvs.getMaxSerializedSize());
         
         ByteBuffer bb = ByteBuffer.allocate(28);
         fvs.writeTo(bb);
+        assertEquals(5, bb.position());
         
         bb.rewind();
-        UInt32ValueSegment fvs1 = new UInt32ValueSegment();
+        IntValueSegment fvs1 = new IntValueSegment();
         fvs1.parseFrom(bb);
         
         assertEquals(ValueUtility.getUint32Value(1), fvs1.get(0));

@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.rocksdb.RocksDBException;
 import org.slf4j.Logger;
@@ -41,7 +42,7 @@ class ArchiveFillerTask implements ParameterConsumer {
     long collectionSegmentStart;
     
     long threshold = 60000;
-    
+    static AtomicInteger count = new AtomicInteger();
     
     public ArchiveFillerTask(ParameterArchive parameterArchive, long start, long stop) throws org.yamcs.ConfigurationException, YProcessorException {
         this.parameterArchive = parameterArchive;
@@ -61,7 +62,7 @@ class ArchiveFillerTask implements ParameterConsumer {
         rrb.setStart(start).setStop(stop);
         rrb.setPacketRequest(PacketReplayRequest.newBuilder().build());
         rrb.setPpRequest(PpReplayRequest.newBuilder().build());
-        yproc = ProcessorFactory.create(parameterArchive.getYamcsInstance(), "ParameterArchive-buildup_"+timePeriod, "Archive", "internal", rrb.build());
+        yproc = ProcessorFactory.create(parameterArchive.getYamcsInstance(), "ParameterArchive-buildup_"+count.incrementAndGet(), "ParameterArchive", "internal", rrb.build());
         yproc.getParameterRequestManager().subscribeAll(this);
     }
     
@@ -79,7 +80,6 @@ class ArchiveFillerTask implements ParameterConsumer {
         for(ParameterValue pv: items) {
             long t = pv.getGenerationTime();
             if(t<collectionSegmentStart) {
-                log.info("Ignoring data at time {} because older than CollectionSegmentStart={}", TimeEncoding.toString(t), TimeEncoding.toString(collectionSegmentStart)); 
                 continue;
             }
             

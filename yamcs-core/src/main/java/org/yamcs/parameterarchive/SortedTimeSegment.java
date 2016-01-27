@@ -185,21 +185,20 @@ public class SortedTimeSegment extends ValueSegment {
      *  array size
      *  ts0
      *  ts1-ts0
-     *  ts2-ts1
+     *  (ts2-ts1) - (ts1-ts0)
+     *  ...
+     *  (ts[n]-ts[n-1]) - (ts[n-1]-ts[n-2])
      *  ...
      * @return
      */
     @Override
     public void writeTo(ByteBuffer buf) {
         if(tsarray.size()==0) throw new IllegalStateException(" the time segment has no data");
+        int[] ddzz = VarIntUtil.encodeDeltaDeltaZigZag(tsarray);
+        VarIntUtil.writeVarInt32(buf, ddzz.length);
         
-        VarIntUtil.writeVarInt32(buf, tsarray.size());
-        int x = tsarray.get(0);
-        VarIntUtil.writeVarInt32(buf, x);
-        for(int i=1; i<tsarray.size(); i++) {
-            int y = tsarray.get(i);
-            VarIntUtil.writeVarInt32(buf, (y-x));
-            x = y;
+        for(int i=0; i<ddzz.length; i++) {
+            VarIntUtil.writeVarInt32(buf, ddzz[i]);
         }
     }
 
@@ -214,12 +213,12 @@ public class SortedTimeSegment extends ValueSegment {
     @Override
     public void parseFrom(ByteBuffer buf) throws DecodingException {
         int size = VarIntUtil.readVarInt32(buf);
-        tsarray = new SortedIntArray(size);
-        int s=0;
+        int[] ddzz = new int[size];
+        
         for(int i=0;i<size;i++) {
-            s+=VarIntUtil.readVarInt32(buf);
-            tsarray.insert(s);
+            ddzz[i]=VarIntUtil.readVarInt32(buf);
         }
+        tsarray = new SortedIntArray(VarIntUtil.decodeDeltaDeltaZigZag(ddzz));
     }
 
     @Override

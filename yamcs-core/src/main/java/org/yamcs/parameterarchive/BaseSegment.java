@@ -17,9 +17,8 @@ public abstract class BaseSegment {
     public static final byte FORMAT_ID_RLEParameterStatusSegment = 2;
     public static final byte FORMAT_ID_BasicParameterStatusSegment = 3;  
     
-    public static final byte FORMAT_ID_GenericValueSegment = 10;
-    public static final byte FORMAT_ID_SInt32ValueSegment = 11;
-    public static final byte FORMAT_ID_UInt32ValueSegment = 12;
+    public static final byte FORMAT_ID_GenericValueSegment = 10;    
+    public static final byte FORMAT_ID_IntValueSegment = 11;
     public static final byte FORMAT_ID_StringValueSegment = 13;
     public static final byte FORMAT_ID_EnumValueSegment = 14;
     public static final byte FORMAT_ID_BooleanValueSegment = 15;
@@ -73,11 +72,9 @@ public abstract class BaseSegment {
         case FORMAT_ID_SortedTimeValueSegment:
             return new SortedTimeSegment(segmentStart);
         case FORMAT_ID_GenericValueSegment:
-            return new GenericValueSegment();
-        case FORMAT_ID_SInt32ValueSegment:
-            return new SInt32ValueSegment();
-        case FORMAT_ID_UInt32ValueSegment:
-            return new UInt32ValueSegment();
+            return new GenericValueSegment();        
+        case FORMAT_ID_IntValueSegment:
+            return new IntValueSegment();
         case FORMAT_ID_StringValueSegment:
             return new StringValueSegment();
         case FORMAT_ID_EnumValueSegment:
