@@ -27,8 +27,7 @@ public class FloatCompress {
         FloatArray farray = new FloatArray();
         int c=0;
         while((line=br.readLine())!=null) {
-            String[] a = line.split("\\s+");
-            float f = Float.parseFloat(a[1]);
+            float f = Float.parseFloat(line);
             farray.add(f);
           //  if(c++>5) break;
         }

@@ -58,29 +58,5 @@ public class FloatValueSegmentTest {
 	}
 
 
-	@Test
-	public void test3() throws Exception {
-		float[] x= FloatCompress.readFile("/tmp/aces_PDU_COPS_TEMP2.replay");
-
-		List<Value> values = new ArrayList<>(x.length);
-		for(int i=0; i<x.length; i++) {
-			values.add(ValueUtility.getFloatValue(x[i]));
-		}
-
-		FloatValueSegment fvs = FloatValueSegment.consolidate(values);
-
-		ByteBuffer bb = ByteBuffer.allocate(fvs.getMaxSerializedSize());
-		fvs.writeTo(bb);
-		int length = bb.position();
-		System.out.println("length: "+length);
-		
-		ByteBuffer bb1 = ByteBuffer.allocate(length);
-		bb1.put(bb.array(), 0, length);
-
-		FloatValueSegment fvs1 = new FloatValueSegment();
-		bb1.rewind();
-		fvs1.parseFrom(bb1);
-		assertArrayEquals(x, fvs1.floats, 1e-10f);
-	}
 
 }
