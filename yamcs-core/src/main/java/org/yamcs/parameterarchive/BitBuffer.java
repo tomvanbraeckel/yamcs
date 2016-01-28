@@ -1,5 +1,7 @@
 package org.yamcs.parameterarchive;
 
+import java.nio.ByteBuffer;
+
 /**
  * BitBuffer allows to write individual bits or group of bits into a buffer backed by an long[] array.
  * 
@@ -18,7 +20,7 @@ public class BitBuffer {
     private int offset; //the offset of the current element in the array
     
     /**
-     * Constructs a buffer of size 8*n backed by an long[n] array
+     * Constructs a buffer of size 8*n backed by an long[n] array. You need to allocate one bit more than required to store the data
      *
      * @param n
      */
@@ -29,6 +31,15 @@ public class BitBuffer {
         b = 0;
     }
   
+    public BitBuffer(byte[] b) {
+        int n = b.length/8;
+        a = new long[n];
+        ByteBuffer bb= ByteBuffer.wrap(b);
+        for(int i=0;i<n;i++) {
+            a[i] = bb.getLong();
+        }
+    }
+
     /**
      * write the least significant numBits of x into the BitBuffer
      * 
@@ -59,7 +70,7 @@ public class BitBuffer {
         b |= ((x&mask) << bitShift);
     }
     
-    public long read(int numBits) {
+    public long readLong(int numBits) {
         int k = numBits-bitShift;
         if(k<0) {
             return doRead(numBits);
@@ -72,11 +83,18 @@ public class BitBuffer {
         }
     }
     
+    public int read(int numBits) {
+        return (int)readLong(numBits);
+    }
+    
     private long doRead(int numBits) {
         bitShift-=numBits;
         long mask = (1L<<numBits) -1;
         return (b>>bitShift)&mask;
     }
+
+   
+
 
     /**
      * flush the temporary field to the array and return the backing array 
@@ -107,5 +125,18 @@ public class BitBuffer {
         offset = 0;
         bitShift = 64;
         b = a[0];
+    }
+    
+    /**
+     * flush the temporary field to the backing array and return a byte[] copy of the backing long array
+     * @return
+     */
+    public byte[] toByteArray() {
+        byte[] b= new byte[offset*8+8];
+        ByteBuffer bb = ByteBuffer.wrap(b);
+        for(int i=0; i<offset+1; i++) {
+            bb.putLong(a[i]);
+        }
+        return b;
     }
 }
