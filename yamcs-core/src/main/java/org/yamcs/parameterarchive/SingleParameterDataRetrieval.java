@@ -114,6 +114,7 @@ public class SingleParameterDataRetrieval {
 
 
     private void retriveValuesFromSegment(SortedTimeSegment timeSegment, PartitionIterator pit, SingleParameterValueRequest pvr,   Consumer<ParameterValueArray> consumer) throws DecodingException {
+        System.out.println("pit: timeSegment: t0: "+timeSegment.getSegmentStart()+"segmentEnd:"+ timeSegment.getSegmentEnd()+" size:"+timeSegment.size());
         
         ValueSegment engValueSegment = pit.engValue();
         ValueSegment rawValueSegment = pit.rawValue();

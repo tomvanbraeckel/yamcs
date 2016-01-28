@@ -1,5 +1,6 @@
 package org.yamcs.parameterarchive;
 
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -10,29 +11,58 @@ import org.yamcs.utils.VarIntUtil;
 
 
 public class FloatValueSegment extends ValueSegment {
-    FloatValueSegment() {
+	final static byte SUBFORMAT_ID_RAW = 0;
+	final static byte SUBFORMAT_ID_COMPRESSED = 1;
+	FloatValueSegment() {
         super(FORMAT_ID_FloatValueSegment);
     }
 
     float[] floats;
-            
+    
+    
     @Override
     public void writeTo(ByteBuffer bb) {
+        int position = bb.position();
+        
+      //try to write it compressed, if we get an buffer overflow, revert to raw encoding
+        bb.put(SUBFORMAT_ID_COMPRESSED);
         int n = floats.length;
-        VarIntUtil.writeVarInt32(bb, n);
-        for(int i=0;i<n;i++) {
-            bb.putFloat(floats[i]);
+    	VarIntUtil.writeVarInt32(bb, n);
+        
+        try {
+        	FloatCompressor.compress(floats, bb);
+        } catch (BufferOverflowException e) {
+        	bb.position(position);
+        	writeRaw(bb);
         }
+    }
+    
+    private void writeRaw(ByteBuffer bb) {
+        bb.put(SUBFORMAT_ID_RAW);
+        int n = floats.length;
+    	VarIntUtil.writeVarInt32(bb, n);
+    	for(int i=0; i<n; i++) {
+    		bb.putFloat(floats[i]);
+    	}
+
     }
 
     @Override
     public void parseFrom(ByteBuffer bb) throws DecodingException {
-        int n = VarIntUtil.readVarInt32(bb);
-        floats = new float[n];
+    	byte b= bb.get();
+    	int n = VarIntUtil.readVarInt32(bb);
+    	if(b==SUBFORMAT_ID_RAW) {
+    		floats = new float[n];
+    		for(int i=0;i<n;i++) {
+    			floats[i] = bb.getFloat();
+    		}	 
+    	} else if(b==SUBFORMAT_ID_COMPRESSED) {
+    		floats = FloatCompressor.decompress(bb, n);	
+    	} else {
+    		throw new DecodingException("Unknown SUBFORMAT_ID: "+b);
+    	}
         
-        for(int i=0;i<n;i++) {
-            floats[i]= bb.getFloat();
-        }
+        
     }
 
 
@@ -43,7 +73,7 @@ public class FloatValueSegment extends ValueSegment {
 
     @Override
     public int getMaxSerializedSize() {
-        return 4+4*floats.length;
+    	return 5+4*floats.length+1;
     }
     
     @Override

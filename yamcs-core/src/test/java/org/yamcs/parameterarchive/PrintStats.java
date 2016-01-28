@@ -13,8 +13,8 @@ public class PrintStats {
         YarchDatabase.setHome("/storage/yamcs-data");
         
         ParameterArchive parchive = new ParameterArchive("aces-ops");
-        PrintStream ps = new PrintStream("/tmp/aces-ops1-stats.txt");
-        PrintStream ps1 = new PrintStream("/tmp/aces-ops1-paraid.txt");
+        PrintStream ps = new PrintStream("/tmp/aces-ops3-stats.txt");
+        PrintStream ps1 = new PrintStream("/tmp/aces-ops3-paraid.txt");
         parchive.printKeys(ps);
         parchive.getParameterIdDb().print(ps1);
         ps1.close();
