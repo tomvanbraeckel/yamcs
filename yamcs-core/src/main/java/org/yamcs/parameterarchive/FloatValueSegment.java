@@ -73,6 +73,6 @@ public class FloatValueSegment extends ValueSegment {
 
     @Override
     public int size() {
-        return 0;
+        return floats.length;
     }
 }
