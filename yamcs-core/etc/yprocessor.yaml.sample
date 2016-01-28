@@ -50,3 +50,12 @@ Archive:
             enabled: true
             cacheAll: true
 
+#config used by the ParmaeterArchive when rebuilding the parameter archive
+# no need for parameter cache
+ParameterArchive:
+    telemetryProvider: 
+        class: org.yamcs.tctm.ReplayService
+    config:
+        parameterCache:
+            enabled: false
+
