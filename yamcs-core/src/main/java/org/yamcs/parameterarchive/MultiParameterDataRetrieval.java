@@ -90,10 +90,10 @@ public class MultiParameterDataRetrieval {
                     log.error(msg);
                     throw new RuntimeException(msg);
                 }
-                ValueSegment engValueSegment = mpvr.retrieveEngValues?pit.engValue():null;
+                BaseSegment engValueSegment = mpvr.retrieveEngValues?pit.engValue():null;
                 ParameterStatusSegment paramStatuSegment =  mpvr.retrieveParamStatus?pit.parameterStatus():null;
 
-                ValueSegment rawValueSegment = null;
+                BaseSegment rawValueSegment = null;
                 if(mpvr.retrieveRawValues) {
                     rawValueSegment = pit.rawValue();
                     if(rawValueSegment==null) {
@@ -104,7 +104,7 @@ public class MultiParameterDataRetrieval {
                 merger.currentParameterGroupId = pit.getParameterGroupId();
                 merger.currentParameterId = pit.getParameterId();
                 merger.currentParameterName = partition2ParameterName.get(pit);
-                new SegmentIterator(timeSegment, engValueSegment, rawValueSegment, paramStatuSegment, mpvr.start, mpvr.stop, mpvr.ascending).forEachRemaining(merger);
+                new SegmentIterator(timeSegment, (ValueSegment)engValueSegment, (ValueSegment)rawValueSegment, paramStatuSegment, mpvr.start, mpvr.stop, mpvr.ascending).forEachRemaining(merger);
                 pit.next();
                 if(pit.isValid()) {
                     queue.add(pit);

@@ -9,7 +9,7 @@ import org.yamcs.utils.DecodingException;
 import org.yamcs.utils.ValueUtility;
 import org.yamcs.utils.VarIntUtil;
 
-public class BooleanValueSegment extends ValueSegment {
+public class BooleanValueSegment extends BaseSegment implements ValueSegment {
     BitSet bitSet;
     
     

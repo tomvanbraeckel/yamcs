@@ -114,10 +114,8 @@ public class SingleParameterDataRetrieval {
 
 
     private void retriveValuesFromSegment(SortedTimeSegment timeSegment, PartitionIterator pit, SingleParameterValueRequest pvr,   Consumer<ParameterValueArray> consumer) throws DecodingException {
-        System.out.println("pit: timeSegment: t0: "+timeSegment.getSegmentStart()+"segmentEnd:"+ timeSegment.getSegmentEnd()+" size:"+timeSegment.size());
-        
-        ValueSegment engValueSegment = pit.engValue();
-        ValueSegment rawValueSegment = pit.rawValue();
+        BaseSegment engValueSegment = pit.engValue();
+        BaseSegment rawValueSegment = pit.rawValue();
         ParameterStatusSegment parameterStatusSegment = pit.parameterStatus();
         
         //retrieveRawValues will be set only when the rawValues do exist-> if it is null means they are equal with the engValues

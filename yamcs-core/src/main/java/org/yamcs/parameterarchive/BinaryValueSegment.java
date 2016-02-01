@@ -10,7 +10,7 @@ import org.yamcs.utils.ValueUtility;
 import org.yamcs.utils.VarIntUtil;
 
 
-public class BinaryValueSegment extends ValueSegment {  
+public class BinaryValueSegment extends BaseSegment implements ValueSegment {  
     protected List<byte[]> values;
     
     protected BinaryValueSegment(List<byte[]> values, byte formatId) {

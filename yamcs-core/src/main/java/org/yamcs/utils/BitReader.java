@@ -33,10 +33,12 @@ public class BitReader {
             return doRead(numBits);
         } else {
             long x= doRead(bitShift)<<k;
-            bitShift = 64;
-            b = bb.getLong();
-            
-            return x|doRead(k);
+            if(k>0) {
+            	bitShift = 64;
+            	b = bb.getLong();
+            	x|=doRead(k);
+            }
+            return x;
         }
     }
     

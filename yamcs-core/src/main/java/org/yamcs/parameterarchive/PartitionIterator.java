@@ -142,14 +142,14 @@ public class PartitionIterator {
         return currentKey;
     }
 
-    ValueSegment engValue() throws DecodingException {
+    BaseSegment engValue() throws DecodingException {
         if(currentEngValueSegment ==null) return null;
-        return (ValueSegment) segmentEncoder.decode(currentEngValueSegment, currentKey.segmentStart);
+        return (BaseSegment) segmentEncoder.decode(currentEngValueSegment, currentKey.segmentStart);
     } 
 
-    ValueSegment rawValue() throws DecodingException {
+    BaseSegment rawValue() throws DecodingException {
         if(currentRawValueSegment ==null) return null;
-        return (ValueSegment) segmentEncoder.decode(currentRawValueSegment, currentKey.segmentStart);
+        return (BaseSegment) segmentEncoder.decode(currentRawValueSegment, currentKey.segmentStart);
     }
 
     ParameterStatusSegment parameterStatus() throws DecodingException {

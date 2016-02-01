@@ -89,12 +89,7 @@
       <artifactId>rocksdbjni</artifactId>
       <version>3.13.1</version>
     </dependency>
-    <dependency>
-     <groupId>me.lemire.integercompression</groupId>
-     <artifactId>JavaFastPFOR</artifactId>
-     <version>0.0.5</version>
-     </dependency>
-   </dependencies>
+  </dependencies>
 
   <organization>
     <name>Space Applications Services</name>

@@ -5,11 +5,9 @@ import java.nio.ByteBuffer;
 import org.yamcs.utils.DecodingException;
 
 public class SegmentEncoderDecoder {
-    final byte VERSION =1;
     
     public byte[] encode(BaseSegment valueSegment) {
         ByteBuffer bb = ByteBuffer.allocate(2+valueSegment.getMaxSerializedSize());
-        bb.put(VERSION);
         bb.put(valueSegment.getFormatId());
         valueSegment.writeTo(bb);
         if(bb.position()<bb.capacity()) {
@@ -26,10 +24,6 @@ public class SegmentEncoderDecoder {
     
     public BaseSegment decode(byte[] buf, long segmentStart) throws DecodingException {
         ByteBuffer bb = ByteBuffer.wrap(buf);
-        byte version = bb.get();
-        if(version!=VERSION) {
-            throw new DecodingException("Version of ValueSegment is "+version+" instead of expected "+VERSION);
-        }
      
         byte formatId = bb.get();
         

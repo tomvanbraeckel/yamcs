@@ -9,7 +9,9 @@ import org.yamcs.utils.ValueUtility;
 import org.yamcs.utils.VarIntUtil;
 
 
-public class DoubleValueSegment extends ValueSegment {
+public class DoubleValueSegment extends BaseSegment implements ValueSegment {
+    final static byte SUBFORMAT_ID_RAW = 0;
+    
     double[] doubles;
     
     DoubleValueSegment() {
@@ -19,6 +21,7 @@ public class DoubleValueSegment extends ValueSegment {
             
     @Override
     public void writeTo(ByteBuffer bb) {
+        bb.put(SUBFORMAT_ID_RAW);
         int n = doubles.length;
         VarIntUtil.writeVarInt32(bb, n);
         for(int i=0;i<n;i++) {
@@ -28,6 +31,10 @@ public class DoubleValueSegment extends ValueSegment {
 
     @Override
     public void parseFrom(ByteBuffer bb) throws DecodingException {
+        byte fid = bb.get();
+        if(fid!=SUBFORMAT_ID_RAW) {
+            throw new DecodingException("Uknown sub format id: "+fid);
+        }
         int n = VarIntUtil.readVarInt32(bb);
         doubles = new double[n];
         

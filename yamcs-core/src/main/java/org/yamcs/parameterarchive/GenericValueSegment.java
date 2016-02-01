@@ -19,7 +19,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
  * 
  * 
  */
-public class GenericValueSegment extends ValueSegment {
+public class GenericValueSegment extends BaseSegment implements ValueSegment {
     List<Value> values = new ArrayList<Value>();
 
     public GenericValueSegment() {
@@ -27,7 +27,6 @@ public class GenericValueSegment extends ValueSegment {
     }
 
 
-    @Override
     public void add(int pos, Value v) {
         values.add(pos, v);
     }
@@ -67,7 +66,7 @@ public class GenericValueSegment extends ValueSegment {
      * Transform this generic segment in one of the specialised versions
      * @return
      */
-    public ValueSegment consolidate() {
+    public BaseSegment consolidate() {
         if(values.size()==0) return this;
 
         Type type = values.get(0).getType();
@@ -85,11 +84,13 @@ public class GenericValueSegment extends ValueSegment {
         case FLOAT:
             return FloatValueSegment.consolidate(values);
         case UINT64:
-            return UInt64ValueSegment.consolidate(values);
+            return LongValueSegment.consolidate(values, false);
+        case SINT64:
+            return LongValueSegment.consolidate(values, true);
         case BINARY:
             return BinaryValueSegment.consolidate(values);
         case TIMESTAMP:
-        case SINT64:
+        
 
         default:
             return this;

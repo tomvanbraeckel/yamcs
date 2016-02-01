@@ -8,9 +8,11 @@ import org.yamcs.utils.DecodingException;
 import org.yamcs.utils.ValueUtility;
 import org.yamcs.utils.VarIntUtil;
 
-public class UInt64ValueSegment extends ValueSegment {
-    UInt64ValueSegment() {
+public class LongValueSegment extends BaseSegment implements ValueSegment {
+    boolean signed;
+    LongValueSegment(boolean signed) {
         super(FORMAT_ID_UInt64ValueSegment);
+        this.signed = signed;
     }
 
 
@@ -34,8 +36,8 @@ public class UInt64ValueSegment extends ValueSegment {
         }
     }
 
-    public static UInt64ValueSegment  consolidate(List<Value> values) {
-        UInt64ValueSegment segment = new UInt64ValueSegment();
+    public static LongValueSegment  consolidate(List<Value> values, boolean signed) {
+        LongValueSegment segment = new LongValueSegment(signed);
         int n = values.size();
         segment.values = new long[n];
         for(int i =0;i<n; i++) {

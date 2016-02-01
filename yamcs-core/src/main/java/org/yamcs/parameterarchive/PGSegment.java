@@ -27,8 +27,8 @@ public class PGSegment {
     private List<GenericValueSegment> rawValueSegments;
     private List<BasicParameterStatusSegment> parameterStatusSegments;
     
-    private List<ValueSegment> consolidatedValueSegments;
-    private List<ValueSegment> consolidatedRawValueSegments;
+    private List<BaseSegment> consolidatedValueSegments;
+    private List<BaseSegment> consolidatedRawValueSegments;
     private List<ParameterStatusSegment> consolidatedParameterStatusSegments;
     
     private boolean consolidated = false;
@@ -99,12 +99,12 @@ public class PGSegment {
     
     public void consolidate() {
         consolidated = true;
-        consolidatedValueSegments  = new ArrayList<ValueSegment>(engValueSegments.size());
+        consolidatedValueSegments  = new ArrayList<BaseSegment>(engValueSegments.size());
         for(GenericValueSegment gvs: engValueSegments) {
             consolidatedValueSegments.add(gvs.consolidate());
         }
         if(storeRawValues) {
-            consolidatedRawValueSegments  = new ArrayList<ValueSegment>(engValueSegments.size());
+            consolidatedRawValueSegments  = new ArrayList<BaseSegment>(engValueSegments.size());
             
             //the raw values will only be stored if they are different than the engineering values
             for(int i=0;i<engValueSegments.size(); i++) {
@@ -140,11 +140,11 @@ public class PGSegment {
         return parameterIds.get(index);
     }
 
-    public List<ValueSegment> getConsolidatedValueSegments() {
+    public List<BaseSegment> getConsolidatedValueSegments() {
         return consolidatedValueSegments;
     }
 
-    public List<ValueSegment> getConsolidatedRawValueSegments() {
+    public List<BaseSegment> getConsolidatedRawValueSegments() {
         return consolidatedRawValueSegments;
     }
 

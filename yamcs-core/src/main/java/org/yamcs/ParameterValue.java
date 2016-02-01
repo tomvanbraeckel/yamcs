@@ -28,7 +28,7 @@ public class ParameterValue {
     ParameterEntry entry;
     int absoluteBitOffset, bitSize;
 
-    public Value rawValue;
+    private Value rawValue;
     private Value engValue;
     private long acquisitionTime;
     private long generationTime;

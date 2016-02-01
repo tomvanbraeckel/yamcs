@@ -11,7 +11,7 @@ public class TestBitBuffer {
 	
     @Test
     public void tesSingleBit1() {
-    	ByteBuffer bb = ByteBuffer.allocate(24);
+    	ByteBuffer bb = ByteBuffer.allocate(16);
     	BitWriter bw =new BitWriter(bb);
         for(int i=0; i<128; i++) {
             bw.write(i, 1);

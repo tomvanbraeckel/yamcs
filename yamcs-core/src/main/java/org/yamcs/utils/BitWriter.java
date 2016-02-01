@@ -47,10 +47,12 @@ public class BitWriter {
             doWrite(x, numBits);
         } else {
             doWrite(x>>k, bitShift);
-            bitShift = 64;
-            bb.putLong(b);
-            b = 0;
-            doWrite(x, k);
+            if(k>0) {
+            	bitShift = 64;
+            	bb.putLong(b);
+            	b = 0;
+            	doWrite(x, k);
+            }
         }
       //  System.out.println("bitShift: "+bitShift+" bb.position: "+bb.position()+" numBits: "+numBits);
     }
@@ -68,6 +70,8 @@ public class BitWriter {
      * do not call this method twice!!
      */
     public void flush() {
-    	bb.putLong(b);
+    	if(bitShift!=64) {
+    		bb.putLong(b);
+    	}
     }
 }

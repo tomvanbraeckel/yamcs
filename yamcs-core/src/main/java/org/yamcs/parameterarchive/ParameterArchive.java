@@ -218,8 +218,8 @@ public class ParameterArchive  extends AbstractService {
         writeBatch.put(p.dataCfh, timeKey, timeValue);
 
         //and then the consolidated value segments
-        List<ValueSegment> consolidated = pgs.getConsolidatedValueSegments();
-        List<ValueSegment> consolidatedRawValues = pgs.getConsolidatedRawValueSegments();
+        List<BaseSegment> consolidated = pgs.getConsolidatedValueSegments();
+        List<BaseSegment> consolidatedRawValues = pgs.getConsolidatedRawValueSegments();
         List<ParameterStatusSegment> satusSegments = pgs.getConsolidatedParameterStatusSegments();
 
         for(int i=0; i<consolidated.size(); i++) {
@@ -230,7 +230,7 @@ public class ParameterArchive  extends AbstractService {
             writeBatch.put(p.dataCfh, engKey, engValue);
 
             if(STORE_RAW_VALUES && consolidatedRawValues!=null) {
-                ValueSegment rvs = consolidatedRawValues.get(i);
+                BaseSegment rvs = consolidatedRawValues.get(i);
                 if(rvs!=null) {
                     byte[] rawKey = new SegmentKey(parameterId, pgs.getParameterGroupId(), pgs.getSegmentStart(), SegmentKey.TYPE_RAW_VALUE).encode();
                     byte[] rawValue = vsEncoder.encode(rvs);

@@ -10,7 +10,7 @@ import org.yamcs.utils.ValueUtility;
 import org.yamcs.utils.VarIntUtil;
 
 
-public class StringValueSegment extends ValueSegment {
+public class StringValueSegment extends BaseSegment implements ValueSegment {
     public static final int MAX_UTF8_CHAR_LENGTH = 3; //I've seen this in protobuf somwhere
     protected List<String> values;
     

@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 import org.yamcs.utils.DecodingException;
 
 /**
- * Base class for all segments of values, timestamps or flags
+ * Base class for all segments of values, timestamps or ParameterStatus
  * 
  * @author nm
  *
@@ -86,13 +86,13 @@ public abstract class BaseSegment {
         case FORMAT_ID_DoubleValueSegment:
             return new DoubleValueSegment();
         case FORMAT_ID_UInt64ValueSegment:
-            return new UInt64ValueSegment();
+            return new LongValueSegment(false);
         case FORMAT_ID_BinaryEnumValueSegment:
             return new BinaryEnumValueSegment();
         case FORMAT_ID_BinaryValueSegment:
             return new BinaryValueSegment();
         default:
-          throw new DecodingException("Invalid value format id "+formatId); 
+          throw new DecodingException("Invalid format id "+formatId); 
         }
     }
     

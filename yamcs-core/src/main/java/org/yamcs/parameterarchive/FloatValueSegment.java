@@ -10,7 +10,7 @@ import org.yamcs.utils.ValueUtility;
 import org.yamcs.utils.VarIntUtil;
 
 
-public class FloatValueSegment extends ValueSegment {
+public class FloatValueSegment extends BaseSegment implements ValueSegment {
 	final static byte SUBFORMAT_ID_RAW = 0;
 	final static byte SUBFORMAT_ID_COMPRESSED = 1;
 	FloatValueSegment() {
