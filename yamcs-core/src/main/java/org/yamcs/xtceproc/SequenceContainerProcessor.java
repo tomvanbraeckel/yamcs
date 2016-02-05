@@ -35,7 +35,6 @@ public class SequenceContainerProcessor {
         if(entries!=null) {
             for (SequenceEntry se:entries) {
                 try {
-
                     switch(se.getReferenceLocation()) {
                     case previousEntry:
                         pcontext.bitPosition+=se.getLocationInContainerInBits();
