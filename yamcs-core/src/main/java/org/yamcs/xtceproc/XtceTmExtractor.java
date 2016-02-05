@@ -26,11 +26,10 @@ public class XtceTmExtractor {
     public final XtceDb xtcedb;
     final SequenceContainer rootContainer;
     ParameterValueList paramResult=new ParameterValueList();
+
     ArrayList<ContainerExtractionResult> containerResult=new ArrayList<ContainerExtractionResult>();
     boolean ignoreOutOfContainerEntries = false;
     
-    
-
     /**
      * Creates a TmExtractor extracting data according to the XtceDb
      * @param xtcedb
@@ -80,8 +79,8 @@ public class XtceTmExtractor {
      */
     public void processPacket(ByteBuffer bb, long generationTime, long aquisitionTime, SequenceContainer startContainer) {
 	try {
-	    paramResult=new ParameterValueList();
-	    containerResult=new ArrayList<ContainerExtractionResult>();
+	    paramResult = new ParameterValueList();
+	    containerResult = new ArrayList<ContainerExtractionResult>();
 	    synchronized(subscription) {
 		ProcessingContext pcontext=new ProcessingContext(bb, 0, 0, subscription, paramResult, containerResult, aquisitionTime, generationTime, stats, ignoreOutOfContainerEntries);
 		pcontext.sequenceContainerProcessor.extract(startContainer);

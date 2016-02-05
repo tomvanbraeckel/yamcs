@@ -28,8 +28,8 @@ public class SequenceContainerProcessor {
         if(ris != null) {
             pcontext.expirationTime = pcontext.acquisitionTime + ris.getMaxInterval();
         }
-
         int maxposition=pcontext.bitPosition;
+
         //then extract the entries
         TreeSet<SequenceEntry> entries=pcontext.subscription.getEntries(seq);
         if(entries!=null) {

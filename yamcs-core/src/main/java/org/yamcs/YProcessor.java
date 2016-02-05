@@ -14,14 +14,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import org.slf4j.Logger;
+import org.yamcs.cmdhistory.CommandHistoryProvider;
 import org.yamcs.cmdhistory.CommandHistoryPublisher;
 import org.yamcs.cmdhistory.CommandHistoryRequestManager;
+import org.yamcs.cmdhistory.StreamCommandHistoryProvider;
 import org.yamcs.cmdhistory.YarchCommandHistoryAdapter;
 import org.yamcs.commanding.CommandQueueManager;
 import org.yamcs.commanding.CommandReleaser;
 import org.yamcs.commanding.CommandingManager;
 import org.yamcs.container.ContainerRequestManager;
-import org.yamcs.management.ManagementService;
 import org.yamcs.parameter.ParameterProvider;
 import org.yamcs.parameter.ParameterRequestManagerImpl;
 import org.yamcs.protobuf.Yamcs.ReplayRequest;
@@ -36,6 +37,7 @@ import org.yamcs.xtceproc.XtceDbFactory;
 import org.yamcs.xtceproc.XtceTmProcessor;
 
 import com.google.common.util.concurrent.AbstractService;
+import com.google.common.util.concurrent.Service;
 
 
 /**
@@ -62,9 +64,13 @@ public class YProcessor extends AbstractService {
     private CommandHistoryRequestManager commandHistoryRequestManager;
 
     private CommandingManager commandingManager;
+
     private final String CONFIG_KEY_alarm ="alarm";
     private final String CONFIG_KEY_tmProcessor ="tmProcessor";
     private final String CONFIG_KEY_parameterCache ="parameterCache";
+
+    private CommandHistoryProvider commandHistoryProvider;
+
 
     private TmPacketProvider tmPacketProvider;
     private CommandReleaser commandReleaser;
@@ -122,6 +128,7 @@ public class YProcessor extends AbstractService {
     @SuppressWarnings("unchecked")
     void init(TcTmService tctms, Map<String, Object> config) throws YProcessorException, ConfigurationException {
         xtcedb = XtceDbFactory.getInstance(yamcsInstance);
+
         timeService = YamcsServer.getTimeService(yamcsInstance);
         Map<String, Object> tmProcessorConfig = null;
         synchronized(instances) {
@@ -168,8 +175,8 @@ public class YProcessor extends AbstractService {
             if(tmPacketProvider!=null) {
                 tmPacketProvider.init(this, tmProcessor);
             }
-            containerRequestManager=new ContainerRequestManager(this, tmProcessor);
-            parameterRequestManager=new ParameterRequestManagerImpl(this, tmProcessor);
+            containerRequestManager = new ContainerRequestManager(this, tmProcessor);
+            parameterRequestManager = new ParameterRequestManagerImpl(this, tmProcessor);
 
             //    containerRequestManager.setPacketProvider(tmPacketProvider);
 
@@ -177,10 +184,15 @@ public class YProcessor extends AbstractService {
                 pprov.init(this);
                 parameterRequestManager.addParameterProvider(pprov);
             }
+            
+            
             //QUICK HACK  TODO
             if((tmPacketProvider!=null) && (tmPacketProvider instanceof ParameterProvider) ) {
                 parameterRequestManager.addParameterProvider((ParameterProvider)tmPacketProvider);
             }
+
+            parameterRequestManager.init();
+            
 
             if(commandReleaser!=null) {
                 try {
@@ -191,14 +203,22 @@ public class YProcessor extends AbstractService {
                 commandingManager=new CommandingManager(this);
                 commandReleaser.setCommandHistory(commandHistoryPublisher);
                 commandHistoryRequestManager = new CommandHistoryRequestManager(this);
+                commandHistoryProvider = new StreamCommandHistoryProvider();
+                commandHistoryProvider.setCommandHistoryRequestManager(commandHistoryRequestManager);
+                
             } else {
                 commandingManager=null;
+                //QUICK HACK  TODO
+                if((tmPacketProvider!=null) && (tmPacketProvider instanceof CommandHistoryProvider) ) {
+                    commandHistoryProvider = (CommandHistoryProvider) tmPacketProvider;
+                    commandHistoryRequestManager = new CommandHistoryRequestManager(this);
+                    commandHistoryProvider.setCommandHistoryRequestManager(commandHistoryRequestManager);
+                }
             }
 
 
             instances.put(key(yamcsInstance,name),this);
             listeners.forEach(l -> l.processorAdded(this));
-            ManagementService.getInstance().registerYProcessor(this);
         }
     }
 
@@ -275,7 +295,7 @@ public class YProcessor extends AbstractService {
 
 
     /**
-     * starts processing by invoking the start method for all the associated processors
+     * starts processing by invoking the start method for all the associated components
      *
      */
     @Override
@@ -289,17 +309,25 @@ public class YProcessor extends AbstractService {
         if(commandReleaser!=null) {
             commandReleaser.startAsync();
             commandReleaser.awaitRunning();
-            commandHistoryRequestManager.startAsync();
             commandingManager.startAsync();
             commandingManager.awaitRunning();
             CommandQueueManager cqm = commandingManager.getCommandQueueManager();
             cqm.startAsync();
             cqm.awaitRunning();
         }
+        
+        if(commandHistoryRequestManager!=null) {
+            commandHistoryRequestManager.startAsync();
+            startIfNecessary(commandHistoryProvider);
+            
+            commandHistoryRequestManager.awaitRunning();
+            commandHistoryProvider.awaitRunning();
+        }
+        
+        
         for(ParameterProvider pprov: parameterProviders) {
             pprov.startAsync();
         }
-
         parameterRequestManager.start();
 
         if(tmPacketProvider!=null) {
@@ -310,9 +338,14 @@ public class YProcessor extends AbstractService {
         }
         
         notifyStarted();
-        propagateProcessorStateChange();
+        propagateProcessorStateChange();        
     }
 
+    private void startIfNecessary(Service service) {
+        if(service.state()==State.NEW) {
+            service.startAsync();
+        }
+    }
 
     public void pause() {
         ((ArchiveTmPacketProvider)tmPacketProvider).pause();
@@ -424,7 +457,7 @@ public class YProcessor extends AbstractService {
     public static Collection<YProcessor> getProcessors() {
         return instances.values();
     }
-    
+
     public static Collection<YProcessor> getProcessors(String instance) {
         List<YProcessor> processors = new ArrayList<>();
         for (YProcessor processor : instances.values()) {
@@ -455,7 +488,6 @@ public class YProcessor extends AbstractService {
         if(commandReleaser!=null) commandReleaser.stopAsync();
         log.info("Processor "+name+" is out of business");
         listeners.forEach(l -> l.yProcessorClosed(this));
-        ManagementService.getInstance().unregisterYProcessor(this);
         synchronized(this) {
             for(YProcessorClient s:connectedClients) {
                 s.yProcessorQuit();
@@ -469,7 +501,7 @@ public class YProcessor extends AbstractService {
     public static void addProcessorListener(YProcessorListener processorListener) {
         listeners.add(processorListener);
     }
-    public static void removeYProcListener(YProcessorListener processorListener) {
+    public static void removeProcessorListener(YProcessorListener processorListener) {
         listeners.remove(processorListener);
     }
 

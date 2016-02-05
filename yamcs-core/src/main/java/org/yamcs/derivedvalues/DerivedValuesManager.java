@@ -20,7 +20,7 @@ import org.yamcs.parameter.ParameterProvider;
 import org.yamcs.parameter.ParameterRequestManagerImpl;
 import org.yamcs.parameter.ParameterRequestManager;
 import org.yamcs.protobuf.Yamcs.NamedObjectId;
-import org.yamcs.utils.TimeEncoding;
+import org.yamcs.protobuf.Yamcs.ReplayRequest;
 import org.yamcs.utils.YObjectLoader;
 import org.yamcs.xtce.NamedDescriptionIndex;
 import org.yamcs.xtce.Parameter;
@@ -51,9 +51,17 @@ public class DerivedValuesManager extends AbstractService implements ParameterPr
     public DerivedValuesManager(String yamcsInstance) {
 	//do nothing here, all the work is done in init
     }
+    
+    /**
+     * this is called when the DerivedValuesManager is defined as parameter provider in the Archive(replay) processors
+     * We don't do anything with the replayRequest so we ignore it. 
+     */
+    public DerivedValuesManager(String yamcsInstance, ReplayRequest replayRequest) {
+        //do nothing here, all the work is done in init
+    }
+    
     YProcessor yproc;
 
-    @SuppressWarnings("unchecked")
     @Override
     public void init(YProcessor yproc) throws ConfigurationException {
 	this.parameterRequestManager = yproc.getParameterRequestManager();
@@ -71,7 +79,6 @@ public class DerivedValuesManager extends AbstractService implements ParameterPr
 	if(conf.containsKey(mdbconfig+"_derivedValuesProviders")) {
 	    List<String> providers=conf.getList(mdbconfig+"_derivedValuesProviders");
 	    for(String p:providers) {
-		Class<DerivedValuesProvider> c;
 		try {
 		    YObjectLoader<DerivedValuesProvider> loader = new YObjectLoader<>();
 		    DerivedValuesProvider provider = loader.loadObject(p, xtcedb);
@@ -89,6 +96,9 @@ public class DerivedValuesManager extends AbstractService implements ParameterPr
     public void addAll(Collection<DerivedValue> dvalues) {
 	derivedValues.addAll(dvalues);
 	for(DerivedValue dv:dvalues) {
+        // quick hack to remove qualified name to remain compatible with previous displays
+        dv.def.setQualifiedName(null);
+
 	    dvIndex.add(dv.def);
 	}
     }
@@ -116,9 +126,21 @@ public class DerivedValuesManager extends AbstractService implements ParameterPr
 
     @Override
     public void startProvidingAll() {
-	// TODO Auto-generated method stub
-
+        log.debug("Requested to provide all");
+        for(DerivedValue dv:derivedValues)
+        {
+            requestedValues.add(dv);
+            try {
+                if(dv.getArgumentIds().length > 0 && dv.getArgumentIds()[0] != null)
+                    parameterRequestManager.addItemsToRequest(subscriptionId, Arrays.asList(dv.getArgumentIds()));
+            } catch (InvalidIdentification e) {
+                log.error("InvalidIdentification caught when subscribing to the items required for the derived value "+dv.def+"\n\t The invalid items are:"+e.invalidParameters, e);
+            } catch (InvalidRequestIdentification e) {
+                log.error("InvalidRequestIdentification caught when subscribing to the items required for the derived value "+dv.def, e);
+            }
+        }
     }
+
     //TODO 2.0 unsubscribe from the requested values
     @Override
     public void stopProviding(Parameter paramDef) {
@@ -143,19 +165,17 @@ public class DerivedValuesManager extends AbstractService implements ParameterPr
     
     @Override
     public boolean canProvide(Parameter param) {
-	return dvIndex.get(param.getQualifiedName())!=null;
+        if(param.getQualifiedName() == null)
+            return dvIndex.get(param.getOpsName()) != null;
+        else
+	        return dvIndex.get(param.getQualifiedName())!=null;
     }
 
 
     
     @Override
     public Parameter getParameter(NamedObjectId paraId) throws InvalidIdentification {
-	Parameter p;
-	if(paraId.hasNamespace()) {
-	    p=dvIndex.get(paraId.getNamespace(), paraId.getName());
-	} else {
-	    p=dvIndex.get(paraId.getName());
-	}
+	Parameter p=dvIndex.get(paraId.getName());
 	if(p!=null) {
 	    return p;
 	} else {
