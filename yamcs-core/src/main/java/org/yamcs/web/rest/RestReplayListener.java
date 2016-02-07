@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.yamcs.parameter.ParameterValueWithId;
 import org.yamcs.parameter.ParameterWithIdConsumer;
+import org.yamcs.protobuf.Pvalue.ParameterValue;
 
 
 /**
@@ -63,6 +64,29 @@ public abstract class RestReplayListener implements ParameterWithIdConsumer {
     }
     
     /**
+     * this is called from the parameter archive where it is easier to get a protobuf ParameterValue instead of org.yamcs.ParameterValue (which needs a reference to an Xtce Parameter)
+     * since we may not know that the parameter is at all in the XtceDB
+     * @param params
+     */
+    public void update2(List<ParameterValue> params) {
+        List<ParameterValue> filteredData = filter2(params);
+        if (filteredData == null) return;
+        
+        if (paginate) {
+            if (rowNr >= pos) {
+                if (emitted < limit) {
+                    emitted++;
+                    onParameterData2(filteredData);
+                } else {
+                    requestReplayAbortion();
+                }
+            }
+            rowNr++;
+        } else {
+            onParameterData2(filteredData);
+        }
+    }
+    /**
      * Override to filter out some replay data. Null means excluded.
      * (which also means it will not be counted towards the pagination.
      */
@@ -70,9 +94,18 @@ public abstract class RestReplayListener implements ParameterWithIdConsumer {
         return params;
     }
     
-    public abstract void onParameterData(List<ParameterValueWithId> params);
+    /**
+     * same as above but takes GPB ParameterValue instead
+     * @param params
+     * @return
+     */
+    public List<ParameterValue> filter2(List<ParameterValue> params) {
+        return params;
+    }
     
-    public void replayFinished(){
-        
-    };
+    public void onParameterData(List<ParameterValueWithId> params){};
+    
+    public void onParameterData2(List<ParameterValue> params) {}
+    
+    public void replayFinished(){};
 }

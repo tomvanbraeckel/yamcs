@@ -333,7 +333,10 @@ public class ParameterValue {
     public long getExpirationTime() {
         return expirationTime;
     }
-
+    
+    public void setEngValue(Value engValue) {
+        this.engValue = engValue;
+    }
     
     public org.yamcs.protobuf.Pvalue.ParameterValue toGpb(NamedObjectId id) {
         org.yamcs.protobuf.Pvalue.ParameterValue.Builder gpvb=org.yamcs.protobuf.Pvalue.ParameterValue.newBuilder()
@@ -417,4 +420,6 @@ public class ParameterValue {
         if(engValue!=null) sb.append(" engValue: {").append(engValue.toString()).append("}");
         return sb.toString();
     }
+
+
 }

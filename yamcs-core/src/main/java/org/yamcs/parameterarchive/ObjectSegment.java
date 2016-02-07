@@ -75,7 +75,8 @@ public class ObjectSegment<E> extends BaseSegment {
         
         if(!objectList.isEmpty()) {
             HashableByteArray lastElement = serializedObjectList.get(serializedObjectList.size()-1);
-            if(hba.equals(lastElement)) {               
+            if(hba.equals(lastElement)) {        
+                hba = lastElement;
                 enumRleSize+=1;
             } else {
                 enumRleSize+=1+b.length;

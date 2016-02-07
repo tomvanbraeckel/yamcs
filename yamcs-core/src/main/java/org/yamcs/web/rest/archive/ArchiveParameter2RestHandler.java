@@ -24,10 +24,10 @@ import org.yamcs.parameterarchive.SingleParameterDataRetrieval;
 import org.yamcs.parameterarchive.SingleParameterValueRequest;
 import org.yamcs.parameterarchive.ConsumerAbortException;
 import org.yamcs.protobuf.Pvalue.ParameterData;
+import org.yamcs.protobuf.Pvalue.ParameterValue;
 import org.yamcs.protobuf.Pvalue.TimeSeries;
 import org.yamcs.protobuf.SchemaPvalue;
 import org.yamcs.protobuf.Yamcs.NamedObjectId;
-import org.yamcs.protobuf.Yamcs.ProtoDataType;
 import org.yamcs.protobuf.Yamcs.Value;
 import org.yamcs.protobuf.Yamcs.Value.Type;
 import org.yamcs.utils.DecodingException;
@@ -241,9 +241,9 @@ public class ArchiveParameter2RestHandler extends RestHandler {
                 limit++; // Allow one extra line for the CSV header
                 RestParameterReplayListener replayListener = new RestParameterReplayListener(0, limit) {
                     @Override
-                    public void onParameterData(ParameterData pdata) {
+                    public void onParameterData2(List<ParameterValue> params) {
                         try {
-                            csvFormatter.writeParameters(pdata.getParameterList());
+                            csvFormatter.writeParameters(params);
                         } catch (IOException e) {
                             log.error("Error while writing parameter line", e);
                         }
@@ -253,8 +253,7 @@ public class ArchiveParameter2RestHandler extends RestHandler {
                 Consumer<ParameterIdValueList> consumer = new Consumer<ParameterIdValueList>() {
                     @Override
                     public void accept(ParameterIdValueList t) {
-                        ParameterData pdata = ParameterData.newBuilder().addAllParameter(t.getValues()).build();
-                        replayListener.newData(ProtoDataType.PARAMETER, pdata);
+                        replayListener.update2(t.getValues());
                         if(replayListener.isReplayAbortRequested()) throw new ConsumerAbortException();
                     }
                 }; 
@@ -269,8 +268,8 @@ public class ArchiveParameter2RestHandler extends RestHandler {
             try {
                 RestParameterReplayListener replayListener = new RestParameterReplayListener(0, limit) {
                     @Override
-                    public void onParameterData(ParameterData pdata) {
-                        resultb.addAllParameter(pdata.getParameterList());
+                    public void onParameterData2(List<ParameterValue> params) {
+                        resultb.addAllParameter(params);
                     }
                 };
 
@@ -278,7 +277,7 @@ public class ArchiveParameter2RestHandler extends RestHandler {
                     @Override
                     public void accept(ParameterIdValueList t) {
                         ParameterData pdata = ParameterData.newBuilder().addAllParameter(t.getValues()).build();
-                        replayListener.newData(ProtoDataType.PARAMETER, pdata);
+                        replayListener.update2(t.getValues());
                         if(replayListener.isReplayAbortRequested()) throw new ConsumerAbortException();
                     }
                 }; 
