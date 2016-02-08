@@ -56,6 +56,9 @@ import com.google.common.util.concurrent.Service;
  *
  */
 public class YProcessor extends AbstractService {
+    private final String CONFIG_KEY_tmProcessor ="tmProcessor";
+
+    
     static private Map<String,YProcessor>instances=Collections.synchronizedMap(new HashMap<String,YProcessor>());
     private ParameterRequestManagerImpl parameterRequestManager;
     private ContainerRequestManager containerRequestManager;
@@ -66,7 +69,6 @@ public class YProcessor extends AbstractService {
     private CommandingManager commandingManager;
 
     private final String CONFIG_KEY_alarm ="alarm";
-    private final String CONFIG_KEY_tmProcessor ="tmProcessor";
     private final String CONFIG_KEY_parameterCache ="parameterCache";
 
     private CommandHistoryProvider commandHistoryProvider;
@@ -131,6 +133,7 @@ public class YProcessor extends AbstractService {
 
         timeService = YamcsServer.getTimeService(yamcsInstance);
         Map<String, Object> tmProcessorConfig = null;
+        
         synchronized(instances) {
             if(instances.containsKey(key(yamcsInstance,name))) throw new YProcessorException("A processor named '"+name+"' already exists in instance "+yamcsInstance);
             if(config!=null) {
