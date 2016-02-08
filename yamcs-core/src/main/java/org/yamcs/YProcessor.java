@@ -70,7 +70,6 @@ public class YProcessor extends AbstractService {
     private CommandingManager commandingManager;
 
     private final String CONFIG_KEY_alarm ="alarm";
-    private final String CONFIG_KEY_parameterCache ="parameterCache";
 
     private CommandHistoryProvider commandHistoryProvider;
 
