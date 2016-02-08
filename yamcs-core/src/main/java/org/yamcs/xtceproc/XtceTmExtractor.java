@@ -35,9 +35,9 @@ public class XtceTmExtractor {
      * @param xtcedb
      */
     public XtceTmExtractor(XtceDb xtcedb) {
-	this.xtcedb=xtcedb;
-	this.subscription=new Subscription(xtcedb);
-	rootContainer=xtcedb.getRootSequenceContainer();
+        this.xtcedb=xtcedb;
+        this.subscription=new Subscription(xtcedb);
+        rootContainer=xtcedb.getRootSequenceContainer();
     }
 
     /**
@@ -46,56 +46,57 @@ public class XtceTmExtractor {
      *  also for each sequence container adds the parameter needed to instantiate the sequence container.
      * @param param parameter to be added to the current subscription list 
      */
-    public void startProviding(Parameter param) { 
-	synchronized(subscription) {
-	    subscription.addParameter(param);
-	}
+    public void startProviding(Parameter param) {
+        synchronized(subscription) {
+            subscription.addParameter(param);
+        }
     }
 
     /**
      * Adds all containers and parameters to the subscription
      */
     public void startProvidingAll() {
-	for (SequenceContainer c : xtcedb.getSequenceContainers()) {
-	    if (c.getBaseContainer() == null) {
-		subscription.addAll(c);
-	    }
-	}
+        for (SequenceContainer c : xtcedb.getSequenceContainers()) {
+            if (c.getBaseContainer() == null) {
+                subscription.addAll(c);
+            }
+        }
     }
 
     public void stopProviding(Parameter param) {
-	//TODO 2.0 do something here
+        //TODO 2.0 do something here
     }
 
     /**
      * Extract one packet, starting at the root sequence container
      */
     public void processPacket(ByteBuffer bb, long generationTime, long acquisitionTime) {
-	processPacket(bb, generationTime, acquisitionTime, rootContainer);
+        processPacket(bb, generationTime, acquisitionTime, rootContainer);
     }
 
     /**
      * Extract one packet, starting at the specified container.
      */
     public void processPacket(ByteBuffer bb, long generationTime, long aquisitionTime, SequenceContainer startContainer) {
-	try {
-	    paramResult = new ParameterValueList();
-	    containerResult = new ArrayList<ContainerExtractionResult>();
-	    synchronized(subscription) {
-		ProcessingContext pcontext=new ProcessingContext(bb, 0, 0, subscription, paramResult, containerResult, aquisitionTime, generationTime, stats, ignoreOutOfContainerEntries);
-		pcontext.sequenceContainerProcessor.extract(startContainer);
-	    }
-	} catch (Exception e) {
-	    log.error("got exception in tmextractor ", e);
-	}
+        try {
+            paramResult = new ParameterValueList();
+            containerResult = new ArrayList<ContainerExtractionResult>();
+            synchronized(subscription) {
+                ProcessingContext pcontext=new ProcessingContext(bb, 0, 0, subscription, paramResult, containerResult, aquisitionTime, generationTime, stats, ignoreOutOfContainerEntries);
+
+                pcontext.sequenceContainerProcessor.extract(startContainer);
+            }
+        } catch (Exception e) {
+            log.error("got exception in tmextractor ", e);
+        }
     }
 
     public void resetStatistics() {
-	stats.reset();
+        stats.reset();
     }
 
     public ProcessingStatistics getStatistics(){
-	return stats;
+        return stats;
     }
     
     public boolean isIgnoreOutOfContainerEntries() {
@@ -115,30 +116,30 @@ public class XtceTmExtractor {
     }
 
     public void startProviding(SequenceContainer sequenceContainer) {
-	synchronized(subscription) {
-	    subscription.addSequenceContainer(sequenceContainer);
-	}
+        synchronized(subscription) {
+            subscription.addSequenceContainer(sequenceContainer);
+        }
     }
 
     public void stopProviding(SequenceContainer sequenceContainer) {
-	//TODO
+        //TODO
     }
     
 
     public ParameterValueList getParameterResult() {
-	return paramResult;
+        return paramResult;
     }
 
     public ArrayList<ContainerExtractionResult> getContainerResult() {
-	return containerResult;
+        return containerResult;
     }
 
     public Subscription getSubscription() {
-	return subscription;
+        return subscription;
     }
 
     @Override
     public String toString() {
-	return subscription.toString();
+        return subscription.toString();
     }
 }
