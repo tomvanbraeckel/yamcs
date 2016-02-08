@@ -57,6 +57,7 @@ import com.google.common.util.concurrent.Service;
  */
 public class YProcessor extends AbstractService {
     private final String CONFIG_KEY_tmProcessor ="tmProcessor";
+    private final String CONFIG_KEY_parameterCache ="parameterCache";
 
     
     static private Map<String,YProcessor>instances=Collections.synchronizedMap(new HashMap<String,YProcessor>());
@@ -93,7 +94,6 @@ public class YProcessor extends AbstractService {
     private boolean parameterCacheEnabled = false;
     private boolean parameterCacheAll = false;
     private long parameterCacheDuration = 10*60*1000;
-    
     
     final Logger log;
     static Set<YProcessorListener> listeners=new CopyOnWriteArraySet<>(); //send notifications for added and removed processors to this
@@ -625,14 +625,10 @@ public class YProcessor extends AbstractService {
         awaitTerminated();
     }
 
-
-
     public void start() {
         startAsync();
         awaitRunning();
     }
-
-
 
     public void notifyStateChange() {
         propagateProcessorStateChange();        
