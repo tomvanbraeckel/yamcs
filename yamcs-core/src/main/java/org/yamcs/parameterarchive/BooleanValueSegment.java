@@ -51,7 +51,7 @@ public class BooleanValueSegment extends BaseSegment implements ValueSegment {
     }
 
     @Override
-    public Value get(int index) {
+    public Value getValue(int index) {
         return ValueUtility.getBooleanValue(bitSet.get(index));
     }
     

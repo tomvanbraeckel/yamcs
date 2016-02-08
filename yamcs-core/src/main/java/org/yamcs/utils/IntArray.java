@@ -147,5 +147,12 @@ public class IntArray {
         return true;
     }
 
+    /**
+     * get the backing array
+     * @return
+     */
+    public int[] array() {
+        return a;
+    }
    
 }

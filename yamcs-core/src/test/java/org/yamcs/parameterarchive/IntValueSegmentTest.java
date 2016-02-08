@@ -40,7 +40,7 @@ public class IntValueSegmentTest {
         
         
         for(int i =0; i<n; i++) {
-            assertEquals(l.get(i), fvs1.get(i));
+            assertEquals(l.get(i), fvs1.getValue(i));
         }
     }
     
@@ -62,7 +62,7 @@ public class IntValueSegmentTest {
         fvs1.parseFrom(bb);
         
         for(int i =0; i<n; i++) {
-            assertEquals(l.get(i), fvs1.get(i));
+            assertEquals(l.get(i), fvs1.getValue(i));
         }
     }
     
@@ -87,7 +87,7 @@ public class IntValueSegmentTest {
         fvs1.parseFrom(bb);
         
         for(int i =0; i<n; i++) {
-            assertEquals(l.get(i), fvs1.get(i));
+            assertEquals(l.get(i), fvs1.getValue(i));
         }
     }
     

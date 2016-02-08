@@ -227,7 +227,7 @@ public class SortedTimeSegment extends BaseSegment implements ValueSegment {
     }
 
     @Override
-    public Value get(int index) {        
+    public Value getValue(int index) {        
         return ValueHelper.newTimestampValue(getTime(index));
     }
 

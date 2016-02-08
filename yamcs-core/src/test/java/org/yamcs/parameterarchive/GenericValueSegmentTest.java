@@ -22,7 +22,6 @@ public class GenericValueSegmentTest {
 
         ByteBuffer bb = ByteBuffer.allocate(gvs.getMaxSerializedSize());
         gvs.writeTo(bb);
-        System.out.println("buf.length: "+bb.position());
         
         bb.rewind();
         GenericValueSegment gvs1 = new GenericValueSegment();

@@ -14,19 +14,16 @@ public abstract class BaseSegment {
     
     public static final byte FORMAT_ID_SortedTimeValueSegment = 1;
     
-    public static final byte FORMAT_ID_RLEParameterStatusSegment = 2;
-    public static final byte FORMAT_ID_BasicParameterStatusSegment = 3;  
+    public static final byte FORMAT_ID_ParameterStatusSegment = 2;
     
     public static final byte FORMAT_ID_GenericValueSegment = 10;    
     public static final byte FORMAT_ID_IntValueSegment = 11;
     public static final byte FORMAT_ID_StringValueSegment = 13;
-    public static final byte FORMAT_ID_EnumValueSegment = 14;
     public static final byte FORMAT_ID_BooleanValueSegment = 15;
     public static final byte FORMAT_ID_FloatValueSegment = 16;
     public static final byte FORMAT_ID_DoubleValueSegment = 17;
     public static final byte FORMAT_ID_UInt64ValueSegment = 18;
     public static final byte FORMAT_ID_BinaryValueSegment = 19;
-    public static final byte FORMAT_ID_BinaryEnumValueSegment = 20;
     
     
     protected byte formatId;
@@ -65,10 +62,8 @@ public abstract class BaseSegment {
 
     public static BaseSegment newValueSegment(byte formatId, long segmentStart) throws DecodingException {
         switch(formatId) {
-        case FORMAT_ID_RLEParameterStatusSegment:
-            return new RLEParameterStatusSegment();
-        case FORMAT_ID_BasicParameterStatusSegment:
-            return new BasicParameterStatusSegment();
+        case FORMAT_ID_ParameterStatusSegment:
+            return new ParameterStatusSegment(false);
         case FORMAT_ID_SortedTimeValueSegment:
             return new SortedTimeSegment(segmentStart);
         case FORMAT_ID_GenericValueSegment:
@@ -76,9 +71,7 @@ public abstract class BaseSegment {
         case FORMAT_ID_IntValueSegment:
             return new IntValueSegment();
         case FORMAT_ID_StringValueSegment:
-            return new StringValueSegment();
-        case FORMAT_ID_EnumValueSegment:
-            return new EnumValueSegment();
+            return new StringValueSegment(false);
         case FORMAT_ID_BooleanValueSegment:
             return new BooleanValueSegment();
         case FORMAT_ID_FloatValueSegment:
@@ -87,10 +80,8 @@ public abstract class BaseSegment {
             return new DoubleValueSegment();
         case FORMAT_ID_UInt64ValueSegment:
             return new LongValueSegment(false);
-        case FORMAT_ID_BinaryEnumValueSegment:
-            return new BinaryEnumValueSegment();
         case FORMAT_ID_BinaryValueSegment:
-            return new BinaryValueSegment();
+            return new BinaryValueSegment(false);
         default:
           throw new DecodingException("Invalid format id "+formatId); 
         }

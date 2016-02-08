@@ -389,7 +389,6 @@ public class ParameterArchiveTest {
         List<ParameterValueArray> l4d = retrieveSingleValueMultigroup(101, 102, p1id, new int[]{pg1id, pg2id}, false); 
         assertEquals(0, l4d.size());
         
-        System.out.println("-----------------");
         //retrieve only statuses
         List<ParameterValueArray> l5a = retrieveSingleValueMultigroup(0, TimeEncoding.MAX_INSTANT, p1id, new int[]{pg1id, pg2id}, true, false, false, true);
         assertNull(l5a.get(0).engValues);

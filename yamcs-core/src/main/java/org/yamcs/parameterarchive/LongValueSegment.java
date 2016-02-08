@@ -68,7 +68,7 @@ public class LongValueSegment extends BaseSegment implements ValueSegment {
     }
 
     @Override
-    public Value get(int index) {
+    public Value getValue(int index) {
         return ValueUtility.getUint64Value(values[index]);
     }
 

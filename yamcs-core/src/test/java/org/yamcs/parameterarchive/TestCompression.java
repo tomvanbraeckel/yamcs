@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.nio.ByteBuffer;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.rocksdb.ColumnFamilyDescriptor;
 import org.rocksdb.ColumnFamilyHandle;
@@ -13,11 +14,11 @@ import org.rocksdb.CompressionType;
 import org.rocksdb.FlushOptions;
 import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
-import org.rocksdb.WriteOptions;
 import org.yamcs.utils.FileUtils;
 
 public class TestCompression {
 
+    @Ignore
     @Test
     public void test() throws Exception {
         String path = "/tmp/testcompression";

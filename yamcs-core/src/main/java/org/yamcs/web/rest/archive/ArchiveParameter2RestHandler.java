@@ -276,7 +276,6 @@ public class ArchiveParameter2RestHandler extends RestHandler {
                 Consumer<ParameterIdValueList> consumer = new Consumer<ParameterIdValueList>() {
                     @Override
                     public void accept(ParameterIdValueList t) {
-                        ParameterData pdata = ParameterData.newBuilder().addAllParameter(t.getValues()).build();
                         replayListener.update2(t.getValues());
                         if(replayListener.isReplayAbortRequested()) throw new ConsumerAbortException();
                     }

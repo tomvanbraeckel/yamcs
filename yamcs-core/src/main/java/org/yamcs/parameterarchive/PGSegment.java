@@ -25,7 +25,7 @@ public class PGSegment {
     private SortedTimeSegment timeSegment;
     private List<GenericValueSegment> engValueSegments;
     private List<GenericValueSegment> rawValueSegments;
-    private List<BasicParameterStatusSegment> parameterStatusSegments;
+    private List<ParameterStatusSegment> parameterStatusSegments;
     
     private List<BaseSegment> consolidatedValueSegments;
     private List<BaseSegment> consolidatedRawValueSegments;
@@ -46,7 +46,7 @@ public class PGSegment {
         
         for(int i=0; i<parameterIds.size(); i++) {
             engValueSegments.add(new GenericValueSegment());
-            parameterStatusSegments.add(new BasicParameterStatusSegment());
+            parameterStatusSegments.add(new ParameterStatusSegment(true));
             if(storeRawValues) {
                 rawValueSegments.add(new GenericValueSegment());
             }

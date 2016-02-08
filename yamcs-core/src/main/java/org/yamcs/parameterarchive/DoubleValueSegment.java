@@ -45,7 +45,7 @@ public class DoubleValueSegment extends BaseSegment implements ValueSegment {
 
 
     @Override
-    public Value get(int index) {
+    public Value getValue(int index) {
         return ValueUtility.getDoubleValue(doubles[index]);
     }
 

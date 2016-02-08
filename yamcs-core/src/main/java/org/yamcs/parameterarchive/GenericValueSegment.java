@@ -75,8 +75,6 @@ public class GenericValueSegment extends BaseSegment implements ValueSegment {
             return IntValueSegment.consolidate(values, false);
         case SINT32:
             return IntValueSegment.consolidate(values, true);
-        case STRING:
-            return StringValueSegment.consolidate(values);
         case BOOLEAN:
             return BooleanValueSegment.consolidate(values);
         case DOUBLE:
@@ -89,6 +87,8 @@ public class GenericValueSegment extends BaseSegment implements ValueSegment {
             return LongValueSegment.consolidate(values, true);
         case BINARY:
             return BinaryValueSegment.consolidate(values);
+        case STRING:
+            return StringValueSegment.consolidate(values);
         case TIMESTAMP:
         
 
@@ -107,7 +107,7 @@ public class GenericValueSegment extends BaseSegment implements ValueSegment {
     }
 
     @Override
-    public Value get(int index) {
+    public Value getValue(int index) {
         return values.get(index);
     }
 

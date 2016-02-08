@@ -59,8 +59,8 @@ public class SegmentIterator {
     
     public TimedValue next() {
         long t = timeSegment.getTime(pos);
-        Value ev = (valueSegment==null)?null:valueSegment.get(pos);
-        Value rv = (rawValueSegment==null)?null:rawValueSegment.get(pos);
+        Value ev = (valueSegment==null)?null:valueSegment.getValue(pos);
+        Value rv = (rawValueSegment==null)?null:rawValueSegment.getValue(pos);
         ParameterStatus ps = (parameterStatusSegment==null)?null:parameterStatusSegment.get(pos);
         
         if(ascending) {
@@ -74,8 +74,8 @@ public class SegmentIterator {
     public void forEachRemaining(Consumer<TimedValue> consumer) {
         while(hasNext()) {
             long t = timeSegment.getTime(pos);
-            Value ev = (valueSegment==null)?null:valueSegment.get(pos);
-            Value rv = (rawValueSegment==null)?null:rawValueSegment.get(pos);
+            Value ev = (valueSegment==null)?null:valueSegment.getValue(pos);
+            Value rv = (rawValueSegment==null)?null:rawValueSegment.getValue(pos);
             ParameterStatus ps = (parameterStatusSegment==null)?null:parameterStatusSegment.get(pos);
 
             if(ascending) {

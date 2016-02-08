@@ -1,115 +1,61 @@
 package org.yamcs.parameterarchive;
 
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.yamcs.protobuf.Yamcs.Value;
 import org.yamcs.utils.DecodingException;
 import org.yamcs.utils.ValueUtility;
-import org.yamcs.utils.VarIntUtil;
 
 
-public class StringValueSegment extends BaseSegment implements ValueSegment {
+
+public class StringValueSegment extends ObjectSegment<String> implements ValueSegment {
+    static StringSerializer serializer = new StringSerializer();
+    StringValueSegment(boolean buildForSerialisation) {
+        super(serializer, buildForSerialisation);
+    }
+
+
     public static final int MAX_UTF8_CHAR_LENGTH = 3; //I've seen this in protobuf somwhere
     protected List<String> values;
-    
-    
-    protected StringValueSegment(List<String> values, byte formatId) {
-        super(formatId);
-        this.values = values;
-    }
-
-    
-    public StringValueSegment(List<String> values) {
-        super(FORMAT_ID_StringValueSegment);
-        this.values = values;
-    }
 
 
+    static class StringSerializer implements ObjectSerializer<String>  {
+        @Override
+        public byte getFormatId() {
+            return BaseSegment.FORMAT_ID_StringValueSegment;
+        }
 
-    protected StringValueSegment(byte formatId) {
-       super(formatId);
-    }
+        @Override
+        public String deserialize(byte[] b) throws DecodingException {
+            return new String(b, StandardCharsets.UTF_8);
+        }
 
-
-    public StringValueSegment() {
-        super(FORMAT_ID_StringValueSegment);
-    }
-
-
-    @Override
-    public void writeTo(ByteBuffer bb) {
-        VarIntUtil.writeVarInt32(bb, values.size());
-        for(String v:values) {
-            VarIntUtil.writeSizeDelimitedString(bb, v);
+        @Override
+        public byte[] serialize(String s) {
+            return s.getBytes(StandardCharsets.UTF_8);
         }
     }
 
+    StringValueSegment consolidate() {
+        return (StringValueSegment)super.consolidate();
+    }
+
     @Override
-    public void parseFrom(ByteBuffer bb) throws DecodingException {
-        int n = VarIntUtil.readVarInt32(bb);
-        values = new ArrayList<String>(n);
-        for(int i=0; i<n; i++) {
-            values.add(VarIntUtil.readSizeDelimitedString(bb));
+    public Value getValue(int index) {
+        return ValueUtility.getStringValue(get(index));
+    }
+
+
+    public void addValue(Value v) {
+        add(v.getStringValue());
+    }
+
+    public static BaseSegment consolidate(List<Value> values) {
+        StringValueSegment svs = new StringValueSegment(true);
+        for(Value v: values) {
+            svs.add(v.getStringValue());
         }
+        return svs.consolidate();
     }
-
-    @Override
-    public int getMaxSerializedSize() {
-        int size = 4+4*values.size(); //4 for the array length, plus 4 for each value size
-        for(String v:values) {
-            size+=v.length()*MAX_UTF8_CHAR_LENGTH;
-        }
-        return size;
-    }
-
-
-    @Override
-    public Value get(int index) {
-        return ValueUtility.getStringValue(values.get(index));
-    }
-
-    @Override
-    public String[] getRange(int posStart, int posStop, boolean ascending) {
-        String[] r = new String[posStop-posStart];
-        if(ascending) {
-            for(int i = posStart; i<posStop; i++) {
-                r[i-posStart] = values.get(i);
-            }
-        } else {
-            for(int i = posStop; i>posStart; i--) {
-                r[posStop-i] = values.get(i);
-            }
-        }
-        
-        return r;
-    }
-    public static StringValueSegment consolidate(List<Value> values) {
-        List<String> slist = new ArrayList<String>(values.size());
-        
-        for(Value v:values) {
-            slist.add(v.getStringValue());
-        }
-        EnumValueSegment evs = new EnumValueSegment(slist);
-        StringValueSegment svs = new StringValueSegment(slist);
-        
-        int evsMaxSize = evs.getMaxSerializedSize();
-        int svsMaxSize = svs.getMaxSerializedSize();
-        
-        if(evsMaxSize<svsMaxSize) return evs;
-        else return svs;
-    }
-    
-    @Override
-    public String toString() {
-        return values.toString();
-    }
-
-
-    @Override
-    public int size() {
-        return values.size();
-    }
-
 }

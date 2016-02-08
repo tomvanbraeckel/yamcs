@@ -166,7 +166,7 @@ public class IntValueSegment extends BaseSegment implements ValueSegment {
 
 
     @Override
-    public Value get(int index) {
+    public Value getValue(int index) {
         if(signed) {
             return ValueUtility.getSint32Value(values[index]);
         } else {

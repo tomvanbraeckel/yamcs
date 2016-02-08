@@ -7,17 +7,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
+import org.junit.Ignore;
 import org.junit.Test;
-import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.ColumnFamilyDescriptor;
 import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.ColumnFamilyOptions;
-import org.rocksdb.CompressionType;
-import org.rocksdb.Options;
 import org.rocksdb.PlainTableConfig;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksIterator;
-import org.rocksdb.TableFormatConfig;
 import org.yamcs.utils.FileUtils;
 
 import static org.junit.Assert.*;
@@ -102,6 +99,7 @@ public class TestStructure {
         rdb.close();
     }
 
+    @Ignore
     @Test
     public void testAllParamsInOneCf() throws Exception {
         System.out.println("------------ numParams: "+numParams+" numBlocks: "+numBlocks+" numSamplesPerBloc: "+ numSamplesPerBloc);        
@@ -143,7 +141,8 @@ public class TestStructure {
         }
         return buf;
     }
-
+    
+    @Ignore
     @Test
     public void testPlainTableVsHashMap() throws Exception {
         String path ="/tmp/dbtest";

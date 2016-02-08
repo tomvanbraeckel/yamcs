@@ -24,9 +24,9 @@ public class BooleanValueSegmentTest {
         BooleanValueSegment bvs1 = new BooleanValueSegment();
         bvs1.parseFrom(bb);
         
-        assertEquals(ValueUtility.getBooleanValue(true), bvs1.get(0));
-        assertEquals(ValueUtility.getBooleanValue(true), bvs1.get(1));
-        assertEquals(ValueUtility.getBooleanValue(false), bvs1.get(2));
+        assertEquals(ValueUtility.getBooleanValue(true), bvs1.getValue(0));
+        assertEquals(ValueUtility.getBooleanValue(true), bvs1.getValue(1));
+        assertEquals(ValueUtility.getBooleanValue(false), bvs1.getValue(2));
     }
 
 }

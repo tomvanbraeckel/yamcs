@@ -2,12 +2,11 @@ package org.yamcs.parameterarchive;
 
 import java.io.PrintStream;
 
-import org.junit.Test;
 import org.yamcs.utils.TimeEncoding;
 import org.yamcs.yarch.YarchDatabase;
 
 public class PrintStats {
-    @Test
+//    @Test
     public void test1() throws Exception {
         TimeEncoding.setUp();
         YarchDatabase.setHome("/storage/yamcs-data");

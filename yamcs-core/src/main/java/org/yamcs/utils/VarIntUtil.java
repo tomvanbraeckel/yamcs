@@ -196,5 +196,17 @@ public class VarIntUtil {
         }
         return ddz;
     }
+    /**
+     * get the number of bytes necessary to encode value
+     * @param size
+     * @return
+     */
+    public static int getEncodedSize(int size) {
+        if(size<128) return 1;
+        if(size<16384) return 2;
+        if(size<2097152) return 3;
+        if(size<268435456) return 4;
+        return 5;
+    }
     
 }

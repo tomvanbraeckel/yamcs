@@ -14,6 +14,6 @@ public interface ValueSegment {
     /**
      * returns Value at position index
      */
-    public abstract Value get(int index);
+    public abstract Value getValue(int index);
 
 }

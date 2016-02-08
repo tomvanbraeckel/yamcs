@@ -23,9 +23,9 @@ public class Uint64ValueSegmentTest {
         LongValueSegment fvs1 = new LongValueSegment(false);
         fvs1.parseFrom(bb);
         
-        assertEquals(ValueUtility.getUint64Value(1), fvs1.get(0));
-        assertEquals(ValueUtility.getUint64Value(2), fvs1.get(1));
-        assertEquals(ValueUtility.getUint64Value(3), fvs1.get(2));
+        assertEquals(ValueUtility.getUint64Value(1), fvs1.getValue(0));
+        assertEquals(ValueUtility.getUint64Value(2), fvs1.getValue(1));
+        assertEquals(ValueUtility.getUint64Value(3), fvs1.getValue(2));
         
         assertArrayEquals(new long[]{1, 2,3}, fvs1.getRange(0, 3, true));
         assertArrayEquals(new long[]{3, 2}, fvs1.getRange(0, 2, false));
