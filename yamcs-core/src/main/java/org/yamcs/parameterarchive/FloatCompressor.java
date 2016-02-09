@@ -14,9 +14,9 @@ import org.yamcs.utils.BitWriter;
  */
 public class FloatCompressor {
    /**
-    * *compress the array of floats into the ByteBuffer
+    * *compress the first n elements from the array of floats into the ByteBuffer
     * */
-    static public void compress(float[] fa, ByteBuffer bb) {
+    static public void compress(float[] fa, int n, ByteBuffer bb) {
         BitWriter bw=new BitWriter(bb);
 
         int xor;
@@ -26,7 +26,7 @@ public class FloatCompressor {
         int prevLz = 100; //such that the first comparison lz>=prevLz will fail
         int prevTz = 0;
 
-        for(int i=1; i<fa.length; i++) {
+        for(int i=1; i<n; i++) {
         //	System.out.println("bb.position: "+bb.position()+" i: "+i+" fa.length: "+fa.length);
             int v = Float.floatToRawIntBits(fa[i]);
             xor = v^prevV;
@@ -100,6 +100,10 @@ public class FloatCompressor {
         }
         
         return fa;
+    }
+
+    public static void compress(float[] fa, ByteBuffer bb) {
+        compress(fa, fa.length, bb);
     }
 }
 

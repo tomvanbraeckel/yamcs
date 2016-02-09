@@ -33,6 +33,10 @@ import org.yamcs.utils.VarIntUtil;
  *
  */
 public class ObjectSegment<E> extends BaseSegment {
+    
+
+ 
+
     final static byte SUBFORMAT_ID_RAW = 0;
     final static byte SUBFORMAT_ID_ENUM_RLE = 1;  
     final static byte SUBFORMAT_ID_ENUM_VB = 2;
@@ -74,6 +78,10 @@ public class ObjectSegment<E> extends BaseSegment {
 
         if(buildForSerialisation) {
             objectList = new ArrayList<E>();
+            serializedObjectList = new ArrayList<HashableByteArray>();
+            unique = new ArrayList<HashableByteArray>();
+            valuemap = new HashMap<>();
+            enumValues = new IntArray();
         } //else in the parseFrom will construct the necessary fields 
     }
 
@@ -84,12 +92,43 @@ public class ObjectSegment<E> extends BaseSegment {
      * @param e
      */
     public void add(E e) {
+       
+        byte[] b = objSerializer.serialize(e);
+        HashableByteArray se = new HashableByteArray(b);
+        int valueId; 
+        if(valuemap.containsKey(se)) {
+            valueId = valuemap.get(se);
+            se = unique.get(valueId); //release the old se object to garbage
+        } else {
+            valueId = unique.size();
+            valuemap.put(se, valueId);
+            unique.add(se);
+        }
+        enumValues.add(valueId);
+        serializedObjectList.add(se);
         objectList.add(e);
         size++;
     }
 
 
     public void add(int pos, E e) {
+        if(pos==size) {
+            add(e);
+            return;
+        }
+        byte[] b = objSerializer.serialize(e);
+        HashableByteArray se = new HashableByteArray(b);
+        int valueId; 
+        if(valuemap.containsKey(se)) {
+            valueId = valuemap.get(se);
+            se = unique.get(valueId); //release the old se object to garbage
+        } else {
+            valueId = unique.size();
+            valuemap.put(se, valueId);
+            unique.add(se);
+        }
+        enumValues.add(pos, valueId);
+        serializedObjectList.add(pos, se);
         objectList.add(pos, e);
         size++;
     }
@@ -192,8 +231,7 @@ public class ObjectSegment<E> extends BaseSegment {
 
 
 
-    @Override
-    public void parseFrom(ByteBuffer bb) throws DecodingException {
+    protected void parse(ByteBuffer bb) throws DecodingException {
         byte formatId = bb.get();
         try {
             switch(formatId) {
@@ -410,36 +448,20 @@ public class ObjectSegment<E> extends BaseSegment {
     ObjectSegment<E> consolidate() {
         rleCounts = new IntArray();
         rleValues = new IntArray();
-        serializedObjectList = new ArrayList<HashableByteArray>();
-        unique = new ArrayList<HashableByteArray>();
-        valuemap = new HashMap<>();
-        enumValues = new IntArray();
         
         rawSize = enumRawSize = enumRleSize = 1; //subFormatId byte
         
         rawSize += VarIntUtil.getEncodedSize(size);
-        enumRawSize += VarIntUtil.getEncodedSize(size); //in enum case the size comes after listing the unique values, but the number of unique values is added at the end
+        enumRawSize += VarIntUtil.getEncodedSize(size)+VarIntUtil.getEncodedSize(unique.size());
+        enumRleSize += VarIntUtil.getEncodedSize(unique.size());
         
-        for(E e: objectList) {
-            byte[] b = objSerializer.serialize(e);
-            HashableByteArray se = new HashableByteArray(b);
-            serializedObjectList.add(se);
+        for(int i=0; i<size; i++) {
+            HashableByteArray se = serializedObjectList.get(i);
+            byte[] b = se.b;
+            int valueId = enumValues.get(i);
             rawSize+= VarIntUtil.getEncodedSize(b.length)+b.length;
-
-            int valueId; 
-            if(valuemap.containsKey(se)) {
-                valueId = valuemap.get(se);
-                se = unique.get(valueId); //release the old se object to garbage
-            } else {
-                valueId = unique.size();
-                valuemap.put(se, valueId);
-                unique.add(se);
-                int s = VarIntUtil.getEncodedSize(b.length)+b.length; 
-                enumRawSize += s;
-                enumRleSize += s;
-            }
-            enumRawSize += VarIntUtil.getEncodedSize(valueId);
-            enumValues.add(valueId);
+            enumRawSize+=VarIntUtil.getEncodedSize(valueId);
+            
             boolean rleAdded = false;
             int rleId = rleValues.size()-1;
             if(rleId>=0) {
@@ -453,19 +475,44 @@ public class ObjectSegment<E> extends BaseSegment {
                 rleCounts.add(1);
                 rleValues.add(valueId);
             }
-            
         }
+
+        for(int i = 0; i<unique.size(); i++) {
+            HashableByteArray se = unique.get(i);
+            byte[] b = se.b;
+            int s = VarIntUtil.getEncodedSize(b.length)+b.length;
+            enumRawSize+=s;
+            enumRleSize+=s;
+        }
+       
         enumRleSize += VarIntUtil.getEncodedSize(rleCounts.size());
         for(int i =0 ;i<rleCounts.size();i++) {
             enumRleSize += VarIntUtil.getEncodedSize(rleCounts.get(i))+VarIntUtil.getEncodedSize(rleValues.get(i));
         }
-        enumRawSize += VarIntUtil.getEncodedSize(unique.size());
-        enumRleSize += VarIntUtil.getEncodedSize(unique.size());
         
         consolidated = true;
         return this;
 
     }
+
+    @SuppressWarnings("rawtypes")
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        ObjectSegment other = (ObjectSegment) obj;
+        if (serializedObjectList == null) {
+            if (other.serializedObjectList != null)
+                return false;
+        } else if (!serializedObjectList.equals(other.serializedObjectList))
+            return false;
+        return true;
+    }
+
 }
 
 /**
@@ -496,6 +543,10 @@ class HashableByteArray {
         if (getClass() != obj.getClass())
             return false;
         HashableByteArray other = (HashableByteArray) obj;
+        
+        if(hashCode()!=other.hashCode()) 
+            return false;
+        
         if (!Arrays.equals(b, other.b))
             return false;
         return true;

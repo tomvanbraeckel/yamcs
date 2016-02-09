@@ -21,8 +21,7 @@ public class BooleanValueSegmentTest {
         bvs.writeTo(bb);
         
         bb.rewind();
-        BooleanValueSegment bvs1 = new BooleanValueSegment();
-        bvs1.parseFrom(bb);
+        BooleanValueSegment bvs1 = BooleanValueSegment.parseFrom(bb);
         
         assertEquals(ValueUtility.getBooleanValue(true), bvs1.getValue(0));
         assertEquals(ValueUtility.getBooleanValue(true), bvs1.getValue(1));

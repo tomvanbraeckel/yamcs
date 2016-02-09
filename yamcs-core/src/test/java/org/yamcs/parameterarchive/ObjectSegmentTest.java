@@ -144,9 +144,8 @@ public class ObjectSegmentTest {
         pss.writeRaw(bb);
         assertEquals(105, bb.position());
         
-        ParameterStatusSegment pss1 = new ParameterStatusSegment(true);
         bb.rewind();
-        pss1.parseFrom(bb);
+        ParameterStatusSegment pss1 = ParameterStatusSegment.parseFrom(bb);
         
         assertEquals(3, pss1.objectList.size());
         statusList = (ParameterStatus[]) pss1.getRange(0, 3, true);
@@ -162,9 +161,8 @@ public class ObjectSegmentTest {
         pss.writeEnumRle(bb);
         assertEquals(83, bb.position());
         
-        pss1 = new ParameterStatusSegment(false);
         bb.rewind();
-        pss1.parseFrom(bb);
+        pss1 = ParameterStatusSegment.parseFrom(bb);
         
         assertTrue(pss1.runLengthEncoded);
         assertEquals(2, pss1.rleObjectList.size());
@@ -180,9 +178,8 @@ public class ObjectSegmentTest {
         pss.writeEnumFprof(bb);
         assertEquals(82, bb.position());
         
-        pss1 = new ParameterStatusSegment(true);
         bb.rewind();
-        pss1.parseFrom(bb);
+        pss1 = ParameterStatusSegment.parseFrom(bb);
         
         assertFalse(pss1.runLengthEncoded);
         assertEquals(3, pss1.objectList.size());
@@ -216,8 +213,7 @@ public class ObjectSegmentTest {
         
         assertEquals(ObjectSegment.SUBFORMAT_ID_ENUM_FPROF, bb.get(0));
         bb.rewind();
-        pss = new ParameterStatusSegment(false);
-        pss.parseFrom(bb);
+        pss =  ParameterStatusSegment.parseFrom(bb);
         
         for(int i=0; i<2000;i+=2) {
             assertTrue(ps1.equals(pss.get(i)));
@@ -251,9 +247,9 @@ public class ObjectSegmentTest {
         
         ByteBuffer bb = ByteBuffer.allocate(pss.getMaxSerializedSize());
         pss.writeTo(bb);
-        pss = new ParameterStatusSegment(true);
         bb.rewind();
-        pss.parseFrom(bb);
+        
+        pss = ParameterStatusSegment.parseFrom(bb);
         
         assertTrue(pss.runLengthEncoded);
         assertEquals(3, pss.rleObjectList.size());
@@ -316,9 +312,8 @@ public class ObjectSegmentTest {
         pss.consolidate();
         ByteBuffer bb = ByteBuffer.allocate(pss.getMaxSerializedSize());
         pss.writeTo(bb);
-        pss = new ParameterStatusSegment(true);
         bb.rewind();
-        pss.parseFrom(bb);
+        pss = ParameterStatusSegment.parseFrom(bb);
         
         ParameterStatus[]   r = pss.getRange(-1, 8, false);
         checkEquals(r, ps3, ps3, ps3, ps3, ps2, ps2, ps2, ps1, ps1);

@@ -1,5 +1,6 @@
 package org.yamcs.parameterarchive;
 
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -20,24 +21,8 @@ public class StringValueSegment extends ObjectSegment<String> implements ValueSe
     protected List<String> values;
 
 
-    static class StringSerializer implements ObjectSerializer<String>  {
-        @Override
-        public byte getFormatId() {
-            return BaseSegment.FORMAT_ID_StringValueSegment;
-        }
-
-        @Override
-        public String deserialize(byte[] b) throws DecodingException {
-            return new String(b, StandardCharsets.UTF_8);
-        }
-
-        @Override
-        public byte[] serialize(String s) {
-            return s.getBytes(StandardCharsets.UTF_8);
-        }
-    }
-
-    StringValueSegment consolidate() {
+    
+    public StringValueSegment consolidate() {
         return (StringValueSegment)super.consolidate();
     }
 
@@ -58,4 +43,33 @@ public class StringValueSegment extends ObjectSegment<String> implements ValueSe
         }
         return svs.consolidate();
     }
+
+    @Override
+    public void add(int pos, Value v) {
+        add(pos, v.getStringValue());
+    }
+
+    public static StringValueSegment parseFrom(ByteBuffer bb) throws DecodingException {
+        StringValueSegment r = new StringValueSegment(false);
+        r.parse(bb);
+        return r;
+    }
+    
+    static class StringSerializer implements ObjectSerializer<String>  {
+        @Override
+        public byte getFormatId() {
+            return BaseSegment.FORMAT_ID_StringValueSegment;
+        }
+
+        @Override
+        public String deserialize(byte[] b) throws DecodingException {
+            return new String(b, StandardCharsets.UTF_8);
+        }
+
+        @Override
+        public byte[] serialize(String s) {
+            return s.getBytes(StandardCharsets.UTF_8);
+        }
+    }
+
 }

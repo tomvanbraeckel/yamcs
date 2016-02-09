@@ -10,6 +10,8 @@ import org.yamcs.utils.VarIntUtil;
 
 public class LongValueSegment extends BaseSegment implements ValueSegment {
     boolean signed;
+    final static int SUBFORMAT_ID_RAW = 0;
+    
     LongValueSegment(boolean signed) {
         super(FORMAT_ID_UInt64ValueSegment);
         this.signed = signed;
@@ -20,6 +22,7 @@ public class LongValueSegment extends BaseSegment implements ValueSegment {
     
     @Override
     public void writeTo(ByteBuffer bb) {
+        writeHeader(SUBFORMAT_ID_RAW,bb);
         int n = values.length;
         VarIntUtil.writeVarInt32(bb, n);
         for(int i=0; i<n; i++) {
@@ -27,8 +30,22 @@ public class LongValueSegment extends BaseSegment implements ValueSegment {
         }
     }
 
-    @Override
-    public void parseFrom(ByteBuffer bb) throws DecodingException {
+    //write header:
+    // 1st byte:    spare    signed/unsigned subformatid
+    //              3 bits   1 bit           4 bits
+    private void writeHeader(int subFormatId, ByteBuffer bb) {
+        int x = signed?1:0;
+        x=(x<<4)|subFormatId;
+        bb.put((byte)x);
+    }
+
+    
+    private void parse(ByteBuffer bb) throws DecodingException {
+        byte x = bb.get();
+        int subFormatId = x&0xF;
+        if(subFormatId!=SUBFORMAT_ID_RAW) throw new DecodingException("Unknown subformatId "+subFormatId+" for LongValueSegment");
+        signed = (((x>>4)&1)==1);
+        
         int n = VarIntUtil.readVarInt32(bb);
         values = new long[n];
         for(int i=0; i<n; i++) {
@@ -36,6 +53,12 @@ public class LongValueSegment extends BaseSegment implements ValueSegment {
         }
     }
 
+    public static LongValueSegment parseFrom(ByteBuffer bb, boolean signed) throws DecodingException {
+        LongValueSegment r = new LongValueSegment(signed);
+        r.parse(bb);
+        return r;
+    }
+    
     public static LongValueSegment  consolidate(List<Value> values, boolean signed) {
         LongValueSegment segment = new LongValueSegment(signed);
         int n = values.size();
@@ -75,6 +98,17 @@ public class LongValueSegment extends BaseSegment implements ValueSegment {
     @Override
     public int size() {
         return values.length;
+    }
+    
+    @Override
+    public void add(int pos, Value engValue) {
+        throw new UnsupportedOperationException("add not supported");
+        
+    }
+
+    @Override
+    public BaseSegment consolidate() {
+        throw new UnsupportedOperationException("consolidate not supported");
     }
     
 }

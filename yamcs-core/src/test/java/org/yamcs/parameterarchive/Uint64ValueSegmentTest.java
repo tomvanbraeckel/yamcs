@@ -20,8 +20,7 @@ public class Uint64ValueSegmentTest {
         fvs.writeTo(bb);
         
         bb.rewind();
-        LongValueSegment fvs1 = new LongValueSegment(false);
-        fvs1.parseFrom(bb);
+        LongValueSegment fvs1 = LongValueSegment.parseFrom(bb, false);
         
         assertEquals(ValueUtility.getUint64Value(1), fvs1.getValue(0));
         assertEquals(ValueUtility.getUint64Value(2), fvs1.getValue(1));

@@ -1,5 +1,6 @@
 package org.yamcs.parameterarchive;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
 import org.yamcs.protobuf.Yamcs.Value;
@@ -19,10 +20,39 @@ public class BinaryValueSegment extends ObjectSegment<byte[]> implements ValueSe
     protected List<String> values;
     
 
+    
+    @Override
+    public Value getValue(int index) {
+        return ValueUtility.getBinaryValue(get(index));
+    }
+
+    public BinaryValueSegment consolidate() {
+        return (BinaryValueSegment) super.consolidate();
+    }
+
+    @Override
+    public void add(int pos, Value v) {
+       add(pos, v.getBinaryValue().toByteArray());
+    }
+    
+    public static BinaryValueSegment consolidate(List<Value> values) {
+        BinaryValueSegment bvs = new BinaryValueSegment(true);
+        for(Value v: values) {
+            bvs.add(v.getBinaryValue().toByteArray());
+        }
+        return bvs.consolidate();
+    }
+
+    public static BinaryValueSegment parseFrom(ByteBuffer bb) throws DecodingException {
+        BinaryValueSegment r = new BinaryValueSegment(false);
+        r.parse(bb);
+        return r;
+    }
+    
     static class BinarySerializer implements ObjectSerializer<byte[]>  {
         @Override
         public byte getFormatId() {
-            return BaseSegment.FORMAT_ID_StringValueSegment;
+            return BaseSegment.FORMAT_ID_BinaryValueSegment;
         }
 
         @Override
@@ -37,20 +67,5 @@ public class BinaryValueSegment extends ObjectSegment<byte[]> implements ValueSe
     }
 
 
-    @Override
-    public Value getValue(int index) {
-        return ValueUtility.getBinaryValue(get(index));
-    }
 
-    BinaryValueSegment consolidate() {
-        return (BinaryValueSegment) super.consolidate();
-    }
-    
-    public static BinaryValueSegment consolidate(List<Value> values) {
-        BinaryValueSegment bvs = new BinaryValueSegment(true);
-        for(Value v: values) {
-            bvs.add(v.getBinaryValue().toByteArray());
-        }
-        return bvs.consolidate();
-    }
 }

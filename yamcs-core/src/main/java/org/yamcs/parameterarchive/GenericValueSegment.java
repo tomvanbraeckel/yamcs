@@ -44,11 +44,12 @@ public class GenericValueSegment extends BaseSegment implements ValueSegment {
             bb.put(b);
         }
     }
+    
+    
     /**
      * Decode using regular protobuf delimited field writes
      */
-    @Override
-    public void parseFrom(ByteBuffer bb) throws DecodingException {
+    private void parse(ByteBuffer bb) throws DecodingException {
         int num = VarIntUtil.readVarInt32(bb);
         for(int i=0;i<num; i++) {
             int size = VarIntUtil.readVarInt32(bb);
@@ -61,7 +62,13 @@ public class GenericValueSegment extends BaseSegment implements ValueSegment {
             }
         }
     }
-
+    
+    static GenericValueSegment parseFrom(ByteBuffer bb) throws DecodingException {
+        GenericValueSegment r= new GenericValueSegment();
+        r.parse(bb);
+        return r;
+    }
+    
     /**
      * Transform this generic segment in one of the specialised versions
      * @return
@@ -72,25 +79,20 @@ public class GenericValueSegment extends BaseSegment implements ValueSegment {
         Type type = values.get(0).getType();
         switch(type) {
         case UINT32:
-            return IntValueSegment.consolidate(values, false);
         case SINT32:
-            return IntValueSegment.consolidate(values, true);
+        case BINARY:
+        case STRING:
+        case FLOAT:
+            throw new IllegalStateException("should not be here; specific segments shall be used for this type: "+type);
         case BOOLEAN:
             return BooleanValueSegment.consolidate(values);
         case DOUBLE:
             return DoubleValueSegment.consolidate(values);
-        case FLOAT:
-            return FloatValueSegment.consolidate(values);
         case UINT64:
             return LongValueSegment.consolidate(values, false);
         case SINT64:
             return LongValueSegment.consolidate(values, true);
-        case BINARY:
-            return BinaryValueSegment.consolidate(values);
-        case STRING:
-            return StringValueSegment.consolidate(values);
         case TIMESTAMP:
-        
 
         default:
             return this;

@@ -24,8 +24,7 @@ public class GenericValueSegmentTest {
         gvs.writeTo(bb);
         
         bb.rewind();
-        GenericValueSegment gvs1 = new GenericValueSegment();
-        gvs1.parseFrom(bb);
+        GenericValueSegment gvs1 = GenericValueSegment.parseFrom(bb);
 
         assertEquals(3, gvs1.values.size());
         assertEquals(v1, gvs1.values.get(0));

@@ -3,6 +3,9 @@ package org.yamcs.parameterarchive;
 import java.nio.ByteBuffer;
 import java.util.PrimitiveIterator;
 
+import me.lemire.integercompression.FastPFOR128;
+import me.lemire.integercompression.IntWrapper;
+
 import org.yamcs.protobuf.ValueHelper;
 import org.yamcs.protobuf.Yamcs.Value;
 import org.yamcs.utils.DecodingException;
@@ -21,20 +24,24 @@ public class SortedTimeSegment extends BaseSegment implements ValueSegment {
     public static final int TIMESTAMP_MASK = (0xFFFFFFFF>>>(32-NUMBITS_MASK));
     public static final long SEGMENT_MASK = ~TIMESTAMP_MASK;
     
+    final static byte SUBFORMAT_ID_DELTAZG_FPF128_VB = 1; //compressed with DeltaZigzag and then FastPFOR128 plus VarInt32 for remaining
+    final static byte SUBFORMAT_ID_DELTAZG_VB = 2; //compressed with DeltaZigzag plus VarInt32
+
+
     public static final int VERSION = 0;
-    
+
     final private long segmentStart;    
     private SortedIntArray tsarray;
-    
-    
+
+
     public SortedTimeSegment(long segmentStart) {
         super(FORMAT_ID_SortedTimeValueSegment);
         if((segmentStart & TIMESTAMP_MASK) !=0) throw new IllegalArgumentException("t0 must be 0 in last "+NUMBITS_MASK+" bits");
-        
+
         tsarray = new SortedIntArray();
         this.segmentStart = segmentStart;
     }
-    
+
     /**
      * Insert instant into the array and return the position at which it has been inserted.
      * 
@@ -46,7 +53,7 @@ public class SortedTimeSegment extends BaseSegment implements ValueSegment {
         }
         return tsarray.insert((int)(instant & TIMESTAMP_MASK));
     }
-    
+
     /**
      * get timestamp at position idx
      * @param idx
@@ -70,15 +77,15 @@ public class SortedTimeSegment extends BaseSegment implements ValueSegment {
             public boolean hasNext() {
                 return it.hasNext();
             }
-            
+
             @Override
             public long nextLong() {
                 return segmentStart+ it.nextInt();
-                
+
             }
         };
     }
-    
+
     /**
      * Constructs an descending iterator starting from a specified value (exclusive) 
      * 
@@ -93,20 +100,20 @@ public class SortedTimeSegment extends BaseSegment implements ValueSegment {
             public boolean hasNext() {
                 return it.hasNext();
             }
-            
+
             @Override
             public long nextLong() {
                 return segmentStart + it.nextInt();
-                
+
             }
         };
     }
-    
-    
+
+
     public long getT0() {
         return segmentStart;
     }
-    
+
     /**
      * returns the start of the segment where instant fits
      * @param instant
@@ -115,7 +122,7 @@ public class SortedTimeSegment extends BaseSegment implements ValueSegment {
     public static long getSegmentStart(long instant) {
         return instant & SEGMENT_MASK;
     }
-    
+
     /**
      * returns the ID of the segment where the instant fits - this is the same with segment start
      * @param instant
@@ -132,11 +139,11 @@ public class SortedTimeSegment extends BaseSegment implements ValueSegment {
     public static long getSegmentEnd(long instant) {
         return instant  | TIMESTAMP_MASK;
     }
-    
+
     public static long getNextSegmentStart(long instant) {
         return (instant  | TIMESTAMP_MASK) +1;
     }
-    
+
     /**
      * returns true if the segment overlaps the [start,stop) interval
      * @param segmentId
@@ -147,12 +154,12 @@ public class SortedTimeSegment extends BaseSegment implements ValueSegment {
     public static boolean overlap(long segmentId, long start, long stop) {
         long segmentStart = segmentId;
         long segmentStop = getSegmentEnd(segmentId);
-        
+
         return start<segmentStop && stop>segmentStart;
-        
+
     }
 
-   
+
     /**
      * performs a binary search in the time segment and returns the position of t or where t would fit in. 
      * 
@@ -170,35 +177,49 @@ public class SortedTimeSegment extends BaseSegment implements ValueSegment {
     public int size() {
         return tsarray.size();
     }
-    
+
     public long getSegmentStart() {
         return segmentStart;
     }
-    
+
     public String toString() {
         return "[TimeSegment: t0:"+segmentStart+", relative times: "+ tsarray.toString()+"]";
     }
 
     /**
-     * Encode the time array as a varint list composed of:
-     *  version
-     *  array size
-     *  ts0
-     *  ts1-ts0
-     *  (ts2-ts1) - (ts1-ts0)
-     *  ...
-     *  (ts[n]-ts[n-1]) - (ts[n-1]-ts[n-2])
-     *  ...
+     * Encode the time array 
      * @return
      */
     @Override
-    public void writeTo(ByteBuffer buf) {
+    public void writeTo(ByteBuffer bb) {
         if(tsarray.size()==0) throw new IllegalStateException(" the time segment has no data");
-        int[] ddzz = VarIntUtil.encodeDeltaDeltaZigZag(tsarray);
-        VarIntUtil.writeVarInt32(buf, ddzz.length);
+        int[] ddz = VarIntUtil.encodeDeltaDeltaZigZag(tsarray);
+        int position = bb.position();
+        bb.put(SUBFORMAT_ID_DELTAZG_FPF128_VB);
         
-        for(int i=0; i<ddzz.length; i++) {
-            VarIntUtil.writeVarInt32(buf, ddzz[i]);
+        int size = ddz.length;
+        
+        VarIntUtil.writeVarInt32(bb,size);
+        
+        
+        FastPFOR128 fastpfor = FastPFORFactory.get();
+        
+        IntWrapper inputoffset = new IntWrapper(0);
+        IntWrapper outputoffset = new IntWrapper(0);
+        int[] out = new int[size];
+        fastpfor.compress(ddz, inputoffset, size, out, outputoffset);
+        if (outputoffset.get() == 0) { 
+            //fastpfor didn't compress anything, probably there were too few datapoints
+            bb.put(position, SUBFORMAT_ID_DELTAZG_VB);
+        } else {
+            //write the fastpfor output
+            for(int i=0; i<outputoffset.get(); i++) {
+                bb.putInt(out[i]);
+            }
+        }
+        //write the remaining bytes varint compressed
+        for(int i = inputoffset.get(); i<size; i++) {
+            VarIntUtil.writeVarInt32(bb, ddz[i]);
         }
     }
 
@@ -210,15 +231,38 @@ public class SortedTimeSegment extends BaseSegment implements ValueSegment {
      * @return
      * @throws DecodingException 
      */
-    @Override
-    public void parseFrom(ByteBuffer buf) throws DecodingException {
-        int size = VarIntUtil.readVarInt32(buf);
-        int[] ddzz = new int[size];
+    private void parse(ByteBuffer bb) throws DecodingException {
+        byte subFormatId = bb.get();
+        int n = VarIntUtil.readVarInt32(bb);
+        int position = bb.position();
         
-        for(int i=0;i<size;i++) {
-            ddzz[i]=VarIntUtil.readVarInt32(buf);
+        IntWrapper inputoffset = new IntWrapper(0);
+        IntWrapper outputoffset = new IntWrapper(0);
+        int[] ddz = new int[n];
+
+        if(subFormatId==SUBFORMAT_ID_DELTAZG_FPF128_VB) {
+            int[] x = new int[(bb.limit()-bb.position())/4];
+            for(int i=0; i<x.length;i++) {
+                x[i]=bb.getInt();
+            }
+            
+            FastPFOR128 fastpfor = FastPFORFactory.get();
+            fastpfor.uncompress(x, inputoffset, x.length, ddz, outputoffset);
+            bb.position(position+inputoffset.get()*4);
         }
-        tsarray = new SortedIntArray(VarIntUtil.decodeDeltaDeltaZigZag(ddzz));
+        
+        for(int i = outputoffset.get(); i<n; i++) {
+            ddz[i] = VarIntUtil.readVarInt32(bb);
+        }
+       
+        tsarray = new SortedIntArray(VarIntUtil.decodeDeltaDeltaZigZag(ddz));
+    }
+
+
+    public static SortedTimeSegment parseFrom(ByteBuffer bb, long segmentStart) throws DecodingException {
+        SortedTimeSegment r = new SortedTimeSegment(segmentStart);
+        r.parse(bb);
+        return r;
     }
 
     @Override
@@ -247,5 +291,16 @@ public class SortedTimeSegment extends BaseSegment implements ValueSegment {
             }
         }
         return r;
+    }
+
+    @Override
+    public void add(int pos, Value engValue) {
+        throw new UnsupportedOperationException("add not supported");
+
+    }
+
+    @Override
+    public BaseSegment consolidate() {
+        throw new UnsupportedOperationException("consolidate not supported");
     }
 }

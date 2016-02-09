@@ -37,14 +37,18 @@ public class IntArray {
         a = new int[capacity];
     }
     
+    private IntArray(int[] a1) {
+        a = a1;
+        length = a1.length;
+    }
+
     /**
-     * Creates the IntArray by copying all values from the input array and sorting them
+     * Creates the IntArray with the backing array
      * 
      * @param array
      */
-    public IntArray(int... array) {
-        length = array.length;
-        a = Arrays.copyOf(array, length);
+    public static IntArray wrap(int... array) {
+        return new IntArray(array);
     }
 
     /**
@@ -56,8 +60,16 @@ public class IntArray {
         ensureCapacity(length+1);
         a[length] = x;
         length++;
-        
     }
+    
+    public void add(int pos, int x) {
+        if(pos>length) throw new IndexOutOfBoundsException("Index: "+pos+" length: "+length);
+        ensureCapacity(length+1);
+        System.arraycopy(a, pos, a, pos + 1, length - pos);
+        a[pos] = x;
+        length++;
+    }
+    
     /**
      * get element at position
      * @param pos
@@ -97,6 +109,8 @@ public class IntArray {
         a[pos] = x;
     }
     
+   
+
     private void rangeCheck(int pos) {
         if(pos >= length) throw new IndexOutOfBoundsException("Index: "+pos+" length: "+length);
     }
@@ -154,5 +168,7 @@ public class IntArray {
     public int[] array() {
         return a;
     }
+
+    
    
 }

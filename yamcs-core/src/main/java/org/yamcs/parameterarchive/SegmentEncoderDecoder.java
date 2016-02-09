@@ -27,8 +27,7 @@ public class SegmentEncoderDecoder {
      
         byte formatId = bb.get();
         
-        BaseSegment vs = BaseSegment.newValueSegment(formatId, segmentStart);
-        vs.parseFrom(bb);
+        BaseSegment vs = BaseSegment.parseSegment(formatId, segmentStart, bb);
         return vs;
     }
 }

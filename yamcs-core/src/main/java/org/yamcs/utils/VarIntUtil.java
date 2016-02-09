@@ -196,6 +196,21 @@ public class VarIntUtil {
         }
         return ddz;
     }
+    
+    public static int[] encodeDeltaDeltaZigZag(IntArray a) {
+        int n = a.size();
+        int[] ddz = new int[n];
+        if(n>0) {
+            ddz[0] = encodeZigZag(a.get(0));
+            int d = 0;
+            for(int i=1; i<n; i++) {
+                int d1 = a.get(i)-a.get(i-1);
+                ddz[i] = encodeZigZag(d1-d);
+                d=d1;
+            }
+        }
+        return ddz;
+    }
     /**
      * get the number of bytes necessary to encode value
      * @param size
@@ -208,5 +223,7 @@ public class VarIntUtil {
         if(size<268435456) return 4;
         return 5;
     }
+
+    
     
 }

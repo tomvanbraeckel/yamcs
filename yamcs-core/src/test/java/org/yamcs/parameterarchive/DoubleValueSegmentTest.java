@@ -21,8 +21,7 @@ public class DoubleValueSegmentTest {
         fvs.writeTo(bb);
         
         bb.rewind();
-        DoubleValueSegment fvs1 = new DoubleValueSegment();
-        fvs1.parseFrom(bb);
+        DoubleValueSegment fvs1 = DoubleValueSegment.parseFrom(bb);
         
         assertEquals(ValueUtility.getDoubleValue(1.2), fvs1.getValue(0));
         assertEquals(ValueUtility.getDoubleValue(2.3), fvs1.getValue(1));

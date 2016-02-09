@@ -24,8 +24,7 @@ public class FloatValueSegmentTest {
         fvs.writeTo(bb);
 
         bb.rewind();
-        FloatValueSegment fvs1 = new FloatValueSegment();
-        fvs1.parseFrom(bb);
+        FloatValueSegment fvs1 = FloatValueSegment.parseFrom(bb);
 
         assertEquals(ValueUtility.getFloatValue(1.2f), fvs1.getValue(0));
         assertEquals(ValueUtility.getFloatValue(2.3f), fvs1.getValue(1));
@@ -50,9 +49,9 @@ public class FloatValueSegmentTest {
         ByteBuffer bb1 = ByteBuffer.allocate(length);
         bb1.put(bb.array(),0,length);
 
-        FloatValueSegment fvs1 = new FloatValueSegment();
+
         bb1.rewind();
-        fvs1.parseFrom(bb1);
+        FloatValueSegment fvs1 = FloatValueSegment.parseFrom(bb1);
         assertEquals(200, fvs1.size());
     }
 

@@ -1,5 +1,7 @@
 package org.yamcs.parameterarchive;
 
+import java.nio.ByteBuffer;
+
 import org.yamcs.ParameterValue;
 import org.yamcs.protobuf.Mdb.AlarmLevelType;
 import org.yamcs.protobuf.Mdb.AlarmRange;
@@ -14,18 +16,29 @@ import com.google.protobuf.InvalidProtocolBufferException;
 public  class ParameterStatusSegment extends ObjectSegment<ParameterStatus> {
     static ParameterStatusSerializer serializer = new ParameterStatusSerializer();
     
+    static final ParameterStatus ACQUIRED = ParameterStatus.newBuilder().setAcquisitionStatus(AcquisitionStatus.ACQUIRED).build();
+    
     public ParameterStatusSegment( boolean buildForSerialisation) {
         super(serializer, buildForSerialisation);
     }
 
 
     static public final ParameterStatus getStatus(ParameterValue pv) {
-        ParameterStatus.Builder pvfb =  ParameterStatus.newBuilder();
         AcquisitionStatus acq = pv.getAcquisitionStatus();
+        MonitoringResult mr = pv.getMonitoringResult();
+        
+        if(acq==AcquisitionStatus.ACQUIRED && mr == null) { //stupid optimisation which covers 95% of all parameters
+            return ACQUIRED;
+        }
+        
+        System.out.println("optimization  not in place : acq: "+acq+" mr: "+mr);
+        
+        ParameterStatus.Builder pvfb =  ParameterStatus.newBuilder();
+        
         if(acq!=null) {
             pvfb.setAcquisitionStatus(acq);
         }
-        MonitoringResult mr = pv.getMonitoringResult();
+        
         if(mr!=null) {
             pvfb.setMonitoringResult(mr);
         }
@@ -64,7 +77,11 @@ public  class ParameterStatusSegment extends ObjectSegment<ParameterStatus> {
     ParameterStatusSegment consolidate() {
         return (ParameterStatusSegment) super.consolidate();
     }
-    
+    public static ParameterStatusSegment parseFrom(ByteBuffer bb) throws DecodingException {
+        ParameterStatusSegment r = new ParameterStatusSegment(false);
+        r.parse(bb);
+        return r;
+    }
     
     static class ParameterStatusSerializer implements ObjectSerializer<ParameterStatus>  {
         @Override
@@ -86,4 +103,7 @@ public  class ParameterStatusSegment extends ObjectSegment<ParameterStatus> {
             return e.toByteArray();
         }
     }
+
+
+   
 }

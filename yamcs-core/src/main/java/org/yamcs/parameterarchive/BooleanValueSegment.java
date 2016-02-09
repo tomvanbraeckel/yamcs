@@ -35,14 +35,19 @@ public class BooleanValueSegment extends BaseSegment implements ValueSegment {
         }
     }
 
-    @Override
-    public void parseFrom(ByteBuffer bb) throws DecodingException {
+    private void parse(ByteBuffer bb) throws DecodingException {
         int n = VarIntUtil.readVarInt32(bb);
         long[]la = new long[n];
         for(int i=0; i<n; i++) {
             la[i]=bb.getLong();
         }
         bitSet = BitSet.valueOf(la);
+    }
+    
+    public static BooleanValueSegment parseFrom(ByteBuffer bb) throws DecodingException {
+        BooleanValueSegment r = new BooleanValueSegment();
+        r.parse(bb);
+        return r;
     }
 
     @Override
@@ -89,5 +94,17 @@ public class BooleanValueSegment extends BaseSegment implements ValueSegment {
     @Override
     public int size() {
         return bitSet.size();
+    }
+
+
+    @Override
+    public void add(int pos, Value engValue) {
+        throw new UnsupportedOperationException("add not supported");
+        
+    }
+
+    @Override
+    public BaseSegment consolidate() {
+        throw new UnsupportedOperationException("consolidate not supported");
     }
 }

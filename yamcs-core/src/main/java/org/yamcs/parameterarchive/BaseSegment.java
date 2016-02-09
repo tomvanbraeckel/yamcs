@@ -36,8 +36,6 @@ public abstract class BaseSegment {
 
     public abstract void writeTo(ByteBuffer buf);
     
-    public abstract void parseFrom(ByteBuffer buf) throws DecodingException;
-    
     /**
      * 
      * @return a high approximation for the serialized size in order to allocate a ByteBuffer big enough
@@ -60,28 +58,28 @@ public abstract class BaseSegment {
         return formatId;
     }
 
-    public static BaseSegment newValueSegment(byte formatId, long segmentStart) throws DecodingException {
+    public static BaseSegment parseSegment(byte formatId, long segmentStart, ByteBuffer bb) throws DecodingException {
         switch(formatId) {
         case FORMAT_ID_ParameterStatusSegment:
-            return new ParameterStatusSegment(false);
+            return ParameterStatusSegment.parseFrom(bb);
         case FORMAT_ID_SortedTimeValueSegment:
-            return new SortedTimeSegment(segmentStart);
+            return SortedTimeSegment.parseFrom(bb, segmentStart);
         case FORMAT_ID_GenericValueSegment:
-            return new GenericValueSegment();        
+            return GenericValueSegment.parseFrom(bb);    
         case FORMAT_ID_IntValueSegment:
-            return new IntValueSegment();
+            return IntValueSegment.parseFrom(bb);
         case FORMAT_ID_StringValueSegment:
-            return new StringValueSegment(false);
+            return  StringValueSegment.parseFrom(bb);
         case FORMAT_ID_BooleanValueSegment:
-            return new BooleanValueSegment();
+            return BooleanValueSegment.parseFrom(bb);
         case FORMAT_ID_FloatValueSegment:
-            return new FloatValueSegment();
+            return FloatValueSegment.parseFrom(bb);
         case FORMAT_ID_DoubleValueSegment:
-            return new DoubleValueSegment();
+            return DoubleValueSegment.parseFrom(bb);
         case FORMAT_ID_UInt64ValueSegment:
-            return new LongValueSegment(false);
+            return LongValueSegment.parseFrom(bb, false);
         case FORMAT_ID_BinaryValueSegment:
-            return new BinaryValueSegment(false);
+            return BinaryValueSegment.parseFrom(bb);
         default:
           throw new DecodingException("Invalid format id "+formatId); 
         }

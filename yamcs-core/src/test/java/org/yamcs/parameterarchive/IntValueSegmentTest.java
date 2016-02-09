@@ -35,8 +35,7 @@ public class IntValueSegmentTest {
         bb.limit(bb.position());
         
         bb.rewind();
-        IntValueSegment fvs1 = new IntValueSegment();
-        fvs1.parseFrom(bb);
+        IntValueSegment fvs1 = IntValueSegment.parseFrom(bb);
         
         
         for(int i =0; i<n; i++) {
@@ -58,8 +57,7 @@ public class IntValueSegmentTest {
         
         bb.limit(bb.position());
         bb.rewind();
-        IntValueSegment fvs1 = new IntValueSegment();
-        fvs1.parseFrom(bb);
+        IntValueSegment fvs1 = IntValueSegment.parseFrom(bb);
         
         for(int i =0; i<n; i++) {
             assertEquals(l.get(i), fvs1.getValue(i));
@@ -68,7 +66,7 @@ public class IntValueSegmentTest {
     
     @Test
     public void testRandom() throws IOException, DecodingException {
-        int n =10;
+        int n = 10;
         Random rand = new Random(0);
         List<Value> l = new ArrayList<Value>(n);
         for(int i =0; i<n; i++) {
@@ -83,8 +81,7 @@ public class IntValueSegmentTest {
         bb.limit(bb.position());
         
         bb.rewind();
-        IntValueSegment fvs1 = new IntValueSegment();
-        fvs1.parseFrom(bb);
+        IntValueSegment fvs1 = IntValueSegment.parseFrom(bb);
         
         for(int i =0; i<n; i++) {
             assertEquals(l.get(i), fvs1.getValue(i));

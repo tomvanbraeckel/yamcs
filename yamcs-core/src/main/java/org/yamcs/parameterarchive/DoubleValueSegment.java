@@ -29,8 +29,7 @@ public class DoubleValueSegment extends BaseSegment implements ValueSegment {
         }
     }
 
-    @Override
-    public void parseFrom(ByteBuffer bb) throws DecodingException {
+    private void parse(ByteBuffer bb) throws DecodingException {
         byte fid = bb.get();
         if(fid!=SUBFORMAT_ID_RAW) {
             throw new DecodingException("Uknown sub format id: "+fid);
@@ -42,7 +41,11 @@ public class DoubleValueSegment extends BaseSegment implements ValueSegment {
             doubles[i]= bb.getDouble();
         }
     }
-
+    public static DoubleValueSegment parseFrom(ByteBuffer bb) throws DecodingException {
+        DoubleValueSegment r = new DoubleValueSegment();
+        r.parse(bb);
+        return r;
+    }
 
     @Override
     public Value getValue(int index) {
@@ -84,5 +87,16 @@ public class DoubleValueSegment extends BaseSegment implements ValueSegment {
     @Override
     public int size() {
         return doubles.length;
+    }
+    
+    @Override
+    public void add(int pos, Value engValue) {
+        throw new UnsupportedOperationException("add not supported");
+        
+    }
+
+    @Override
+    public BaseSegment consolidate() {
+        throw new UnsupportedOperationException("consolidate not supported");
     }
 }

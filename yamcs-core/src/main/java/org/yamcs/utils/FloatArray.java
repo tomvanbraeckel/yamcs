@@ -42,10 +42,12 @@ public class FloatArray {
      * 
      * @param array
      */
-    public FloatArray(float... array) {
+    private FloatArray(float... array) {
         length = array.length;
-        a = Arrays.copyOf(array, length);
+        a = array;
     }
+
+   
 
     /**
      * add value to the array 
@@ -56,7 +58,14 @@ public class FloatArray {
         ensureCapacity(length+1);
         a[length] = x;
         length++;
-        
+    }
+    
+    public void add(int pos, float x) {
+        if(pos>length) throw new IndexOutOfBoundsException("Index: "+pos+" length: "+length);
+        ensureCapacity(length+1);
+        System.arraycopy(a, pos, a, pos + 1, length - pos);
+        a[pos] = x;
+        length++;
     }
     /**
      * get element at position
@@ -147,5 +156,14 @@ public class FloatArray {
         return true;
     }
 
+    public static FloatArray wrap(float[] floats) {
+        return new FloatArray(floats);
+    }
+
+    public float[] array() {
+        return a;
+    }
+
+   
    
 }

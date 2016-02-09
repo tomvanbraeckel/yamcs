@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 
 import org.yamcs.ParameterValue;
 import org.yamcs.protobuf.Yamcs.Value;
+import org.yamcs.protobuf.Yamcs.Value.Type;
 import org.yamcs.utils.SortedIntArray;
 
 /**
@@ -23,8 +24,8 @@ public class PGSegment {
     final int parameterGroupId;
     final SortedIntArray parameterIds;
     private SortedTimeSegment timeSegment;
-    private List<GenericValueSegment> engValueSegments;
-    private List<GenericValueSegment> rawValueSegments;
+    private List<ValueSegment> engValueSegments;
+    private List<ValueSegment> rawValueSegments;
     private List<ParameterStatusSegment> parameterStatusSegments;
     
     private List<BaseSegment> consolidatedValueSegments;
@@ -33,26 +34,58 @@ public class PGSegment {
     
     private boolean consolidated = false;
     private final boolean storeRawValues = ParameterArchive.STORE_RAW_VALUES;
+    private long segmentStart;
     
     public PGSegment(int parameterGroupId, long segmentStart, SortedIntArray parameterIds) {
         this.parameterGroupId = parameterGroupId;
         this.parameterIds = parameterIds;
+        this.segmentStart = segmentStart;
+    }
+    
+    
+    private void init(List<ParameterValue> sortedPvList) {
         timeSegment = new SortedTimeSegment(segmentStart);
+        
         engValueSegments = new ArrayList<>(parameterIds.size());
         parameterStatusSegments = new ArrayList<>(parameterIds.size());
         if(storeRawValues) {
             rawValueSegments = new ArrayList<>(parameterIds.size());
         }
-        
+
         for(int i=0; i<parameterIds.size(); i++) {
-            engValueSegments.add(new GenericValueSegment());
+            ParameterValue pv = sortedPvList.get(i);
+            Value v = pv.getEngValue();
+            if(v!=null) {
+                engValueSegments.add(getNewSegment(v.getType()));
+            }
             parameterStatusSegments.add(new ParameterStatusSegment(true));
-            if(storeRawValues) {
-                rawValueSegments.add(new GenericValueSegment());
+            Value rawV = pv.getRawValue();
+            if(storeRawValues && rawV!=null) {
+                rawValueSegments.add(getNewSegment(rawV.getType()));
             }
         }
     }
+   
     
+  
+
+    static private ValueSegment getNewSegment(Type type) {
+        switch(type) {
+        case BINARY:
+            return new BinaryValueSegment(true);
+        case STRING:
+            return new StringValueSegment(true);
+        case SINT32:
+            return new IntValueSegment(true);
+        case UINT32:
+            return new IntValueSegment(false);
+        case FLOAT:
+            return new FloatValueSegment();
+       default:
+         return new GenericValueSegment();
+        }
+    }
+
     /**
      * Add a new record 
      *  instant goes into the timeSegment
@@ -68,9 +101,14 @@ public class PGSegment {
         if(consolidated) {
             throw new IllegalStateException("PGSegment is consolidated");
         }
-        if(sortedPvList.size()!=engValueSegments.size()) {
+        if(sortedPvList.size() != parameterIds.size()) {
             throw new IllegalArgumentException("Wrong number of values passed: "+sortedPvList.size()+";expected "+engValueSegments.size());
         }
+        
+        if(engValueSegments==null) {
+            init(sortedPvList);
+        }
+        
         
         int pos = timeSegment.add(instant);
         for(int i = 0; i<engValueSegments.size(); i++) {
@@ -100,16 +138,16 @@ public class PGSegment {
     public void consolidate() {
         consolidated = true;
         consolidatedValueSegments  = new ArrayList<BaseSegment>(engValueSegments.size());
-        for(GenericValueSegment gvs: engValueSegments) {
+        for(ValueSegment gvs: engValueSegments) {
             consolidatedValueSegments.add(gvs.consolidate());
         }
-        if(storeRawValues) {
+        if(storeRawValues && rawValueSegments.size()>0) {
             consolidatedRawValueSegments  = new ArrayList<BaseSegment>(engValueSegments.size());
             
             //the raw values will only be stored if they are different than the engineering values
             for(int i=0;i<engValueSegments.size(); i++) {
-                GenericValueSegment rvs = rawValueSegments.get(i);
-                GenericValueSegment vs = engValueSegments.get(i);
+                ValueSegment rvs = rawValueSegments.get(i);
+                ValueSegment vs = engValueSegments.get(i);
                 if((rvs.size()==0) || rvs.equals(vs)) {
                     consolidatedRawValueSegments.add(null);
                 } else {
