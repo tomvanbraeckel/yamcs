@@ -94,7 +94,6 @@ public class YProcessor extends AbstractService {
 
     ParameterCacheConfig parameterCacheConfig = new ParameterCacheConfig(false, false, 0);
     
-    
     final Logger log;
     static Set<YProcessorListener> listeners=new CopyOnWriteArraySet<>(); //send notifications for added and removed processors to this
 
@@ -608,7 +607,6 @@ public class YProcessor extends AbstractService {
     public ParameterCache getParameterCache() {
         return parameterRequestManager.getParameterCache();
     }
-
 
     public ScheduledThreadPoolExecutor getTimer() {
         return timer;
