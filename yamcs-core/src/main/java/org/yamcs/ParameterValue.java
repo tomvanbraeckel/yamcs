@@ -430,6 +430,11 @@ public class ParameterValue {
             }
         } 
     }
+
+    public boolean hasAcquisitionTime() {
+        return acquisitionTime != TimeEncoding.INVALID_INSTANT;
+    }
+
     private FloatRange fromGbpAlarmRange(AlarmRange ar) {
         double minInclusive = ar.hasMinInclusive()?ar.getMinInclusive():Double.NEGATIVE_INFINITY;
         double maxInclusive = ar.hasMaxInclusive()?ar.getMaxInclusive():Double.POSITIVE_INFINITY;
@@ -449,7 +454,7 @@ public class ParameterValue {
         if(engValue!=null) sb.append(" engValue: {").append(engValue.toString()).append("}");
         return sb.toString();
     }
-
+    
 
 
 }
