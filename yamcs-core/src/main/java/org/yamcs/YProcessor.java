@@ -286,7 +286,6 @@ public class YProcessor extends AbstractService {
             duration = (Integer)v *1000L;
         }
         parameterCacheConfig = new ParameterCacheConfig(enabled, cacheAll, duration);
-        
     }
 
     private static String key(String instance, String name) {
@@ -600,14 +599,6 @@ public class YProcessor extends AbstractService {
         return alarmServerEnabled;
     }
 
-    public ParameterCacheConfig getPameterCacheConfig () {
-        return parameterCacheConfig;
-    }
-
-    public ParameterCache getParameterCache() {
-        return parameterRequestManager.getParameterCache();
-    }
-
     public ScheduledThreadPoolExecutor getTimer() {
         return timer;
     }
@@ -639,5 +630,14 @@ public class YProcessor extends AbstractService {
 
     public void notifyStateChange() {
         propagateProcessorStateChange();        
+    }
+
+
+    public ParameterCacheConfig getPameterCacheConfig() {
+        return parameterCacheConfig;
+    }
+    
+    public ParameterCache getParameterCache() {
+        return parameterRequestManager.getParameterCache();
     }
 }
