@@ -8,6 +8,7 @@ import org.yamcs.protobuf.Mdb.AlarmRange;
 import org.yamcs.protobuf.Pvalue.AcquisitionStatus;
 import org.yamcs.protobuf.Pvalue.MonitoringResult;
 import org.yamcs.protobuf.Pvalue.ParameterStatus;
+import org.yamcs.protobuf.Pvalue.RangeCondition;
 import org.yamcs.utils.DecodingException;
 import org.yamcs.xtce.FloatRange;
 
@@ -31,8 +32,6 @@ public  class ParameterStatusSegment extends ObjectSegment<ParameterStatus> {
             return ACQUIRED;
         }
         
-        System.out.println("optimization  not in place : acq: "+acq+" mr: "+mr);
-        
         ParameterStatus.Builder pvfb =  ParameterStatus.newBuilder();
         
         if(acq!=null) {
@@ -42,6 +41,11 @@ public  class ParameterStatusSegment extends ObjectSegment<ParameterStatus> {
         if(mr!=null) {
             pvfb.setMonitoringResult(mr);
         }
+        RangeCondition rc = pv.getRangeCondition();
+        if(rc!=null) {
+            pvfb.setRangeCondition(rc);
+        }
+        
         addAlarmRange(pvfb, AlarmLevelType.WATCH, pv.getWatchRange());
         addAlarmRange(pvfb, AlarmLevelType.WARNING, pv.getWarningRange());
         addAlarmRange(pvfb, AlarmLevelType.DISTRESS, pv.getDistressRange());

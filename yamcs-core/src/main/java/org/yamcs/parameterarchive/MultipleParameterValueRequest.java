@@ -1,9 +1,7 @@
 package org.yamcs.parameterarchive;
 
-import org.yamcs.protobuf.Yamcs.NamedObjectId;
-
 public class MultipleParameterValueRequest {
-    final NamedObjectId[] parameterNames;
+    final String[] parameterNames;
     final int[] parameterIds;
     final int[] parameterGroupIds;
     final long start;
@@ -15,13 +13,9 @@ public class MultipleParameterValueRequest {
     boolean retrieveParamStatus = true;
     int limit = -1;
     
-    //if true, then the generated ParameterValues will have the UTC string time set
-    boolean storeUtcTime = false;
-    
-    public MultipleParameterValueRequest(long start, long stop, NamedObjectId[] parameterNames, int[] parameterIds, int[] parameterGroupIds,  boolean ascending) {
-        if(parameterGroupIds.length!=parameterIds.length) throw new IllegalArgumentException("Different number of parameter ids than parameter group ids");
-        if(parameterNames.length!=parameterIds.length) throw new IllegalArgumentException("Different number of parameter names than parameter ids");
-        
+    public MultipleParameterValueRequest(long start, long stop, String[] parameterNames, int[] parameterIds, int[] parameterGroupIds,  boolean ascending) {
+        if(parameterGroupIds.length != parameterIds.length) throw new IllegalArgumentException("Different number of parameter ids than parameter group ids");
+        if(parameterNames.length != parameterIds.length) throw new IllegalArgumentException("Different number of parameter names than parameter ids");
         
         this.parameterNames = parameterNames;
         this.parameterIds = parameterIds;
@@ -57,15 +51,8 @@ public class MultipleParameterValueRequest {
         this.retrieveParamStatus = retrieveParamStatus;
     }
 
-    public boolean isStoreUtcTime() {
-        return storeUtcTime;
-    }
 
-    public void setStoreUtcTime(boolean storeUtcTime) {
-        this.storeUtcTime = storeUtcTime;
-    }
-
-    public NamedObjectId[] getParameterNames() {
+    public String[] getParameterNames() {
         return parameterNames;
     }
 

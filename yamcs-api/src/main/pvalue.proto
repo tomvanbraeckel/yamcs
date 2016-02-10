@@ -56,8 +56,9 @@ message ParameterValue {
 message ParameterStatus {
   optional AcquisitionStatus acquisitionStatus = 1;
   optional MonitoringResult monitoringResult = 2;
+  optional RangeCondition rangeCondition = 3;
   // context-dependent ranges
-  repeated mdb.AlarmRange alarmRange = 3;
+  repeated mdb.AlarmRange alarmRange = 4;
 }
 
 message ParameterData {

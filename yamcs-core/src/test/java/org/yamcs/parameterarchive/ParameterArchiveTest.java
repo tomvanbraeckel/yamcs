@@ -558,9 +558,9 @@ public class ParameterArchiveTest {
     }
     
     List<ParameterIdValueList> retrieveMultipleParameters(long start, long stop, int[] parameterIds, int[] parameterGroupIds,  boolean ascending, int limit) throws Exception {
-        NamedObjectId[] parameterNames = new NamedObjectId[parameterIds.length];
+        String[] parameterNames = new String[parameterIds.length];
         for(int i =0;i<parameterIds.length;i++) {
-            parameterNames[i] = NamedObjectId.newBuilder().setName("p"+parameterIds[i]).build();
+            parameterNames[i] = "p"+parameterIds[i];;
         }
         MultipleParameterValueRequest mpvr = new MultipleParameterValueRequest(start, stop, parameterNames, parameterIds, parameterGroupIds, ascending);
         mpvr.setLimit(limit);

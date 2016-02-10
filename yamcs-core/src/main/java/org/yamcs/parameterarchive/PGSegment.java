@@ -60,8 +60,12 @@ public class PGSegment {
             }
             parameterStatusSegments.add(new ParameterStatusSegment(true));
             Value rawV = pv.getRawValue();
-            if(storeRawValues && rawV!=null) {
-                rawValueSegments.add(getNewSegment(rawV.getType()));
+            if(storeRawValues) {
+                if(rawV==null) {
+                    rawValueSegments.add(null);
+                } else {
+                    rawValueSegments.add(getNewSegment(rawV.getType()));
+                }
             }
         }
     }
@@ -145,10 +149,10 @@ public class PGSegment {
             consolidatedRawValueSegments  = new ArrayList<BaseSegment>(engValueSegments.size());
             
             //the raw values will only be stored if they are different than the engineering values
-            for(int i=0;i<engValueSegments.size(); i++) {
+            for(int i=0; i<engValueSegments.size(); i++) {
                 ValueSegment rvs = rawValueSegments.get(i);
                 ValueSegment vs = engValueSegments.get(i);
-                if((rvs.size()==0) || rvs.equals(vs)) {
+                if((rvs==null) || rvs.equals(vs)) {
                     consolidatedRawValueSegments.add(null);
                 } else {
                     consolidatedRawValueSegments.add(rvs.consolidate());

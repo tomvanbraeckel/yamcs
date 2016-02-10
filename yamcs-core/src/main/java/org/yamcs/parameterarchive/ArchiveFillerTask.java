@@ -82,6 +82,10 @@ class ArchiveFillerTask implements ParameterConsumer {
             if(t<collectionSegmentStart) {
                 continue;
             }
+            if(pv.getParameterQualifiedNamed()==null) {
+                log.warn("No qualified name for parameter value {}, ignoring", pv);
+                continue;
+            }
             
             SortedParameterList l = m.get(t);
             if(l==null) {
@@ -181,7 +185,7 @@ class ArchiveFillerTask implements ParameterConsumer {
         List<ParameterValue> sortedPvList = new ArrayList<ParameterValue>();
 
         void add(ParameterValue pv) {
-            String fqn = pv.getParameter().getQualifiedName();
+            String fqn = pv.getParameterQualifiedNamed();
             Value.Type engType = pv.getEngValue().getType();
             Value.Type rawType = (pv.getRawValue()==null)? null: pv.getRawValue().getType();
             int parameterId = parameterIdMap.createAndGet(fqn, engType, rawType);

@@ -3,7 +3,7 @@ package org.yamcs.parameterarchive;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.yamcs.protobuf.Pvalue.ParameterValue;
+import org.yamcs.ParameterValue;
 import org.yamcs.utils.IntArray;
 import org.yamcs.utils.StringConvertors;
 import org.yamcs.utils.TimeEncoding;
@@ -30,6 +30,11 @@ public class ParameterIdValueList {
         pids.add(parameterId);
         values.add(v);
     }
+   
+
+    public List<ParameterValue> getValues() {
+        return values;
+    }
     
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -43,9 +48,4 @@ public class ParameterIdValueList {
         sb.append("]");
         return sb.toString();
     }
-
-    public List<ParameterValue> getValues() {
-        return values;
-    }
-    
 }

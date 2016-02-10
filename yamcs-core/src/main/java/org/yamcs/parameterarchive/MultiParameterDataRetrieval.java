@@ -13,9 +13,9 @@ import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yamcs.ParameterValue;
 import org.yamcs.parameterarchive.ParameterArchive.Partition;
 import org.yamcs.protobuf.Pvalue.ParameterStatus;
-import org.yamcs.protobuf.Pvalue.ParameterValue;
 import org.yamcs.protobuf.Yamcs.NamedObjectId;
 import org.yamcs.utils.DecodingException;
 import org.yamcs.utils.TimeEncoding;
@@ -54,7 +54,7 @@ public class MultiParameterDataRetrieval {
     private void retrieveFromPartition(Partition p, Consumer<ParameterIdValueList> consumer) throws RocksDBException, DecodingException {
 
         RocksIterator[] its = new RocksIterator[mpvr.parameterIds.length];
-        Map<PartitionIterator, NamedObjectId> partition2ParameterName = new HashMap<>();
+        Map<PartitionIterator, String> partition2ParameterName = new HashMap<>();
         PriorityQueue<PartitionIterator> queue = new PriorityQueue<PartitionIterator>(new PartitionIteratorComparator(mpvr.ascending));
         SegmentMerger merger = null;
         boolean retrieveEng = mpvr.retrieveEngValues||mpvr.retrieveRawValues;
@@ -141,7 +141,7 @@ public class MultiParameterDataRetrieval {
         TreeMap<Long,ParameterIdValueList> values;
         int currentParameterId;
         int currentParameterGroupId;
-        NamedObjectId currentParameterName;
+        String currentParameterName;
 
         final MultipleParameterValueRequest mpvr;
 
@@ -168,21 +168,19 @@ public class MultiParameterDataRetrieval {
                 vlist = new ParameterIdValueList(tv.instant, currentParameterGroupId);
                 values.put(k, vlist);
             }
-            ParameterValue.Builder pvb = ParameterValue.newBuilder().setId(currentParameterName);
-            pvb.setGenerationTime(tv.instant);
-            if(mpvr.storeUtcTime) {
-                pvb.setGenerationTimeUTC(TimeEncoding.toString(tv.instant));
-            }
-            if(tv.engValue!=null) pvb.setEngValue(tv.engValue);
-            if(tv.rawValue!=null) pvb.setRawValue(tv.rawValue);
+            ParameterValue pv = new ParameterValue(currentParameterName);
+            pv.setGenerationTime(tv.instant);
+
+            if(tv.engValue!=null) pv.setEngValue(tv.engValue);
+            if(tv.rawValue!=null) pv.setRawValue(tv.rawValue);
             if(tv.paramStatus!=null) {
                 ParameterStatus ps = tv.paramStatus;
-                if(ps.hasAcquisitionStatus()) pvb.setAcquisitionStatus(ps.getAcquisitionStatus());
-                if(ps.hasMonitoringResult()) pvb.setMonitoringResult(ps.getMonitoringResult());
-                if(ps.getAlarmRangeCount()>0) pvb.addAllAlarmRange(ps.getAlarmRangeList());
+                if(ps.hasAcquisitionStatus()) pv.setAcquisitionStatus(ps.getAcquisitionStatus());
+                if(ps.hasMonitoringResult()) pv.setMonitoringResult(ps.getMonitoringResult());
+                if(ps.getAlarmRangeCount()>0) pv.addAlarmRanges(ps.getAlarmRangeList());
             }
             
-            vlist.add(currentParameterId, pvb.build());
+            vlist.add(currentParameterId, pv);
         }
 
         private long k(int parameterGroupId, long instant) {

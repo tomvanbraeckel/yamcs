@@ -3,8 +3,8 @@ package org.yamcs.web.rest;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.yamcs.ParameterValue;
 import org.yamcs.parameter.ParameterValueWithId;
-import org.yamcs.protobuf.Pvalue.ParameterValue;
 import org.yamcs.protobuf.Yamcs.Value;
 import org.yamcs.utils.ValueUtility;
 
@@ -37,7 +37,7 @@ public abstract class RestParameterReplayListener extends RestReplayListener {
             List<ParameterValueWithId> plist = new ArrayList<>();
             
             for (ParameterValueWithId pvalid : params) {
-                org.yamcs.ParameterValue pval = pvalid.getParameterValue();
+                ParameterValue pval = pvalid.getParameterValue();
                 if (!ValueUtility.equals(lastValue, pval.getEngValue())) {
                     plist.add(pvalid);
                 }
@@ -48,20 +48,17 @@ public abstract class RestParameterReplayListener extends RestReplayListener {
             return params;
         }
     }
-    
-    @Override
-    public List<ParameterValue> filter2(List<ParameterValue>  params) {
+    public ParameterValueWithId filter(ParameterValueWithId pvwid) {
         if (noRepeat) {
-            List<ParameterValue> plist = new ArrayList<ParameterValue>();
-            for (ParameterValue pval : params) {
-                if (!ValueUtility.equals(lastValue, pval.getEngValue())) {
-                    plist.add(pval);
-                }
+            ParameterValue pval = pvwid.getParameterValue();
+            if (!ValueUtility.equals(lastValue, pval.getEngValue())) {
                 lastValue = pval.getEngValue();
+                return pvwid;
+            } else {
+                return null;
             }
-            return (plist.size() > 0) ? plist : null;
         } else {
-            return params;
+            return pvwid;
         }
-    }
+    }  
 }

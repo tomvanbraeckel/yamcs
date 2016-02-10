@@ -2897,9 +2897,19 @@ public final class Pvalue {
      */
     org.yamcs.protobuf.Pvalue.MonitoringResult getMonitoringResult();
 
-    // repeated .mdb.AlarmRange alarmRange = 3;
+    // optional .pvalue.RangeCondition rangeCondition = 3;
     /**
-     * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
+     * <code>optional .pvalue.RangeCondition rangeCondition = 3;</code>
+     */
+    boolean hasRangeCondition();
+    /**
+     * <code>optional .pvalue.RangeCondition rangeCondition = 3;</code>
+     */
+    org.yamcs.protobuf.Pvalue.RangeCondition getRangeCondition();
+
+    // repeated .mdb.AlarmRange alarmRange = 4;
+    /**
+     * <code>repeated .mdb.AlarmRange alarmRange = 4;</code>
      *
      * <pre>
      * context-dependent ranges
@@ -2908,7 +2918,7 @@ public final class Pvalue {
     java.util.List<org.yamcs.protobuf.Mdb.AlarmRange> 
         getAlarmRangeList();
     /**
-     * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
+     * <code>repeated .mdb.AlarmRange alarmRange = 4;</code>
      *
      * <pre>
      * context-dependent ranges
@@ -2916,7 +2926,7 @@ public final class Pvalue {
      */
     org.yamcs.protobuf.Mdb.AlarmRange getAlarmRange(int index);
     /**
-     * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
+     * <code>repeated .mdb.AlarmRange alarmRange = 4;</code>
      *
      * <pre>
      * context-dependent ranges
@@ -2924,7 +2934,7 @@ public final class Pvalue {
      */
     int getAlarmRangeCount();
     /**
-     * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
+     * <code>repeated .mdb.AlarmRange alarmRange = 4;</code>
      *
      * <pre>
      * context-dependent ranges
@@ -2933,7 +2943,7 @@ public final class Pvalue {
     java.util.List<? extends org.yamcs.protobuf.Mdb.AlarmRangeOrBuilder> 
         getAlarmRangeOrBuilderList();
     /**
-     * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
+     * <code>repeated .mdb.AlarmRange alarmRange = 4;</code>
      *
      * <pre>
      * context-dependent ranges
@@ -3019,10 +3029,21 @@ public final class Pvalue {
               }
               break;
             }
-            case 26: {
-              if (!((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
+            case 24: {
+              int rawValue = input.readEnum();
+              org.yamcs.protobuf.Pvalue.RangeCondition value = org.yamcs.protobuf.Pvalue.RangeCondition.valueOf(rawValue);
+              if (value == null) {
+                unknownFields.mergeVarintField(3, rawValue);
+              } else {
+                bitField0_ |= 0x00000004;
+                rangeCondition_ = value;
+              }
+              break;
+            }
+            case 34: {
+              if (!((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
                 alarmRange_ = new java.util.ArrayList<org.yamcs.protobuf.Mdb.AlarmRange>();
-                mutable_bitField0_ |= 0x00000004;
+                mutable_bitField0_ |= 0x00000008;
               }
               alarmRange_.add(input.readMessage(org.yamcs.protobuf.Mdb.AlarmRange.PARSER, extensionRegistry));
               break;
@@ -3035,7 +3056,7 @@ public final class Pvalue {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e.getMessage()).setUnfinishedMessage(this);
       } finally {
-        if (((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
+        if (((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
           alarmRange_ = java.util.Collections.unmodifiableList(alarmRange_);
         }
         this.unknownFields = unknownFields.build();
@@ -3102,11 +3123,27 @@ public final class Pvalue {
       return monitoringResult_;
     }
 
-    // repeated .mdb.AlarmRange alarmRange = 3;
-    public static final int ALARMRANGE_FIELD_NUMBER = 3;
+    // optional .pvalue.RangeCondition rangeCondition = 3;
+    public static final int RANGECONDITION_FIELD_NUMBER = 3;
+    private org.yamcs.protobuf.Pvalue.RangeCondition rangeCondition_;
+    /**
+     * <code>optional .pvalue.RangeCondition rangeCondition = 3;</code>
+     */
+    public boolean hasRangeCondition() {
+      return ((bitField0_ & 0x00000004) == 0x00000004);
+    }
+    /**
+     * <code>optional .pvalue.RangeCondition rangeCondition = 3;</code>
+     */
+    public org.yamcs.protobuf.Pvalue.RangeCondition getRangeCondition() {
+      return rangeCondition_;
+    }
+
+    // repeated .mdb.AlarmRange alarmRange = 4;
+    public static final int ALARMRANGE_FIELD_NUMBER = 4;
     private java.util.List<org.yamcs.protobuf.Mdb.AlarmRange> alarmRange_;
     /**
-     * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
+     * <code>repeated .mdb.AlarmRange alarmRange = 4;</code>
      *
      * <pre>
      * context-dependent ranges
@@ -3116,7 +3153,7 @@ public final class Pvalue {
       return alarmRange_;
     }
     /**
-     * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
+     * <code>repeated .mdb.AlarmRange alarmRange = 4;</code>
      *
      * <pre>
      * context-dependent ranges
@@ -3127,7 +3164,7 @@ public final class Pvalue {
       return alarmRange_;
     }
     /**
-     * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
+     * <code>repeated .mdb.AlarmRange alarmRange = 4;</code>
      *
      * <pre>
      * context-dependent ranges
@@ -3137,7 +3174,7 @@ public final class Pvalue {
       return alarmRange_.size();
     }
     /**
-     * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
+     * <code>repeated .mdb.AlarmRange alarmRange = 4;</code>
      *
      * <pre>
      * context-dependent ranges
@@ -3147,7 +3184,7 @@ public final class Pvalue {
       return alarmRange_.get(index);
     }
     /**
-     * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
+     * <code>repeated .mdb.AlarmRange alarmRange = 4;</code>
      *
      * <pre>
      * context-dependent ranges
@@ -3161,6 +3198,7 @@ public final class Pvalue {
     private void initFields() {
       acquisitionStatus_ = org.yamcs.protobuf.Pvalue.AcquisitionStatus.ACQUIRED;
       monitoringResult_ = org.yamcs.protobuf.Pvalue.MonitoringResult.DISABLED;
+      rangeCondition_ = org.yamcs.protobuf.Pvalue.RangeCondition.LOW;
       alarmRange_ = java.util.Collections.emptyList();
     }
     private byte memoizedIsInitialized = -1;
@@ -3181,8 +3219,11 @@ public final class Pvalue {
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         output.writeEnum(2, monitoringResult_.getNumber());
       }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        output.writeEnum(3, rangeCondition_.getNumber());
+      }
       for (int i = 0; i < alarmRange_.size(); i++) {
-        output.writeMessage(3, alarmRange_.get(i));
+        output.writeMessage(4, alarmRange_.get(i));
       }
       getUnknownFields().writeTo(output);
     }
@@ -3201,9 +3242,13 @@ public final class Pvalue {
         size += com.google.protobuf.CodedOutputStream
           .computeEnumSize(2, monitoringResult_.getNumber());
       }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeEnumSize(3, rangeCondition_.getNumber());
+      }
       for (int i = 0; i < alarmRange_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(3, alarmRange_.get(i));
+          .computeMessageSize(4, alarmRange_.get(i));
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -3330,9 +3375,11 @@ public final class Pvalue {
         bitField0_ = (bitField0_ & ~0x00000001);
         monitoringResult_ = org.yamcs.protobuf.Pvalue.MonitoringResult.DISABLED;
         bitField0_ = (bitField0_ & ~0x00000002);
+        rangeCondition_ = org.yamcs.protobuf.Pvalue.RangeCondition.LOW;
+        bitField0_ = (bitField0_ & ~0x00000004);
         if (alarmRangeBuilder_ == null) {
           alarmRange_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000004);
+          bitField0_ = (bitField0_ & ~0x00000008);
         } else {
           alarmRangeBuilder_.clear();
         }
@@ -3372,10 +3419,14 @@ public final class Pvalue {
           to_bitField0_ |= 0x00000002;
         }
         result.monitoringResult_ = monitoringResult_;
+        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+          to_bitField0_ |= 0x00000004;
+        }
+        result.rangeCondition_ = rangeCondition_;
         if (alarmRangeBuilder_ == null) {
-          if (((bitField0_ & 0x00000004) == 0x00000004)) {
+          if (((bitField0_ & 0x00000008) == 0x00000008)) {
             alarmRange_ = java.util.Collections.unmodifiableList(alarmRange_);
-            bitField0_ = (bitField0_ & ~0x00000004);
+            bitField0_ = (bitField0_ & ~0x00000008);
           }
           result.alarmRange_ = alarmRange_;
         } else {
@@ -3403,11 +3454,14 @@ public final class Pvalue {
         if (other.hasMonitoringResult()) {
           setMonitoringResult(other.getMonitoringResult());
         }
+        if (other.hasRangeCondition()) {
+          setRangeCondition(other.getRangeCondition());
+        }
         if (alarmRangeBuilder_ == null) {
           if (!other.alarmRange_.isEmpty()) {
             if (alarmRange_.isEmpty()) {
               alarmRange_ = other.alarmRange_;
-              bitField0_ = (bitField0_ & ~0x00000004);
+              bitField0_ = (bitField0_ & ~0x00000008);
             } else {
               ensureAlarmRangeIsMutable();
               alarmRange_.addAll(other.alarmRange_);
@@ -3420,7 +3474,7 @@ public final class Pvalue {
               alarmRangeBuilder_.dispose();
               alarmRangeBuilder_ = null;
               alarmRange_ = other.alarmRange_;
-              bitField0_ = (bitField0_ & ~0x00000004);
+              bitField0_ = (bitField0_ & ~0x00000008);
               alarmRangeBuilder_ = 
                 com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
                    getAlarmRangeFieldBuilder() : null;
@@ -3528,13 +3582,49 @@ public final class Pvalue {
         return this;
       }
 
-      // repeated .mdb.AlarmRange alarmRange = 3;
+      // optional .pvalue.RangeCondition rangeCondition = 3;
+      private org.yamcs.protobuf.Pvalue.RangeCondition rangeCondition_ = org.yamcs.protobuf.Pvalue.RangeCondition.LOW;
+      /**
+       * <code>optional .pvalue.RangeCondition rangeCondition = 3;</code>
+       */
+      public boolean hasRangeCondition() {
+        return ((bitField0_ & 0x00000004) == 0x00000004);
+      }
+      /**
+       * <code>optional .pvalue.RangeCondition rangeCondition = 3;</code>
+       */
+      public org.yamcs.protobuf.Pvalue.RangeCondition getRangeCondition() {
+        return rangeCondition_;
+      }
+      /**
+       * <code>optional .pvalue.RangeCondition rangeCondition = 3;</code>
+       */
+      public Builder setRangeCondition(org.yamcs.protobuf.Pvalue.RangeCondition value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        bitField0_ |= 0x00000004;
+        rangeCondition_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional .pvalue.RangeCondition rangeCondition = 3;</code>
+       */
+      public Builder clearRangeCondition() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        rangeCondition_ = org.yamcs.protobuf.Pvalue.RangeCondition.LOW;
+        onChanged();
+        return this;
+      }
+
+      // repeated .mdb.AlarmRange alarmRange = 4;
       private java.util.List<org.yamcs.protobuf.Mdb.AlarmRange> alarmRange_ =
         java.util.Collections.emptyList();
       private void ensureAlarmRangeIsMutable() {
-        if (!((bitField0_ & 0x00000004) == 0x00000004)) {
+        if (!((bitField0_ & 0x00000008) == 0x00000008)) {
           alarmRange_ = new java.util.ArrayList<org.yamcs.protobuf.Mdb.AlarmRange>(alarmRange_);
-          bitField0_ |= 0x00000004;
+          bitField0_ |= 0x00000008;
          }
       }
 
@@ -3542,7 +3632,7 @@ public final class Pvalue {
           org.yamcs.protobuf.Mdb.AlarmRange, org.yamcs.protobuf.Mdb.AlarmRange.Builder, org.yamcs.protobuf.Mdb.AlarmRangeOrBuilder> alarmRangeBuilder_;
 
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 4;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3556,7 +3646,7 @@ public final class Pvalue {
         }
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 4;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3570,7 +3660,7 @@ public final class Pvalue {
         }
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 4;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3584,7 +3674,7 @@ public final class Pvalue {
         }
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 4;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3605,7 +3695,7 @@ public final class Pvalue {
         return this;
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 4;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3623,7 +3713,7 @@ public final class Pvalue {
         return this;
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 4;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3643,7 +3733,7 @@ public final class Pvalue {
         return this;
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 4;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3664,7 +3754,7 @@ public final class Pvalue {
         return this;
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 4;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3682,7 +3772,7 @@ public final class Pvalue {
         return this;
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 4;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3700,7 +3790,7 @@ public final class Pvalue {
         return this;
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 4;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3718,7 +3808,7 @@ public final class Pvalue {
         return this;
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 4;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3727,7 +3817,7 @@ public final class Pvalue {
       public Builder clearAlarmRange() {
         if (alarmRangeBuilder_ == null) {
           alarmRange_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000004);
+          bitField0_ = (bitField0_ & ~0x00000008);
           onChanged();
         } else {
           alarmRangeBuilder_.clear();
@@ -3735,7 +3825,7 @@ public final class Pvalue {
         return this;
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 4;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3752,7 +3842,7 @@ public final class Pvalue {
         return this;
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 4;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3763,7 +3853,7 @@ public final class Pvalue {
         return getAlarmRangeFieldBuilder().getBuilder(index);
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 4;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3777,7 +3867,7 @@ public final class Pvalue {
         }
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 4;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3792,7 +3882,7 @@ public final class Pvalue {
         }
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 4;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3803,7 +3893,7 @@ public final class Pvalue {
             org.yamcs.protobuf.Mdb.AlarmRange.getDefaultInstance());
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 4;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3815,7 +3905,7 @@ public final class Pvalue {
             index, org.yamcs.protobuf.Mdb.AlarmRange.getDefaultInstance());
       }
       /**
-       * <code>repeated .mdb.AlarmRange alarmRange = 3;</code>
+       * <code>repeated .mdb.AlarmRange alarmRange = 4;</code>
        *
        * <pre>
        * context-dependent ranges
@@ -3832,7 +3922,7 @@ public final class Pvalue {
           alarmRangeBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
               org.yamcs.protobuf.Mdb.AlarmRange, org.yamcs.protobuf.Mdb.AlarmRange.Builder, org.yamcs.protobuf.Mdb.AlarmRangeOrBuilder>(
                   alarmRange_,
-                  ((bitField0_ & 0x00000004) == 0x00000004),
+                  ((bitField0_ & 0x00000008) == 0x00000008),
                   getParentForChildren(),
                   isClean());
           alarmRange_ = null;
@@ -6446,23 +6536,25 @@ public final class Pvalue {
       "isitionTimeUTC\030\013 \001(\t\022\031\n\021generationTimeUT" +
       "C\030\014 \001(\t\022\026\n\016expirationTime\030\027 \001(\003\022\031\n\021expir" +
       "ationTimeUTC\030\030 \001(\t\022#\n\nalarmRange\030\031 \003(\0132\017" +
-      ".mdb.AlarmRange\"\240\001\n\017ParameterStatus\0224\n\021a" +
+      ".mdb.AlarmRange\"\320\001\n\017ParameterStatus\0224\n\021a" +
       "cquisitionStatus\030\001 \001(\0162\031.pvalue.Acquisit" +
       "ionStatus\0222\n\020monitoringResult\030\002 \001(\0162\030.pv" +
-      "alue.MonitoringResult\022#\n\nalarmRange\030\003 \003(" +
-      "\0132\017.mdb.AlarmRange\"q\n\rParameterData\022)\n\tp" +
-      "arameter\030\001 \003(\0132\026.pvalue.ParameterValue\022\r" +
-      "\n\005group\030\002 \001(\t\022\026\n\016generationTime\030\003 \001(\003\022\016\n",
-      "\006seqNum\030\004 \001(\005\"\201\001\n\nTimeSeries\022)\n\006sample\030\001" +
-      " \003(\0132\031.pvalue.TimeSeries.Sample\032H\n\006Sampl" +
-      "e\022\014\n\004time\030\001 \001(\t\022\013\n\003avg\030\002 \001(\001\022\013\n\003min\030\003 \001(" +
-      "\001\022\013\n\003max\030\004 \001(\001\022\t\n\001n\030\005 \001(\005*M\n\021Acquisition" +
-      "Status\022\014\n\010ACQUIRED\020\000\022\020\n\014NOT_RECEIVED\020\001\022\013" +
-      "\n\007INVALID\020\002\022\013\n\007EXPIRED\020\003*o\n\020MonitoringRe" +
-      "sult\022\014\n\010DISABLED\020\000\022\r\n\tIN_LIMITS\020\001\022\t\n\005WAT" +
-      "CH\020\007\022\013\n\007WARNING\020\n\022\014\n\010DISTRESS\020\r\022\014\n\010CRITI" +
-      "CAL\020\020\022\n\n\006SEVERE\020\023*#\n\016RangeCondition\022\007\n\003L" +
-      "OW\020\000\022\010\n\004HIGH\020\001B\024\n\022org.yamcs.protobuf"
+      "alue.MonitoringResult\022.\n\016rangeCondition\030" +
+      "\003 \001(\0162\026.pvalue.RangeCondition\022#\n\nalarmRa" +
+      "nge\030\004 \003(\0132\017.mdb.AlarmRange\"q\n\rParameterD" +
+      "ata\022)\n\tparameter\030\001 \003(\0132\026.pvalue.Paramete",
+      "rValue\022\r\n\005group\030\002 \001(\t\022\026\n\016generationTime\030" +
+      "\003 \001(\003\022\016\n\006seqNum\030\004 \001(\005\"\201\001\n\nTimeSeries\022)\n\006" +
+      "sample\030\001 \003(\0132\031.pvalue.TimeSeries.Sample\032" +
+      "H\n\006Sample\022\014\n\004time\030\001 \001(\t\022\013\n\003avg\030\002 \001(\001\022\013\n\003" +
+      "min\030\003 \001(\001\022\013\n\003max\030\004 \001(\001\022\t\n\001n\030\005 \001(\005*M\n\021Acq" +
+      "uisitionStatus\022\014\n\010ACQUIRED\020\000\022\020\n\014NOT_RECE" +
+      "IVED\020\001\022\013\n\007INVALID\020\002\022\013\n\007EXPIRED\020\003*o\n\020Moni" +
+      "toringResult\022\014\n\010DISABLED\020\000\022\r\n\tIN_LIMITS\020" +
+      "\001\022\t\n\005WATCH\020\007\022\013\n\007WARNING\020\n\022\014\n\010DISTRESS\020\r\022" +
+      "\014\n\010CRITICAL\020\020\022\n\n\006SEVERE\020\023*#\n\016RangeCondit",
+      "ion\022\007\n\003LOW\020\000\022\010\n\004HIGH\020\001B\024\n\022org.yamcs.prot" +
+      "obuf"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -6480,7 +6572,7 @@ public final class Pvalue {
           internal_static_pvalue_ParameterStatus_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_pvalue_ParameterStatus_descriptor,
-              new java.lang.String[] { "AcquisitionStatus", "MonitoringResult", "AlarmRange", });
+              new java.lang.String[] { "AcquisitionStatus", "MonitoringResult", "RangeCondition", "AlarmRange", });
           internal_static_pvalue_ParameterData_descriptor =
             getDescriptor().getMessageTypes().get(2);
           internal_static_pvalue_ParameterData_fieldAccessorTable = new

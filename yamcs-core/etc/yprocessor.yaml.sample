@@ -47,7 +47,9 @@ realtime:
              ignoreOutOfContainerEntries: false
 
 
-
+#used to perform step by step archive replays to displays,etc
+# initiated from Yamcs Monitor, Yamcs Studio.
+# should be renamed to ArchiveReplay
 Archive:
     telemetryProvider: 
         class: org.yamcs.tctm.ReplayService
@@ -57,7 +59,7 @@ Archive:
             cacheAll: true
 
 
-#config used by the ParmaeterArchive when rebuilding the parameter archive
+#used by the ParmaeterArchive when rebuilding the parameter archive
 # no need for parameter cache
 ParameterArchive:
     telemetryProvider: 
@@ -66,7 +68,7 @@ ParameterArchive:
         parameterCache:
             enabled: false
 
-#used for performing archive replays (e.g. parameter-extractor.sh)
+#used for performing archive retrievals via replays (e.g. parameter-extractor.sh)
 # we do not want cache in order to extract the minimum data necessary
 ArchiveRetrieval:
     telemetryProvider:
