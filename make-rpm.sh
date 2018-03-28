@@ -13,6 +13,7 @@ version=`grep -m 1 '<version>.*</version>' pom.xml | sed -e 's/.*<version>\(.*\)
 #change x.y.z-SNAPSHOT into x.y.z_SNAPSHOT because "-" is not allowed in RPM version names
 d=`date +%Y%m%d%H%M%S`
 version=${version/-SNAPSHOT/_SNAPSHOT$d}
+version=${version/-TVBUSOC/_TVBUSOC$d}
 
 rev=`git rev-parse --short HEAD`
 
